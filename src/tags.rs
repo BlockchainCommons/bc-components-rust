@@ -18,9 +18,7 @@ use dcbor::Tag;
 #[macro_export]
 macro_rules! tag_constant {
     ($const_name:ident, $value:expr, $name:expr) => {
-        lazy_static::lazy_static! {
-            pub static ref $const_name: Tag = Tag::new_with_static_name($value, $name);
-        }
+        pub const $const_name: Tag = Tag::new_with_static_name($value, $name);
     };
 }
 

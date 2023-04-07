@@ -1,5 +1,7 @@
 use bc_crypto::sha256;
-use crate::{data_provider::DataProvider, digest_provider::DigestProvider};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
+use bc_ur::{UREncodable, URDecodable, URCodable};
+use crate::{data_provider::DataProvider, digest_provider::DigestProvider, tags};
 
 /// A cryptographically secure digest.
 ///
@@ -71,6 +73,14 @@ impl Digest {
     pub fn short_description(&self) -> String {
         hex::encode(&self.data[0..4])
     }
+
+    /// Validate the given data against the digest, if any.
+    pub fn validate_opt(data: &dyn DataProvider, digest: Option<&Digest>) -> bool {
+        match digest {
+            Some(digest) => digest.validate(data),
+            None => true,
+        }
+    }
 }
 
 impl std::cmp::PartialOrd for Digest {
@@ -91,13 +101,44 @@ impl DigestProvider for Digest {
     }
 }
 
-/// Validate the given data against the digest, if any.
-pub fn validate_opt(data: &dyn DataProvider, digest: Option<&Digest>) -> bool {
-    match digest {
-        Some(digest) => digest.validate(data),
-        None => true,
+impl CBORTagged for Digest {
+    const CBOR_TAG: Tag = tags::DIGEST;
+}
+
+impl CBOREncodable for Digest {
+    fn cbor(&self) -> dcbor::CBOR {
+        self.tagged_cbor()
     }
 }
+
+impl CBORTaggedEncodable for Digest {
+    fn untagged_cbor(&self) -> CBOR {
+        Bytes::from_data(&self.data).cbor()
+    }
+}
+
+impl UREncodable for Digest { }
+
+impl CBORDecodable for Digest {
+    fn from_cbor(cbor: &CBOR) -> Result<Box<Self>, dcbor::CBORError> {
+        Self::from_untagged_cbor(cbor)
+    }
+}
+
+impl CBORTaggedDecodable for Digest {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Box<Self>, dcbor::CBORError> {
+        let bytes = Bytes::from_cbor(cbor)?;
+        let data = bytes.data();
+        let instance = Self::new_from_raw_value(data, Self::DEFAULT_DIGEST_LENGTH).ok_or(CBORError::InvalidFormat)?;
+        Ok(Box::new(instance))
+
+        // Ok(Box::new(Self::new(&Bytes::from_cbor(cbor)?.data())))
+    }
+}
+
+impl URDecodable for Digest { }
+
+impl URCodable for Digest { }
 
 impl std::fmt::Display for Digest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -172,5 +213,16 @@ mod tests {
         assert_eq!(digest.data.len(), Digest::DEFAULT_DIGEST_LENGTH);
         assert_eq!(digest.data(), sha256("hello world".as_bytes()));
         assert_eq!(digest.data(), hex_literal::hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
+    }
+
+    #[test]
+    fn test_ur() {
+        let data = "hello world";
+        let digest = Digest::new(data.as_bytes());
+        let ur_string = digest.ur_string();
+        let expected_ur_string = "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
+        assert_eq!(ur_string, expected_ur_string);
+        let digest2 = *Digest::new_from_ur_string(&ur_string).unwrap();
+        assert_eq!(digest, digest2);
     }
 }
