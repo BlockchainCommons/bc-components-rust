@@ -1,0 +1,19 @@
+[package]
+name = "bc-components"
+version = "0.1.0"
+edition = "2021"
+description = "Secure Components for Rust."
+author = "Blockchain Commons"
+keywords = ["cryptography"]
+repository = "https://github.com/BlockchainCommons/bc-components-rust"
+readme = "README.md"
+categories = ["cryptography"]
+
+[dependencies]
+bc-crypto = { path = "../bc-crypto-rust" }
+dcbor = { path = "../bc-dcbor-rust" }
+lazy_static = "1.4.0"
+hex = "0.4.3"
+
+[dev-dependencies]
+hex-literal = "0.4.1"
