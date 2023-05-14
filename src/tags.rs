@@ -1,4 +1,5 @@
 use dcbor::Tag;
+use paste::paste;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
 
@@ -18,6 +19,9 @@ use dcbor::Tag;
 #[macro_export]
 macro_rules! tag_constant {
     ($const_name:ident, $value:expr, $name:expr) => {
+        paste! {
+            pub const [<$const_name _VALUE>]: u64 = $value;
+        }
         pub const $const_name: Tag = Tag::new_with_static_name($value, $name);
     };
 }

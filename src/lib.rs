@@ -1,7 +1,19 @@
 pub mod tags;
-pub mod digest;
-pub mod data_provider;
-pub mod digest_provider;
+
+mod digest;
+pub use digest::Digest;
+
+mod digest_provider;
+pub use digest_provider::DigestProvider;
+
+mod compressed;
+pub use compressed::Compressed;
+
+mod nonce;
+pub use nonce::Nonce;
+
+mod encrypted_message;
+pub use encrypted_message::EncryptedMessage;
 
 #[cfg(test)]
 mod tests {
