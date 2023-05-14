@@ -1,6 +1,7 @@
 pub mod tags;
 
 mod digest;
+mod salt;
 pub use digest::Digest;
 
 mod digest_provider;
