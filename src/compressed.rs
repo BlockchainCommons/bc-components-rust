@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::{fmt::{Display, Formatter}, rc::Rc};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORError, CBORDecodable, CBORTaggedDecodable};
 use bc_crypto::crc32;
@@ -154,27 +154,27 @@ impl CBORTaggedEncodable for Compressed {
 impl UREncodable for Compressed { }
 
 impl CBORDecodable for Compressed {
-    fn from_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Compressed {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let elements = cbor.as_array()?;
         if elements.len() < 3 || elements.len() > 4 {
             return Err(CBORError::InvalidFormat);
         }
         let checksum = *u32::from_cbor(&elements[0])?;
         let uncompressed_size = *usize::from_cbor(&elements[1])?;
-        let compressed_data = *Vec::<u8>::from_cbor(&elements[2])?;
+        let compressed_data = Vec::<u8>::from_cbor(&elements[2])?.as_ref().clone();
         let digest = if elements.len() == 4 {
-            Some(*Digest::from_cbor(&elements[3])?)
+            Some(Digest::from_cbor(&elements[3])?.as_ref().clone())
         } else {
             None
         };
         Ok(
-            Box::new(
+            Rc::new(
                 Self::new(checksum, uncompressed_size, compressed_data, digest)
                     .ok_or(CBORError::InvalidFormat)?
             )

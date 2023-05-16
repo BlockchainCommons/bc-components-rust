@@ -1,5 +1,7 @@
+use std::rc::Rc;
+
 use bc_crypto::random_data;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use crate::tags;
 
  #[derive(Clone, Debug, Eq, PartialEq)]
@@ -54,7 +56,7 @@ impl CBORTagged for Nonce {
 }
 
 impl CBOREncodable for Nonce {
-    fn cbor(&self) -> dcbor::CBOR {
+    fn cbor(&self) -> CBOR {
         self.tagged_cbor()
     }
 }
@@ -66,17 +68,51 @@ impl CBORTaggedEncodable for Nonce {
 }
 
 impl CBORDecodable for Nonce {
-    fn from_cbor(cbor: &CBOR) -> Result<Box<Self>, dcbor::CBORError> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged: &CBOR) -> Result<Box<Self>, dcbor::CBORError> {
-        let bytes = Bytes::from_cbor(untagged)?;
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+        let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
-        let instance = Self::from_raw_data(data).ok_or(dcbor::CBORError::InvalidFormat)?;
-        Ok(Box::new(instance))
+        let instance = Self::from_raw_data(data).ok_or(CBORError::InvalidFormat)?;
+        Ok(Rc::new(instance))
+    }
+}
+
+impl std::fmt::Display for Nonce {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Nonce({})", hex::encode(&self.0))
+    }
+}
+
+// Convert from a thing that can be referenced as an array of bytes to a Nonce.
+impl<T: AsRef<[u8]>> From<T> for Nonce {
+    fn from(data: T) -> Self {
+        Self::from_raw_data(&data).unwrap()
+    }
+}
+
+// Convert from a reference to a byte vector to a Nonce.
+impl From<&Nonce> for Nonce {
+    fn from(nonce: &Nonce) -> Self {
+        nonce.clone()
+    }
+}
+
+// Convert from a byte vector to a Nonce.
+impl From<Nonce> for Vec<u8> {
+    fn from(nonce: Nonce) -> Self {
+        nonce.0.to_vec()
+    }
+}
+
+// Convert from a reference to a byte vector to a Nonce.
+impl From<&Nonce> for Vec<u8> {
+    fn from(nonce: &Nonce) -> Self {
+        nonce.0.to_vec()
     }
 }
 

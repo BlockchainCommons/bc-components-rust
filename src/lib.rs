@@ -1,7 +1,6 @@
 pub mod tags;
 
 mod digest;
-mod salt;
 pub use digest::Digest;
 
 mod digest_provider;
@@ -15,6 +14,9 @@ pub use nonce::Nonce;
 
 mod encrypted_message;
 pub use encrypted_message::EncryptedMessage;
+
+mod salt;
+pub use salt::Salt;
 
 #[cfg(test)]
 mod tests {

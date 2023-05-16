@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use bc_crypto::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use bc_ur::{UREncodable, URDecodable, URCodable};
@@ -137,16 +139,16 @@ impl CBORTaggedEncodable for Digest {
 impl UREncodable for Digest { }
 
 impl CBORDecodable for Digest {
-    fn from_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(cbor)?;
         let instance = Self::from_raw_data(&bytes.data()).ok_or(CBORError::InvalidFormat)?;
-        Ok(Box::new(instance))
+        Ok(Rc::new(instance))
     }
 }
 
@@ -160,24 +162,28 @@ impl std::fmt::Display for Digest {
     }
 }
 
+// Convert from a thing that can be referenced as an array of bytes to a Digest.
 impl<T: AsRef<[u8]>> From<T> for Digest {
     fn from(data: T) -> Self {
         Self::from_image(&data)
     }
 }
 
+// Convert from a reference to a byte vector to a Digest.
 impl From<&Digest> for Digest {
     fn from(digest: &Digest) -> Self {
         digest.clone()
     }
 }
 
+// Convert from a byte vector to a Digest.
 impl From<Digest> for Vec<u8> {
     fn from(digest: Digest) -> Self {
         digest.0.to_vec()
     }
 }
 
+// Convert a reference to a Digest to a byte vector.
 impl From<&Digest> for Vec<u8> {
     fn from(digest: &Digest) -> Self {
         digest.0.to_vec()
@@ -213,8 +219,8 @@ mod tests {
         let ur_string = digest.ur_string();
         let expected_ur_string = "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
         assert_eq!(ur_string, expected_ur_string);
-        let digest2 = *Digest::from_ur_string(&ur_string).unwrap();
-        assert_eq!(digest, digest2);
+        let digest2 = Digest::from_ur_string(&ur_string).unwrap();
+        assert_eq!(digest, *digest2);
     }
 
     #[test]

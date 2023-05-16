@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORError, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
@@ -167,7 +169,7 @@ impl CBOREncodable for EncryptedMessage {
 }
 
 impl CBORDecodable for EncryptedMessage {
-    fn from_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -181,7 +183,7 @@ impl CBORTaggedEncodable for EncryptedMessage {
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Box<Self>, CBORError> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         todo!()
     }
 }
