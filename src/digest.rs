@@ -8,7 +8,7 @@ use crate::{digest_provider::DigestProvider, tags_registry};
 /// A cryptographically secure digest.
 ///
 /// Implemented with SHA-256.
-#[derive(Clone, Debug, Ord, PartialEq, Eq, Hash)]
+#[derive(Clone, Ord, PartialEq, Eq, Hash)]
 pub struct Digest([u8; Self::DIGEST_LENGTH]);
 
 impl Digest {
@@ -117,6 +117,12 @@ impl std::cmp::PartialOrd for Digest {
 impl DigestProvider for Digest {
     fn digest(&self) -> Digest {
         self.clone()
+    }
+}
+
+impl std::fmt::Debug for Digest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Digest({})", self.hex())
     }
 }
 
