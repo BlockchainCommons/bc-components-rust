@@ -2,7 +2,7 @@ use std::{ops::RangeInclusive, rc::Rc};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use bc_crypto::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use crate::tags;
+use crate::tags_registry;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Salt(Vec<u8>);
@@ -71,7 +71,7 @@ impl Salt {
 }
 
 impl CBORTagged for Salt {
-    const CBOR_TAG: Tag = tags::SALT;
+    const CBOR_TAG: Tag = tags_registry::SALT;
 }
 
 impl CBOREncodable for Salt {

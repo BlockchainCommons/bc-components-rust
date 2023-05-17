@@ -1,8 +1,7 @@
 use std::rc::Rc;
-
 use bc_crypto::random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
-use crate::tags;
+use crate::tags_registry;
 
  #[derive(Clone, Debug, Eq, PartialEq)]
  pub struct Nonce ([u8; Self::NONCE_LENGTH]);
@@ -52,7 +51,7 @@ impl Nonce {
 }
 
 impl CBORTagged for Nonce {
-    const CBOR_TAG: Tag = tags::NONCE;
+    const CBOR_TAG: Tag = tags_registry::NONCE;
 }
 
 impl CBOREncodable for Nonce {

@@ -4,7 +4,7 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORError
 use bc_crypto::crc32;
 use miniz_oxide::deflate::compress_to_vec;
 use miniz_oxide::inflate::decompress_to_vec;
-use crate::{digest::Digest, DigestProvider, tags};
+use crate::{digest::Digest, DigestProvider, tags_registry};
 
 /// Errors for Compressed
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -128,7 +128,7 @@ impl Display for Compressed {
 }
 
 impl CBORTagged for Compressed {
-    const CBOR_TAG: Tag = tags::COMPRESSED;
+    const CBOR_TAG: Tag = tags_registry::COMPRESSED;
 }
 
 impl CBOREncodable for Compressed {

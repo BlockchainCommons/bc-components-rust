@@ -3,7 +3,7 @@ use std::rc::Rc;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORError, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
-use crate::{Nonce, Digest, DigestProvider, tags};
+use crate::{Nonce, Digest, DigestProvider, tags_registry};
 
 /*
 ```swift
@@ -155,7 +155,7 @@ impl DigestProvider for EncryptedMessage {
 }
 
 impl CBORTagged for EncryptedMessage {
-    const CBOR_TAG: Tag = tags::ENCRYPTED;
+    const CBOR_TAG: Tag = tags_registry::ENCRYPTED;
 }
 
 impl CBOREncodable for EncryptedMessage {

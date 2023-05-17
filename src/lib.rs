@@ -1,7 +1,8 @@
-pub mod tags;
-
 mod digest;
 pub use digest::Digest;
+
+mod cid;
+pub use cid::CID;
 
 mod digest_provider;
 pub use digest_provider::DigestProvider;
@@ -18,12 +19,14 @@ pub use encrypted_message::EncryptedMessage;
 mod salt;
 pub use salt::Salt;
 
+pub mod tags_registry;
+
 #[cfg(test)]
 mod tests {
     use crate::*;
     #[test]
     fn tags() {
-        assert_eq!(tags::LEAF.value(), 24);
-        assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
+        assert_eq!(tags_registry::LEAF.value(), 24);
+        assert_eq!(tags_registry::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
     }
 }

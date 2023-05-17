@@ -3,7 +3,7 @@ use std::rc::Rc;
 use bc_crypto::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use crate::{digest_provider::DigestProvider, tags};
+use crate::{digest_provider::DigestProvider, tags_registry};
 
 /// A cryptographically secure digest.
 ///
@@ -121,7 +121,7 @@ impl DigestProvider for Digest {
 }
 
 impl CBORTagged for Digest {
-    const CBOR_TAG: Tag = tags::DIGEST;
+    const CBOR_TAG: Tag = tags_registry::DIGEST;
 }
 
 impl CBOREncodable for Digest {
