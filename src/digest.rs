@@ -14,35 +14,32 @@ pub struct Digest([u8; Self::DIGEST_LENGTH]);
 impl Digest {
     pub const DIGEST_LENGTH: usize = 32;
 
-    /// Create a new digest from the raw bytes.
-    ///
-    /// Takes ownership of the raw bytes.
-    pub fn from_raw(raw: [u8; Self::DIGEST_LENGTH]) -> Self {
-        Self(raw)
+    /// Create a new digest from data.
+    pub fn from_data(data: [u8; Self::DIGEST_LENGTH]) -> Self {
+        Self(data)
     }
 
-    /// Create a new digest from the raw bytes.
+    /// Create a new digest from data.
     ///
-    /// Returns `None` if the raw data is not the correct length.
-    /// Copies the raw data.
-    pub fn from_raw_data<T>(raw: &T) -> Option<Self> where T: AsRef<[u8]> {
-        let raw = raw.as_ref();
-        if raw.len() != Self::DIGEST_LENGTH {
+    /// Returns `None` if the data is not the correct length.
+    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+        let data = data.as_ref();
+        if data.len() != Self::DIGEST_LENGTH {
             return None;
         }
         let mut arr = [0u8; Self::DIGEST_LENGTH];
-        arr.copy_from_slice(raw.as_ref());
-        Some(Self::from_raw(arr))
+        arr.copy_from_slice(data.as_ref());
+        Some(Self::from_data(arr))
     }
 
     /// Create a new digest from the given image.
     ///
     /// The image is hashed with SHA-256.
     pub fn from_image<T>(image: &T) -> Self where T: AsRef<[u8]> {
-        Self::from_raw(sha256(image.as_ref()))
+        Self::from_data(sha256(image.as_ref()))
     }
 
-    /// Create a new digest from an array of raw data.
+    /// Create a new digest from an array of data items.
     ///
     /// The image parts are concatenated and hashed with SHA-256.
     pub fn from_image_parts(image_parts: &[&[u8]]) -> Self {
@@ -57,16 +54,15 @@ impl Digest {
     ///
     /// The image parts are concatenated and hashed with SHA-256.
     pub fn from_digests(digests: &[Digest]) -> Self {
-        // Accumulate all the raw values into a single byte array.
         let mut buf = Vec::new();
         for digest in digests {
-            buf.extend_from_slice(digest.raw());
+            buf.extend_from_slice(digest.data());
         }
         Self::from_image(&buf)
     }
 
-    /// Get the raw value of the digest.
-    pub fn raw(&self) -> &[u8; 32] {
+    /// Get the data of the digest.
+    pub fn data(&self) -> &[u8; 32] {
         &self.0
     }
 
@@ -83,10 +79,10 @@ impl Digest {
     /// # Panics
     /// Panics if the string is not exactly 64 hexadecimal digits.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_raw_data(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
-    /// The raw value as a hexadecimal string.
+    /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
         hex::encode(&self.0)
     }
@@ -153,7 +149,7 @@ impl CBORDecodable for Digest {
 impl CBORTaggedDecodable for Digest {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_raw_data(&bytes.data()).ok_or(CBORError::InvalidFormat)?;
+        let instance = Self::from_data_ref(&bytes.data()).ok_or(CBORError::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }
@@ -205,17 +201,17 @@ mod tests {
     fn test_digest() {
         let data = "hello world";
         let digest = Digest::from_image(&data.as_bytes());
-        assert_eq!(digest.raw().len(), Digest::DIGEST_LENGTH);
-        assert_eq!(*digest.raw(), sha256(data.as_bytes()));
-        assert_eq!(*digest.raw(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
+        assert_eq!(digest.data().len(), Digest::DIGEST_LENGTH);
+        assert_eq!(*digest.data(), sha256(data.as_bytes()));
+        assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
     }
 
     #[test]
     fn test_digest_from_hex() {
         let digest = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
-        assert_eq!(digest.raw().len(), Digest::DIGEST_LENGTH);
-        assert_eq!(*digest.raw(), sha256("hello world".as_bytes()));
-        assert_eq!(*digest.raw(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
+        assert_eq!(digest.data().len(), Digest::DIGEST_LENGTH);
+        assert_eq!(*digest.data(), sha256("hello world".as_bytes()));
+        assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
     }
 
     #[test]

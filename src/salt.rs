@@ -8,18 +8,18 @@ use crate::tags_registry;
 pub struct Salt(Vec<u8>);
 
 impl Salt {
-    /// Create a new salt from raw bytes.
-    pub fn from_raw(raw: &[u8]) -> Self {
-        Self(raw.to_vec())
+    /// Create a new salt from data.
+    pub fn from_data(data: &[u8]) -> Self {
+        Self(data.to_vec())
     }
 
-    /// Create a new salt from raw bytes.
-    pub fn from_raw_data<T>(data: &T) -> Self where T: AsRef<[u8]> {
-        Self::from_raw(data.as_ref())
+    /// Create a new salt from data.
+    pub fn from_data_ref<T>(data: &T) -> Self where T: AsRef<[u8]> {
+        Self::from_data(data.as_ref())
     }
 
-    /// Return the raw bytes of the salt.
-    pub fn raw(&self) -> &[u8] {
+    /// Return the data of the salt.
+    pub fn data(&self) -> &[u8] {
         &self.0
     }
 
@@ -82,7 +82,7 @@ impl CBOREncodable for Salt {
 
 impl CBORTaggedEncodable for Salt {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.raw()).cbor()
+        Bytes::from_data(self.data()).cbor()
     }
 }
 
@@ -96,7 +96,7 @@ impl CBORTaggedDecodable for Salt {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
-        let instance = Self::from_raw_data(data);
+        let instance = Self::from_data_ref(data);
         Ok(Rc::new(instance))
     }
 }
@@ -116,7 +116,7 @@ impl std::fmt::Display for Salt {
 // Convert from a thing that can be referenced as an array of bytes to a Salt.
 impl<T: AsRef<[u8]>> From<T> for Salt {
     fn from(data: T) -> Self {
-        Self::from_raw_data(&data)
+        Self::from_data_ref(&data)
     }
 }
 

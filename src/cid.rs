@@ -10,30 +10,30 @@ pub struct CID ([u8; Self::CID_LENGTH]);
 impl CID {
     pub const CID_LENGTH: usize = 32;
 
-    /// Create a new CID from raw bytes.
-    pub fn from_raw(raw: [u8; Self::CID_LENGTH]) -> Self {
-        Self(raw)
+    /// Create a new CID from bytes.
+    pub fn from_data(data: [u8; Self::CID_LENGTH]) -> Self {
+        Self(data)
     }
 
-    /// Create a new CID from raw bytes.
-    pub fn from_raw_data<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
-        let raw = data.as_ref();
-        if raw.len() != Self::CID_LENGTH {
+    /// Create a new CID from bytes.
+    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+        let data = data.as_ref();
+        if data.len() != Self::CID_LENGTH {
             return None;
         }
         let mut arr = [0u8; Self::CID_LENGTH];
-        arr.copy_from_slice(&raw);
-        Some(Self::from_raw(arr))
+        arr.copy_from_slice(&data);
+        Some(Self::from_data(arr))
     }
 
     /// Create a new random CID.
     pub fn new() -> Self {
         let data = random_data(Self::CID_LENGTH);
-        Self::from_raw_data(&data).unwrap()
+        Self::from_data_ref(&data).unwrap()
     }
 
-    /// Get the raw value of the CID.
-    pub fn raw(&self) -> &[u8] {
+    /// Get the data of the CID.
+    pub fn data(&self) -> &[u8] {
         &self.0
     }
 
@@ -42,17 +42,22 @@ impl CID {
     /// # Panics
     /// Panics if the string is not exactly 64 hexadecimal digits.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_raw_data(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
-    /// The raw value as a hexadecimal string.
+    /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
-        hex::encode(self.raw())
+        hex::encode(self.data())
+    }
+
+    /// The first four bytes of the CID as a hexadecimal string.
+    pub fn short_description(&self) -> String {
+        hex::encode(&self.0[0..4])
     }
 }
 
 impl CBORTagged for CID {
-    const CBOR_TAG: Tag = tags_registry::COMMON_IDENTIFIER;
+    const CBOR_TAG: Tag = tags_registry::CID;
 }
 
 impl CBOREncodable for CID {
@@ -63,7 +68,7 @@ impl CBOREncodable for CID {
 
 impl CBORTaggedEncodable for CID {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::Bytes(Bytes::from(self.raw()))
+        CBOR::Bytes(Bytes::from(self.data()))
     }
 }
 
@@ -77,7 +82,7 @@ impl CBORTaggedDecodable for CID {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
-        let instance = Self::from_raw_data(&data).ok_or(CBORError::InvalidFormat)?;
+        let instance = Self::from_data_ref(&data).ok_or(CBORError::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }

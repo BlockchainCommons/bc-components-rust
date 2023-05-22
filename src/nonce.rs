@@ -9,30 +9,30 @@ use crate::tags_registry;
 impl Nonce {
     pub const NONCE_LENGTH: usize = 12;
 
-    /// Create a new nonce from raw bytes.
-    pub fn from_raw(raw: [u8; Self::NONCE_LENGTH]) -> Self {
-        Self(raw)
+    /// Create a new nonce from data.
+    pub fn from_data(data: [u8; Self::NONCE_LENGTH]) -> Self {
+        Self(data)
     }
 
-    /// Create a new nonce from raw bytes.
-    pub fn from_raw_data<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
-        let raw = data.as_ref();
-        if raw.len() != Self::NONCE_LENGTH {
+    /// Create a new nonce from data.
+    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+        let data = data.as_ref();
+        if data.len() != Self::NONCE_LENGTH {
             return None;
         }
         let mut arr = [0u8; Self::NONCE_LENGTH];
-        arr.copy_from_slice(&raw);
-        Some(Self::from_raw(arr))
+        arr.copy_from_slice(&data);
+        Some(Self::from_data(arr))
     }
 
     /// Create a new random nonce.
     pub fn new() -> Self {
         let data = random_data(Self::NONCE_LENGTH);
-        Self::from_raw_data(&data).unwrap()
+        Self::from_data_ref(&data).unwrap()
     }
 
-    /// Get the raw value of the nonce.
-    pub fn raw(&self) -> &[u8] {
+    /// Get the data of the nonce.
+    pub fn data(&self) -> &[u8] {
         &self.0
     }
 
@@ -41,12 +41,12 @@ impl Nonce {
     /// # Panics
     /// Panics if the string is not exactly 24 hexadecimal digits.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_raw_data(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
-    /// The raw value as a hexadecimal string.
+    /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
-        hex::encode(self.raw())
+        hex::encode(self.data())
     }
 }
 
@@ -62,7 +62,7 @@ impl CBOREncodable for Nonce {
 
 impl CBORTaggedEncodable for Nonce {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.raw()).cbor()
+        Bytes::from_data(self.data()).cbor()
     }
 }
 
@@ -76,7 +76,7 @@ impl CBORTaggedDecodable for Nonce {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
-        let instance = Self::from_raw_data(data).ok_or(CBORError::InvalidFormat)?;
+        let instance = Self::from_data_ref(data).ok_or(CBORError::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }
@@ -90,7 +90,7 @@ impl std::fmt::Display for Nonce {
 // Convert from a thing that can be referenced as an array of bytes to a Nonce.
 impl<T: AsRef<[u8]>> From<T> for Nonce {
     fn from(data: T) -> Self {
-        Self::from_raw_data(&data).unwrap()
+        Self::from_data_ref(&data).unwrap()
     }
 }
 
@@ -123,21 +123,21 @@ mod test {
     #[test]
     fn test_nonce_raw() {
         let nonce_raw = [0u8; Nonce::NONCE_LENGTH];
-        let nonce = Nonce::from_raw(nonce_raw);
-        assert_eq!(nonce.raw(), &nonce_raw);
+        let nonce = Nonce::from_data(nonce_raw);
+        assert_eq!(nonce.data(), &nonce_raw);
     }
 
     #[test]
     fn test_nonce_from_raw_data() {
         let raw_data = vec![0u8; Nonce::NONCE_LENGTH];
-        let nonce = Nonce::from_raw_data(&raw_data).unwrap();
-        assert_eq!(nonce.raw(), &raw_data[..]);
+        let nonce = Nonce::from_data_ref(&raw_data).unwrap();
+        assert_eq!(nonce.data(), &raw_data[..]);
     }
 
     #[test]
     fn test_nonce_length() {
         let raw_data = vec![0u8; Nonce::NONCE_LENGTH + 1];
-        let nonce = Nonce::from_raw_data(&raw_data);
+        let nonce = Nonce::from_data_ref(&raw_data);
         assert_eq!(nonce, None);
     }
 
@@ -145,7 +145,7 @@ mod test {
     fn test_nonce_new() {
         let nonce1 = Nonce::new();
         let nonce2 = Nonce::new();
-        assert_ne!(nonce1.raw(), nonce2.raw());
+        assert_ne!(nonce1.data(), nonce2.data());
     }
 
     #[test]

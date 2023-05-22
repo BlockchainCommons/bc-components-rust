@@ -28,6 +28,10 @@ macro_rules! tag_constant {
     };
 }
 
+tag_constant!(DATE, 1, "date");
+tag_constant!(URI, 32, "url");
+tag_constant!(UUID, 37, "uuid");
+
 // Core Envelope tags.
 
 // See https://www.rfc-editor.org/rfc/rfc8949.html#name-encoded-cbor-data-item
@@ -59,7 +63,7 @@ tag_constant!(AGREEMENT_PRIVATE_KEY,    301, "agreement-private-key");
 tag_constant!(AGREEMENT_PUBLIC_KEY,     302, "agreement-public-key");
 tag_constant!(EC_KEY,                   306, "crypto-eckey"); // Fixed
 tag_constant!(SSKR_SHARE,               309, "crypto-sskr"); // Fixed
-tag_constant!(COMMON_IDENTIFIER,        312, "cid");
+tag_constant!(CID,                      312, "cid");
 tag_constant!(SEED_DIGEST,              313, "seed-digest");
 tag_constant!(NONCE,                    314, "nonce");
 tag_constant!(PASSWORD,                 315, "password");
@@ -130,7 +134,7 @@ impl LazyKnownTags {
                 AGREEMENT_PUBLIC_KEY,
                 EC_KEY,
                 SSKR_SHARE,
-                COMMON_IDENTIFIER,
+                CID,
                 SEED_DIGEST,
                 NONCE,
                 PASSWORD,

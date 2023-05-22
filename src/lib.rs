@@ -19,6 +19,12 @@ pub use encrypted_message::EncryptedMessage;
 mod salt;
 pub use salt::Salt;
 
+mod uri;
+pub use uri::URI;
+
+mod uuid;
+pub use uuid::UUID;
+
 pub mod tags_registry;
 
 #[cfg(test)]

@@ -135,6 +135,15 @@ pub struct EncryptedMessage {
 }
 
 impl EncryptedMessage {
+    pub fn new(ciphertext: Vec<u8>, aad: Vec<u8>, nonce: Nonce, auth: Auth) -> Self {
+        Self {
+            ciphertext,
+            aad,
+            nonce,
+            auth,
+        }
+    }
+
     pub fn has_digest(&self) -> bool {
         todo!();
     }
@@ -183,7 +192,7 @@ impl CBORTaggedEncodable for EncryptedMessage {
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+    fn from_untagged_cbor(_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         todo!()
     }
 }
