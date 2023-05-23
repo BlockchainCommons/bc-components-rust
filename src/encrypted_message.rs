@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, borrow::Cow};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORError, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
@@ -154,11 +154,7 @@ impl EncryptedMessage {
 }
 
 impl DigestProvider for EncryptedMessage {
-    fn digest(&self) -> Digest {
-        todo!()
-    }
-
-    fn digest_ref(&self) -> &Digest {
+    fn digest(&self) -> Cow<Digest> {
         todo!();
     }
 }

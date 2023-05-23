@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, borrow::Cow};
 
 use bc_crypto::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
@@ -111,12 +111,8 @@ impl std::cmp::PartialOrd for Digest {
 }
 
 impl DigestProvider for Digest {
-    fn digest(&self) -> Digest {
-        self.clone()
-    }
-
-    fn digest_ref(&self) -> &Digest {
-        self
+    fn digest(&self) -> Cow<Digest> {
+        Cow::Borrowed(self)
     }
 }
 

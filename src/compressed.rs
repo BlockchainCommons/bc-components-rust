@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Formatter}, rc::Rc};
+use std::{fmt::{Display, Formatter}, rc::Rc, borrow::Cow};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORError, CBORDecodable, CBORTaggedDecodable};
 use bc_crypto::crc32;
@@ -102,12 +102,8 @@ impl Compressed {
 }
 
 impl DigestProvider for Compressed {
-    fn digest(&self) -> Digest {
-        self.digest.as_ref().unwrap().clone()
-    }
-
-    fn digest_ref(&self) -> &Digest {
-        self.digest.as_ref().unwrap()
+    fn digest(&self) -> Cow<Digest> {
+        Cow::Owned(self.digest.as_ref().unwrap().clone())
     }
 }
 
