@@ -92,10 +92,6 @@ impl Compressed {
         self.compressed_size() as f64 / self.uncompressed_size as f64
     }
 
-    pub fn digest_ref(&self) -> &Digest {
-        self.digest.as_ref().unwrap()
-    }
-
     pub fn digest_ref_opt(&self) -> Option<&Digest> {
         self.digest.as_ref()
     }
@@ -108,6 +104,10 @@ impl Compressed {
 impl DigestProvider for Compressed {
     fn digest(&self) -> Digest {
         self.digest.as_ref().unwrap().clone()
+    }
+
+    fn digest_ref(&self) -> &Digest {
+        self.digest.as_ref().unwrap()
     }
 }
 

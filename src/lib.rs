@@ -13,6 +13,9 @@ pub use compressed::Compressed;
 mod nonce;
 pub use nonce::Nonce;
 
+mod symmetric_key;
+pub use symmetric_key::SymmetricKey;
+
 mod encrypted_message;
 pub use encrypted_message::EncryptedMessage;
 

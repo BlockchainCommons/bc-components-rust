@@ -148,10 +148,6 @@ impl EncryptedMessage {
         todo!();
     }
 
-    pub fn digest_ref(&self) -> &Digest {
-        todo!();
-    }
-
     pub fn digest_ref_opt(&self) -> Option<&Digest> {
         todo!();
     }
@@ -160,6 +156,10 @@ impl EncryptedMessage {
 impl DigestProvider for EncryptedMessage {
     fn digest(&self) -> Digest {
         todo!()
+    }
+
+    fn digest_ref(&self) -> &Digest {
+        todo!();
     }
 }
 

@@ -114,6 +114,10 @@ impl DigestProvider for Digest {
     fn digest(&self) -> Digest {
         self.clone()
     }
+
+    fn digest_ref(&self) -> &Digest {
+        self
+    }
 }
 
 impl std::fmt::Debug for Digest {
@@ -164,10 +168,10 @@ impl std::fmt::Display for Digest {
     }
 }
 
-// Convert from a thing that can be referenced as an array of bytes to a Digest.
-impl<T: AsRef<[u8]>> From<T> for Digest {
-    fn from(data: T) -> Self {
-        Self::from_image(&data)
+// Convert from a Digest to a reference to a byte vector.
+impl AsRef<[u8]> for Digest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
