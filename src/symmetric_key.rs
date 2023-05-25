@@ -117,12 +117,6 @@ impl std::fmt::Debug for SymmetricKey {
     }
 }
 
-impl std::fmt::Display for SymmetricKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SymmetricKey({})", self.hex())
-    }
-}
-
 impl CBORTagged for SymmetricKey {
     const CBOR_TAG: Tag = tags_registry::SYMMETRIC_KEY;
 }

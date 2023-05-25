@@ -3,7 +3,7 @@ use bc_crypto::fill_random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use crate::tags_registry;
 
- #[derive(Clone, Debug, Eq, PartialEq)]
+ #[derive(Clone, Eq, PartialEq)]
  pub struct Nonce ([u8; Self::NONCE_LENGTH]);
 
 impl Nonce {
@@ -94,9 +94,9 @@ impl CBORTaggedDecodable for Nonce {
     }
 }
 
-impl std::fmt::Display for Nonce {
+impl std::fmt::Debug for Nonce {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nonce({})", hex::encode(self.0))
+        write!(f, "Nonce({})", self.hex())
     }
 }
 

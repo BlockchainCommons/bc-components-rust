@@ -127,12 +127,6 @@ impl std::fmt::Debug for Digest {
     }
 }
 
-impl std::fmt::Display for Digest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Digest({})", self.hex())
-    }
-}
-
 impl CBORTagged for Digest {
     const CBOR_TAG: Tag = tags_registry::DIGEST;
 }

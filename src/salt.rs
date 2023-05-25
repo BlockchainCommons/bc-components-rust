@@ -4,7 +4,7 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 use bc_crypto::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags_registry;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Salt(Vec<u8>);
 
 impl Salt {
@@ -68,6 +68,16 @@ impl Salt {
         let max_size = std::cmp::max(min_size + 8, (count * 0.25).ceil() as usize);
         Self::new_in_range_using(&(min_size..=max_size), rng).unwrap()
     }
+
+    /// Create a new salt from the given hexadecimal string.
+    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
+        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap())
+    }
+
+    /// The data as a hexadecimal string.
+    pub fn hex(&self) -> String {
+        hex::encode(self.data())
+    }
 }
 
 impl CBORTagged for Salt {
@@ -107,9 +117,9 @@ impl URDecodable for Salt { }
 
 impl URCodable for Salt { }
 
-impl std::fmt::Display for Salt {
+impl std::fmt::Debug for Salt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Salt({})", hex::encode(&self.0))
+        write!(f, "Salt({})", self.hex())
     }
 }
 
