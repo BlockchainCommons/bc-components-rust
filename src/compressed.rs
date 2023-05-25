@@ -1,4 +1,4 @@
-use std::{fmt::{Display, Formatter}, rc::Rc, borrow::Cow};
+use std::{fmt::Formatter, rc::Rc, borrow::Cow};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORError, CBORDecodable, CBORTaggedDecodable};
 use bc_crypto::hash::crc32;
@@ -7,7 +7,7 @@ use miniz_oxide::inflate::decompress_to_vec;
 use crate::{digest::Digest, DigestProvider, tags_registry};
 
 /// Errors for Compressed
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub enum Error {
     /// The compressed data is corrupt.
     Corrupt,
@@ -27,7 +27,7 @@ pub enum Error {
 /// If the payload is too small to compress, the uncompressed payload is placed in
 /// the `compressedData` field and the size of that field will be the same as the
 /// `uncompressedSize` field.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Compressed {
     checksum: u32,
     uncompressed_size: usize,
@@ -107,7 +107,7 @@ impl DigestProvider for Compressed {
     }
 }
 
-impl Display for Compressed {
+impl std::fmt::Debug for Compressed {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -190,7 +190,7 @@ mod tests {
     fn test_1() {
         let source = "Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.".as_bytes();
         let compressed = Compressed::from_uncompressed_data(source, None);
-        assert_eq!(format!("{}", compressed), "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)");
+        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
@@ -198,7 +198,7 @@ mod tests {
     fn test_2() {
         let source = "Lorem ipsum dolor sit amet consectetur adipiscing".as_bytes();
         let compressed = Compressed::from_uncompressed_data(source, None);
-        assert_eq!(format!("{}", compressed), "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)");
+        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
@@ -206,7 +206,7 @@ mod tests {
     fn test_3() {
         let source = "Lorem".as_bytes();
         let compressed = Compressed::from_uncompressed_data(source, None);
-        assert_eq!(format!("{}", compressed), "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)");
+        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
@@ -214,7 +214,7 @@ mod tests {
     fn test_4() {
         let source = "".as_bytes();
         let compressed = Compressed::from_uncompressed_data(source, None);
-        assert_eq!(format!("{}", compressed), "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)");
+        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 }
