@@ -121,6 +121,12 @@ impl std::fmt::Debug for Digest {
     }
 }
 
+impl std::fmt::Display for Digest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Digest({})", self.hex())
+    }
+}
+
 impl CBORTagged for Digest {
     const CBOR_TAG: Tag = tags_registry::DIGEST;
 }
@@ -157,34 +163,28 @@ impl URDecodable for Digest { }
 
 impl URCodable for Digest { }
 
-impl std::fmt::Display for Digest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Digest({})", hex::encode(&self.0))
-    }
-}
-
-// Convert from a Digest to a reference to a byte vector.
+// Convert from an instance to a reference to a byte array.
 impl AsRef<[u8]> for Digest {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
-// Convert from a reference to a byte vector to a Digest.
+// Convert from a reference to a byte vector to an instance.
 impl From<&Digest> for Digest {
     fn from(digest: &Digest) -> Self {
         digest.clone()
     }
 }
 
-// Convert from a byte vector to a Digest.
+// Convert from a byte vector to an instance.
 impl From<Digest> for Vec<u8> {
     fn from(digest: Digest) -> Self {
         digest.0.to_vec()
     }
 }
 
-// Convert a reference to a Digest to a byte vector.
+// Convert a reference to an instance to a byte vector.
 impl From<&Digest> for Vec<u8> {
     fn from(digest: &Digest) -> Self {
         digest.0.to_vec()

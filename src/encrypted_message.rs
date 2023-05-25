@@ -122,8 +122,61 @@ extension EncryptedMessage: URCodable {
  */
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Auth {
-    data: Vec<u8>,
+pub struct Auth([u8; Self::AUTH_LENGTH]);
+
+impl Auth {
+    pub const AUTH_LENGTH: usize = 16;
+
+    pub fn from_data(data: [u8; Self::AUTH_LENGTH]) -> Self {
+        Self(data)
+    }
+
+    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+        let data = data.as_ref();
+        if data.len() != Self::AUTH_LENGTH {
+            return None;
+        }
+        let mut arr = [0u8; Self::AUTH_LENGTH];
+        arr.copy_from_slice(data.as_ref());
+        Some(Self::from_data(arr))
+    }
+
+    pub fn data(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl AsRef<[u8]> for Auth {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl From<&[u8]> for Auth {
+    fn from(data: &[u8]) -> Self {
+        Self::from_data_ref(&data).unwrap()
+    }
+}
+
+impl From<Vec<u8>> for Auth {
+    fn from(data: Vec<u8>) -> Self {
+        Self::from_data_ref(&data).unwrap()
+    }
+}
+
+impl CBOREncodable for Auth {
+    fn cbor(&self) -> CBOR {
+        dcbor::Bytes::from_data(self.data()).cbor()
+    }
+}
+
+impl CBORDecodable for Auth {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+        let bytes = dcbor::Bytes::from_cbor(cbor)?;
+        let data = bytes.data();
+        let instance = Self::from_data_ref(&data).ok_or(CBORError::InvalidFormat)?;
+        Ok(Rc::new(instance))
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -142,6 +195,22 @@ impl EncryptedMessage {
             nonce,
             auth,
         }
+    }
+
+    pub fn ciphertext(&self) -> &[u8] {
+        &self.ciphertext
+    }
+
+    pub fn aad(&self) -> &[u8] {
+        &self.aad
+    }
+
+    pub fn nonce(&self) -> &Nonce {
+        &self.nonce
+    }
+
+    pub fn auth(&self) -> &Auth {
+        &self.auth
     }
 
     pub fn has_digest(&self) -> bool {
@@ -166,9 +235,9 @@ impl CBORTagged for EncryptedMessage {
 impl CBOREncodable for EncryptedMessage {
     fn cbor(&self) -> CBOR {
         if self.aad.is_empty() {
-            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.data.cbor()].cbor();
+            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor()].cbor();
         } else {
-            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.data.cbor(), self.aad.cbor()].cbor();
+            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor(), self.aad.cbor()].cbor();
         }
     }
 }

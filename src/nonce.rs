@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use bc_crypto::random_data;
+use bc_crypto::fill_random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use crate::tags_registry;
 
@@ -8,6 +8,13 @@ use crate::tags_registry;
 
 impl Nonce {
     pub const NONCE_LENGTH: usize = 12;
+
+    /// Create a new random nonce.
+    pub fn new() -> Self {
+        let mut data = [0u8; Self::NONCE_LENGTH];
+        fill_random_data(&mut data);
+        Self(data)
+    }
 
     /// Create a new nonce from data.
     pub fn from_data(data: [u8; Self::NONCE_LENGTH]) -> Self {
@@ -23,12 +30,6 @@ impl Nonce {
         let mut arr = [0u8; Self::NONCE_LENGTH];
         arr.copy_from_slice(&data);
         Some(Self::from_data(arr))
-    }
-
-    /// Create a new random nonce.
-    pub fn new() -> Self {
-        let data = random_data(Self::NONCE_LENGTH);
-        Self::from_data_ref(&data).unwrap()
     }
 
     /// Get the data of the nonce.
@@ -47,6 +48,12 @@ impl Nonce {
     /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
+    }
+}
+
+impl AsRef<[u8]> for Nonce {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -84,13 +91,6 @@ impl CBORTaggedDecodable for Nonce {
 impl std::fmt::Display for Nonce {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Nonce({})", hex::encode(&self.0))
-    }
-}
-
-// Convert from a thing that can be referenced as an array of bytes to a Nonce.
-impl<T: AsRef<[u8]>> From<T> for Nonce {
-    fn from(data: T) -> Self {
-        Self::from_data_ref(&data).unwrap()
     }
 }
 
