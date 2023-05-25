@@ -17,7 +17,7 @@ impl Nonce {
     }
 
     /// Create a new nonce from data.
-    pub fn from_data(data: [u8; Self::NONCE_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::NONCE_LENGTH]) -> Self {
         Self(data)
     }
 
@@ -33,7 +33,7 @@ impl Nonce {
     }
 
     /// Get the data of the nonce.
-    pub fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8; Self::NONCE_LENGTH] {
         &self.0
     }
 
@@ -54,6 +54,12 @@ impl Nonce {
 impl Default for Nonce {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl From<Rc<Nonce>> for Nonce {
+    fn from(value: Rc<Nonce>) -> Self {
+        value.as_ref().clone()
     }
 }
 

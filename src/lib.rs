@@ -17,7 +17,7 @@ mod symmetric_key;
 pub use symmetric_key::SymmetricKey;
 
 mod encrypted_message;
-pub use encrypted_message::EncryptedMessage;
+pub use encrypted_message::{EncryptedMessage, Auth};
 
 mod salt;
 pub use salt::Salt;
@@ -29,6 +29,7 @@ mod uuid;
 pub use uuid::UUID;
 
 pub mod tags_registry;
+pub use tags_registry::KNOWN_TAGS;
 
 #[cfg(test)]
 mod tests {

@@ -1,7 +1,7 @@
 use std::{rc::Rc, borrow::Cow};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORError, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORError, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, Bytes};
 
 use crate::{Nonce, Digest, DigestProvider, tags_registry};
 
@@ -68,11 +68,7 @@ impl CBORTagged for EncryptedMessage {
 
 impl CBOREncodable for EncryptedMessage {
     fn cbor(&self) -> CBOR {
-        if self.aad.is_empty() {
-            vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor()].cbor()
-        } else {
-            vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor(), self.aad.cbor()].cbor()
-        }
+        self.tagged_cbor()
     }
 }
 
@@ -86,13 +82,39 @@ impl CBORCodable for EncryptedMessage { }
 
 impl CBORTaggedEncodable for EncryptedMessage {
     fn untagged_cbor(&self) -> CBOR {
-        todo!()
+        let mut a = vec![
+            Bytes::from_data(&self.ciphertext).cbor(),
+            Bytes::from_data(self.nonce.data()).cbor(),
+            Bytes::from_data(self.auth.data()).cbor()
+        ];
+
+        if !self.aad.is_empty() {
+            a.push(Bytes::from_data(&self.aad).cbor());
+        }
+
+        a.cbor()
     }
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
-        todo!()
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+        match cbor {
+            CBOR::Array(elements) => {
+                if elements.len() < 3 {
+                    return Err(CBORError::InvalidFormat);
+                }
+                let ciphertext = Bytes::from_cbor(&elements[0])?.data().to_vec();
+                let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?.into();
+                let auth = Auth::from_cbor(&elements[2])?.into();
+                let aad = if elements.len() > 3 {
+                    Bytes::from_cbor(&elements[3])?.data().to_vec()
+                } else {
+                    Vec::<u8>::new()
+                };
+                Ok(Rc::new(Self::new(ciphertext, aad, nonce, auth)))
+            },
+            _ => Err(CBORError::InvalidFormat),
+        }
     }
 }
 
@@ -110,7 +132,7 @@ pub struct Auth([u8; Self::AUTH_LENGTH]);
 impl Auth {
     pub const AUTH_LENGTH: usize = 16;
 
-    pub fn from_data(data: [u8; Self::AUTH_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::AUTH_LENGTH]) -> Self {
         Self(data)
     }
 
@@ -124,8 +146,14 @@ impl Auth {
         Some(Self::from_data(arr))
     }
 
-    pub fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &[u8; Self::AUTH_LENGTH] {
         &self.0
+    }
+}
+
+impl From<Rc<Auth>> for Auth {
+    fn from(value: Rc<Auth>) -> Self {
+        (*value).clone()
     }
 }
 
@@ -159,5 +187,113 @@ impl CBORDecodable for Auth {
         let data = bytes.data();
         let instance = Self::from_data_ref(&data).ok_or(CBORError::InvalidFormat)?;
         Ok(Rc::new(instance))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use bc_ur::{UREncodable, URDecodable};
+    use dcbor::{CBOREncodable, CBORDecodable};
+    use hex_literal::hex;
+    use indoc::indoc;
+
+    use crate::{SymmetricKey, Nonce, EncryptedMessage, Auth, with_known_tags};
+
+    const PLAINTEXT: &[u8] = b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
+    const AAD: [u8; 12] = hex!("50515253c0c1c2c3c4c5c6c7");
+    const KEY: SymmetricKey = SymmetricKey::from_data(hex!("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f"));
+    const NONCE: Nonce = Nonce::from_data(hex!("070000004041424344454647"));
+    const CIPHERTEXT: [u8; 114] = hex!("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116");
+    const AUTH: Auth = Auth::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
+
+    fn encrypted_message() -> EncryptedMessage {
+        KEY.encrypt_with_nonce(PLAINTEXT, AAD, NONCE)
+    }
+
+    #[test]
+    fn test_rfc_test_vector() -> Result<(), Box<dyn std::error::Error>> {
+        let encrypted_message = encrypted_message();
+        assert_eq!(encrypted_message.ciphertext(), &CIPHERTEXT);
+        assert_eq!(encrypted_message.aad(), &AAD);
+        assert_eq!(encrypted_message.nonce(), &NONCE);
+        assert_eq!(encrypted_message.auth(), &AUTH);
+
+        let decrypted_plaintext = KEY.decrypt(&encrypted_message)?;
+        assert_eq!(PLAINTEXT, decrypted_plaintext.as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn test_random_key_and_nonce() -> Result<(), Box<dyn std::error::Error>> {
+        let key = SymmetricKey::new();
+        let nonce = Nonce::new();
+        let encrypted_message = key.encrypt_with_nonce(PLAINTEXT, AAD, nonce);
+        let decrypted_plaintext = key.decrypt(&encrypted_message)?;
+        assert_eq!(PLAINTEXT, decrypted_plaintext.as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn test_empty_data() -> Result<(), Box<dyn std::error::Error>> {
+        let key = SymmetricKey::new();
+        let encrypted_message = key.encrypt([], []);
+        let decrypted_plaintext = key.decrypt(&encrypted_message)?;
+        assert_eq!(&[] as &[u8], decrypted_plaintext.as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn test_cbor_data() {
+        with_known_tags!(|known_tags| {
+            assert_eq!(encrypted_message().cbor().diagnostic_opt(true, Some(known_tags)),
+            indoc!(r#"
+            205(   ; encrypted
+               [
+                  h'd31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116',
+                  h'070000004041424344454647',
+                  h'1ae10b594f09e26a7e902ecbd0600691',
+                  h'50515253c0c1c2c3c4c5c6c7'
+               ]
+            )
+            "#).trim());
+
+            assert_eq!(encrypted_message().cbor().hex_opt(true, Some(known_tags)),
+            indoc!(r#"
+            d8 cd                                    # tag(205)   ; encrypted
+               84                                    # array(4)
+                  5872                               # bytes(114)
+                     d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116
+                  4c                                 # bytes(12)
+                     070000004041424344454647        # "....@ABCDEFG"
+                  50                                 # bytes(16)
+                     1ae10b594f09e26a7e902ecbd0600691
+                  4c                                 # bytes(12)
+                     50515253c0c1c2c3c4c5c6c7
+            "#).trim());
+        });
+
+        let data = encrypted_message().cbor_data();
+        let expected = hex!("d8cd845872d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b61164c070000004041424344454647501ae10b594f09e26a7e902ecbd06006914c50515253c0c1c2c3c4c5c6c7");
+        assert_eq!(data, expected);
+    }
+
+    #[test]
+    fn test_cbor() -> Result<(), Box<dyn std::error::Error>> {
+        let encrypted_message = encrypted_message();
+        let cbor = encrypted_message.cbor();
+        let decoded = EncryptedMessage::from_cbor(&cbor)?;
+        assert_eq!(encrypted_message, *decoded);
+        Ok(())
+    }
+
+    #[test]
+    fn test_ur() -> Result<(), Box<dyn std::error::Error>> {
+        let encrypted_message = encrypted_message();
+        let ur = encrypted_message.ur();
+        let expected_ur = "ur:encrypted/lrhdjptecylgeeiemnhnuykglnperfguwskbsaoxpmwegydtjtayzeptvoreosenwyidtbfsrnoxhylkptiobglfzszointnmojplucyjsuebknnambddtahtbonrpkbsnfrenmoutrylbdpktlulkmkaxplvldeascwhdzsqddkvezstbkpmwgolplalufdehtsrffhwkuewtmngrknntvwkotdihlntoswgrhscmgsataeaeaefzfpfwfxfyfefgflgdcyvybdhkgwasvoimkbmhdmsbtihnammegsgdgygmgurtsesasrssskswstcfnbpdct";
+        assert_eq!(ur.to_string(), expected_ur);
+        let decoded = EncryptedMessage::from_ur(&ur).unwrap();
+        assert_eq!(encrypted_message, *decoded);
+        Ok(())
     }
 }

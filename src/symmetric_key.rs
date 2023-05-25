@@ -8,7 +8,7 @@ use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CB
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_LENGTH]);
 
 impl SymmetricKey {
-    pub const SYMMETRIC_KEY_LENGTH: usize = 12;
+    pub const SYMMETRIC_KEY_LENGTH: usize = 32;
 
     /// Create a new random symmetric key.
     pub fn new() -> Self {
@@ -18,7 +18,7 @@ impl SymmetricKey {
     }
 
     /// Create a new symmetric key from data.
-    pub fn from_data(data: [u8; Self::SYMMETRIC_KEY_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::SYMMETRIC_KEY_LENGTH]) -> Self {
         Self(data)
     }
 

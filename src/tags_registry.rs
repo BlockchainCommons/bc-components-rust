@@ -181,18 +181,26 @@ pub static KNOWN_TAGS: LazyKnownTags = LazyKnownTags {
     data: Mutex::new(None),
 };
 
+#[macro_export]
+macro_rules! with_known_tags {
+    ($action:expr) => {{
+        let binding = $crate::KNOWN_TAGS.get();
+        let known_tags = binding.as_ref().unwrap();
+        $action(known_tags)
+    }};
+}
+
 #[cfg(test)]
 mod tests {
-    use dcbor::KnownTags;
-    use crate::tags_registry::KNOWN_TAGS;
+    use crate::with_known_tags;
 
     #[test]
     fn test_1() {
         use crate::*;
         assert_eq!(tags_registry::LEAF.value(), 24);
         assert_eq!(tags_registry::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
-        let binding = KNOWN_TAGS.get();
-        let known_tags = binding.as_ref().unwrap();
-        assert_eq!(known_tags.name_for_tag(&tags_registry::LEAF), "leaf");
+        with_known_tags!(|known_tags: &dyn dcbor::KnownTags| {
+            assert_eq!(known_tags.name_for_tag(&tags_registry::LEAF), "leaf");
+        });
     }
 }
