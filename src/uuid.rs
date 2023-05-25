@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, str::FromStr};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use crate::tags_registry;
 
@@ -6,20 +6,16 @@ use crate::tags_registry;
 pub struct UUID(String);
 
 impl UUID {
-    pub fn from_str(uuid: &str) -> Self {
-        Self(uuid.to_string())
+    pub fn new<T>(uuid: T) -> Self where T: Into<String> {
+        Self(uuid.into())
     }
+}
 
-    pub fn from_string(uuid: String) -> Self {
-        Self(uuid)
-    }
+impl FromStr for UUID {
+    type Err = ();
 
-    pub fn to_str(&self) -> &str {
-        &self.0
-    }
-
-    pub fn to_string(&self) -> String {
-        self.0.clone()
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::new(s))
     }
 }
 
@@ -49,27 +45,27 @@ impl CBORTaggedDecodable for UUID {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(cbor)?;
         let uuid = String::from_utf8(bytes.data().to_vec()).map_err(|_| CBORError::InvalidFormat)?;
-        Ok(Rc::new(Self::from_string(uuid)))
+        Ok(Rc::new(Self::new(uuid)))
     }
 }
 
 impl std::fmt::Display for UUID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "UUID({})", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
 // Convert from a string to a UUID.
 impl From<&str> for UUID {
     fn from(uuid: &str) -> Self {
-        Self::from_str(uuid)
+        Self::new(uuid)
     }
 }
 
 // Convert from a string to a UUID.
 impl From<String> for UUID {
     fn from(uuid: String) -> Self {
-        Self::from_string(uuid)
+        Self::new(uuid)
     }
 }
 
