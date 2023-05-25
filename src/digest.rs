@@ -1,6 +1,5 @@
 use std::{rc::Rc, borrow::Cow};
-
-use bc_crypto::sha256;
+use bc_crypto::hash::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::{digest_provider::DigestProvider, tags_registry};
