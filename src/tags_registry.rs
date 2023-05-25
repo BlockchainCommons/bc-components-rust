@@ -192,7 +192,7 @@ mod tests {
         assert_eq!(tags_registry::LEAF.value(), 24);
         assert_eq!(tags_registry::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
         let binding = KNOWN_TAGS.get();
-        let known_tags = &*binding.as_ref().unwrap();
+        let known_tags = binding.as_ref().unwrap();
         assert_eq!(known_tags.name_for_tag(&tags_registry::LEAF), "leaf");
     }
 }

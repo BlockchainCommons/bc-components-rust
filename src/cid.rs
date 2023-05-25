@@ -22,7 +22,7 @@ impl CID {
             return None;
         }
         let mut arr = [0u8; Self::CID_LENGTH];
-        arr.copy_from_slice(&data);
+        arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 

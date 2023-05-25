@@ -235,9 +235,9 @@ impl CBORTagged for EncryptedMessage {
 impl CBOREncodable for EncryptedMessage {
     fn cbor(&self) -> CBOR {
         if self.aad.is_empty() {
-            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor()].cbor();
+            vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor()].cbor()
         } else {
-            return vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor(), self.aad.cbor()].cbor();
+            vec![self.ciphertext.cbor(), self.nonce.cbor(), self.auth.cbor(), self.aad.cbor()].cbor()
         }
     }
 }

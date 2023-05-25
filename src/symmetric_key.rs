@@ -29,7 +29,7 @@ impl SymmetricKey {
             return None;
         }
         let mut arr = [0u8; Self::SYMMETRIC_KEY_LENGTH];
-        arr.copy_from_slice(&data);
+        arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 
@@ -74,6 +74,12 @@ impl SymmetricKey {
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, CryptoError> {
         decrypt_aead_chacha20_poly1305_with_aad(message.ciphertext(), self, message.nonce(), message.aad(), message.auth())
+    }
+}
+
+impl Default for SymmetricKey {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -129,7 +135,7 @@ impl CBOREncodable for SymmetricKey {
 
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(&self.0).cbor()
+        Bytes::from_data(self.0).cbor()
     }
 }
 

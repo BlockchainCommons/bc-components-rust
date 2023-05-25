@@ -7,7 +7,7 @@ use crate::{digest_provider::DigestProvider, tags_registry};
 /// A cryptographically secure digest.
 ///
 /// Implemented with SHA-256.
-#[derive(Clone, Ord, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Digest([u8; Self::DIGEST_LENGTH]);
 
 impl Digest {
@@ -83,7 +83,7 @@ impl Digest {
 
     /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
-        hex::encode(&self.0)
+        hex::encode(self.0)
     }
 
     /// The first four bytes of the digest as a hexadecimal string.
@@ -106,6 +106,12 @@ impl Digest {
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
+    }
+}
+
+impl std::cmp::Ord for Digest {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.cmp(&other.0)
     }
 }
 
@@ -139,7 +145,7 @@ impl CBOREncodable for Digest {
 
 impl CBORTaggedEncodable for Digest {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(&self.0).cbor()
+        Bytes::from_data(self.0).cbor()
     }
 }
 

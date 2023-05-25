@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{rc::Rc, str::FromStr};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
 use crate::tags_registry;
 
@@ -6,20 +6,16 @@ use crate::tags_registry;
 pub struct URI(String);
 
 impl URI {
-    pub fn from_str(uri: &str) -> Self {
-        Self(uri.to_string())
+    pub fn new<T>(uri: T) -> Self where T: Into<String> {
+        Self(uri.into())
     }
+}
 
-    pub fn from_string(uri: String) -> Self {
-        Self(uri)
-    }
+impl FromStr for URI {
+    type Err = ();
 
-    pub fn to_str(&self) -> &str {
-        &self.0
-    }
-
-    pub fn to_string(&self) -> String {
-        self.0.clone()
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::new(s))
     }
 }
 
@@ -49,27 +45,27 @@ impl CBORTaggedDecodable for URI {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
         let bytes = Bytes::from_cbor(cbor)?;
         let uri = String::from_utf8(bytes.data().to_vec()).map_err(|_| CBORError::InvalidFormat)?;
-        Ok(Rc::new(Self::from_string(uri)))
+        Ok(Rc::new(Self::new(uri)))
     }
 }
 
 impl std::fmt::Display for URI {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "URI({})", self.0)
+        write!(f, "{}", self.0)
     }
 }
 
 // Convert from a string to a URI.
 impl From<&str> for URI {
     fn from(uri: &str) -> Self {
-        Self::from_str(uri)
+        Self::new(uri)
     }
 }
 
 // Convert from a string to a URI.
 impl From<String> for URI {
     fn from(uri: String) -> Self {
-        Self::from_string(uri)
+        Self::new(uri)
     }
 }
 

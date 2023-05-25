@@ -28,7 +28,7 @@ impl Nonce {
             return None;
         }
         let mut arr = [0u8; Self::NONCE_LENGTH];
-        arr.copy_from_slice(&data);
+        arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 
@@ -48,6 +48,12 @@ impl Nonce {
     /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
+    }
+}
+
+impl Default for Nonce {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -90,7 +96,7 @@ impl CBORTaggedDecodable for Nonce {
 
 impl std::fmt::Display for Nonce {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Nonce({})", hex::encode(&self.0))
+        write!(f, "Nonce({})", hex::encode(self.0))
     }
 }
 
@@ -152,7 +158,7 @@ mod test {
     fn test_nonce_hex_roundtrip() {
         let nonce = Nonce::new();
         let hex_string = nonce.hex();
-        let nonce_from_hex = Nonce::from_hex(&hex_string);
+        let nonce_from_hex = Nonce::from_hex(hex_string);
         assert_eq!(nonce, nonce_from_hex);
     }
 
