@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_crypto::random_data;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, CBORError};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, Error};
 
 use crate::tags_registry;
 
@@ -73,16 +73,16 @@ impl CBORTaggedEncodable for CID {
 }
 
 impl CBORDecodable for CID {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for CID {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, CBORError> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, Error> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
-        let instance = Self::from_data_ref(&data).ok_or(CBORError::InvalidFormat)?;
+        let instance = Self::from_data_ref(&data).ok_or(Error::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }

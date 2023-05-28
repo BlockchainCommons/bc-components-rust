@@ -1,6 +1,6 @@
 use std::{fmt::Formatter, rc::Rc, borrow::Cow};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORError, CBORDecodable, CBORTaggedDecodable};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, Error as CBORError, CBORDecodable, CBORTaggedDecodable};
 use bc_crypto::hash::crc32;
 use miniz_oxide::deflate::compress_to_vec;
 use miniz_oxide::inflate::decompress_to_vec;
