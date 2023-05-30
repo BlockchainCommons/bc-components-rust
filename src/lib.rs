@@ -31,6 +31,9 @@ pub use uuid::UUID;
 mod agreement_public_key;
 pub use agreement_public_key::AgreementPublicKey;
 
+mod agreement_private_key;
+pub use agreement_private_key::AgreementPrivateKey;
+
 pub mod tags_registry;
 pub use tags_registry::KNOWN_TAGS;
 

@@ -1,15 +1,24 @@
 use std::rc::Rc;
+use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key, x25519_new_agreement_private_key_using};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
 use crate::tags_registry;
 
-/// A Curve25519 public key used for X25519 key agreement.
+/// A Curve25519 private key used for X25519 key agreement.
 ///
 /// https://datatracker.ietf.org/doc/html/rfc7748
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPublicKey ([u8; Self::KEY_LENGTH]);
+pub struct AgreementPrivateKey ([u8; Self::KEY_LENGTH]);
 
-impl AgreementPublicKey {
+impl AgreementPrivateKey {
     pub const KEY_LENGTH: usize = 32;
+
+    pub fn new() -> Self {
+        Self(x25519_new_agreement_private_key())
+    }
+
+    pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
+        Self(x25519_new_agreement_private_key_using(rng))
+    }
 
     pub const fn from_data(data: [u8; Self::KEY_LENGTH]) -> Self {
         Self(data)
@@ -38,41 +47,47 @@ impl AgreementPublicKey {
     }
 }
 
-impl From<Rc<AgreementPublicKey>> for AgreementPublicKey {
-    fn from(value: Rc<AgreementPublicKey>) -> Self {
+impl Default for AgreementPrivateKey {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<Rc<AgreementPrivateKey>> for AgreementPrivateKey {
+    fn from(value: Rc<AgreementPrivateKey>) -> Self {
         value.as_ref().clone()
     }
 }
 
-impl AsRef<[u8]> for AgreementPublicKey {
+impl AsRef<[u8]> for AgreementPrivateKey {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
-impl CBORTagged for AgreementPublicKey {
-    const CBOR_TAG: Tag = tags_registry::AGREEMENT_PUBLIC_KEY;
+impl CBORTagged for AgreementPrivateKey {
+    const CBOR_TAG: Tag = tags_registry::AGREEMENT_PRIVATE_KEY;
 }
 
-impl CBOREncodable for AgreementPublicKey {
+impl CBOREncodable for AgreementPrivateKey {
     fn cbor(&self) -> CBOR {
         self.tagged_cbor()
     }
 }
 
-impl CBORTaggedEncodable for AgreementPublicKey {
+impl CBORTaggedEncodable for AgreementPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         Bytes::from_data(self.data()).cbor()
     }
 }
 
-impl CBORDecodable for AgreementPublicKey {
+impl CBORDecodable for AgreementPrivateKey {
     fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
-impl CBORTaggedDecodable for AgreementPublicKey {
+impl CBORTaggedDecodable for AgreementPrivateKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
@@ -81,29 +96,29 @@ impl CBORTaggedDecodable for AgreementPublicKey {
     }
 }
 
-impl std::fmt::Debug for AgreementPublicKey {
+impl std::fmt::Debug for AgreementPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AgreementPublicKey({})", self.hex())
+        write!(f, "AgreementPrivateKey({})", self.hex())
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPublicKey.
-impl From<&AgreementPublicKey> for AgreementPublicKey {
-    fn from(key: &AgreementPublicKey) -> Self {
+// Convert from a reference to a byte vector to a AgreementPrivateKey.
+impl From<&AgreementPrivateKey> for AgreementPrivateKey {
+    fn from(key: &AgreementPrivateKey) -> Self {
         key.clone()
     }
 }
 
-// Convert from a byte vector to a AgreementPublicKey.
-impl From<AgreementPublicKey> for Vec<u8> {
-    fn from(key: AgreementPublicKey) -> Self {
+// Convert from a byte vector to a AgreementPrivateKey.
+impl From<AgreementPrivateKey> for Vec<u8> {
+    fn from(key: AgreementPrivateKey) -> Self {
         key.0.to_vec()
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPublicKey.
-impl From<&AgreementPublicKey> for Vec<u8> {
-    fn from(key: &AgreementPublicKey) -> Self {
+// Convert from a reference to a byte vector to a AgreementPrivateKey.
+impl From<&AgreementPrivateKey> for Vec<u8> {
+    fn from(key: &AgreementPrivateKey) -> Self {
         key.0.to_vec()
     }
 }
