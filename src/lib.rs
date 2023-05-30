@@ -34,6 +34,9 @@ pub use agreement_public_key::AgreementPublicKey;
 mod agreement_private_key;
 pub use agreement_private_key::AgreementPrivateKey;
 
+mod ec_key;
+pub use ec_key::*;
+
 pub mod tags_registry;
 pub use tags_registry::KNOWN_TAGS;
 
