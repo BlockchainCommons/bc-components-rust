@@ -40,9 +40,23 @@ impl ECKeyBaseTrait for ECPublicKey {
 }
 
 impl ECKeyTrait for ECPublicKey {
-    // ...
+    fn public_key(&self) -> ECPublicKey {
+        self.clone()
+    }
 }
 
 impl ECPublicKeyTrait for ECPublicKey {
-    // ...
+    fn compressed(&self) -> ECPublicKey {
+        self.public_key()
+    }
+
+    fn uncompressed(&self) -> crate::ECUncompressedPublicKey {
+        bc_crypto::ecdsa_decompress_public_key(self.data()).into()
+    }
+}
+
+impl From<[u8; Self::KEY_SIZE]> for ECPublicKey {
+    fn from(value: [u8; Self::KEY_SIZE]) -> Self {
+        Self::from_data(value)
+    }
 }
