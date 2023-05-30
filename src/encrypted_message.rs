@@ -127,26 +127,26 @@ impl URDecodable for EncryptedMessage { }
 impl URCodable for EncryptedMessage { }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Auth([u8; Self::AUTH_LENGTH]);
+pub struct Auth([u8; Self::AUTH_SIZE]);
 
 impl Auth {
-    pub const AUTH_LENGTH: usize = 16;
+    pub const AUTH_SIZE: usize = 16;
 
-    pub const fn from_data(data: [u8; Self::AUTH_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::AUTH_SIZE]) -> Self {
         Self(data)
     }
 
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::AUTH_LENGTH {
+        if data.len() != Self::AUTH_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::AUTH_LENGTH];
+        let mut arr = [0u8; Self::AUTH_SIZE];
         arr.copy_from_slice(data.as_ref());
         Some(Self::from_data(arr))
     }
 
-    pub fn data(&self) -> &[u8; Self::AUTH_LENGTH] {
+    pub fn data(&self) -> &[u8; Self::AUTH_SIZE] {
         &self.0
     }
 }

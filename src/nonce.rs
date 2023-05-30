@@ -4,36 +4,36 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 use crate::tags_registry;
 
  #[derive(Clone, Eq, PartialEq)]
- pub struct Nonce ([u8; Self::NONCE_LENGTH]);
+ pub struct Nonce ([u8; Self::NONCE_SIZE]);
 
 impl Nonce {
-    pub const NONCE_LENGTH: usize = 12;
+    pub const NONCE_SIZE: usize = 12;
 
     /// Create a new random nonce.
     pub fn new() -> Self {
-        let mut data = [0u8; Self::NONCE_LENGTH];
+        let mut data = [0u8; Self::NONCE_SIZE];
         fill_random_data(&mut data);
         Self(data)
     }
 
     /// Create a new nonce from data.
-    pub const fn from_data(data: [u8; Self::NONCE_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::NONCE_SIZE]) -> Self {
         Self(data)
     }
 
     /// Create a new nonce from data.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::NONCE_LENGTH {
+        if data.len() != Self::NONCE_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::NONCE_LENGTH];
+        let mut arr = [0u8; Self::NONCE_SIZE];
         arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 
     /// Get the data of the nonce.
-    pub fn data(&self) -> &[u8; Self::NONCE_LENGTH] {
+    pub fn data(&self) -> &[u8; Self::NONCE_SIZE] {
         &self.0
     }
 
@@ -134,21 +134,21 @@ mod test {
 
     #[test]
     fn test_nonce_raw() {
-        let nonce_raw = [0u8; Nonce::NONCE_LENGTH];
+        let nonce_raw = [0u8; Nonce::NONCE_SIZE];
         let nonce = Nonce::from_data(nonce_raw);
         assert_eq!(nonce.data(), &nonce_raw);
     }
 
     #[test]
     fn test_nonce_from_raw_data() {
-        let raw_data = vec![0u8; Nonce::NONCE_LENGTH];
+        let raw_data = vec![0u8; Nonce::NONCE_SIZE];
         let nonce = Nonce::from_data_ref(&raw_data).unwrap();
         assert_eq!(nonce.data(), &raw_data[..]);
     }
 
     #[test]
-    fn test_nonce_length() {
-        let raw_data = vec![0u8; Nonce::NONCE_LENGTH + 1];
+    fn test_nonce_size() {
+        let raw_data = vec![0u8; Nonce::NONCE_SIZE + 1];
         let nonce = Nonce::from_data_ref(&raw_data);
         assert_eq!(nonce, None);
     }

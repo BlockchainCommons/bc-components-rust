@@ -7,10 +7,10 @@ use crate::tags_registry;
 ///
 /// https://datatracker.ietf.org/doc/html/rfc7748
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPrivateKey ([u8; Self::KEY_LENGTH]);
+pub struct AgreementPrivateKey ([u8; Self::KEY_SIZE]);
 
 impl AgreementPrivateKey {
-    pub const KEY_LENGTH: usize = 32;
+    pub const KEY_SIZE: usize = 32;
 
     pub fn new() -> Self {
         Self(x25519_new_agreement_private_key())
@@ -20,21 +20,21 @@ impl AgreementPrivateKey {
         Self(x25519_new_agreement_private_key_using(rng))
     }
 
-    pub const fn from_data(data: [u8; Self::KEY_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::KEY_LENGTH {
+        if data.len() != Self::KEY_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::KEY_LENGTH];
+        let mut arr = [0u8; Self::KEY_SIZE];
         arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 
-    pub fn data(&self) -> &[u8; Self::KEY_LENGTH] {
+    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
         &self.0
     }
 

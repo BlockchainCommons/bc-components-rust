@@ -5,30 +5,30 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_LENGTH]);
+pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_SIZE]);
 
 impl SymmetricKey {
-    pub const SYMMETRIC_KEY_LENGTH: usize = 32;
+    pub const SYMMETRIC_KEY_SIZE: usize = 32;
 
     /// Create a new random symmetric key.
     pub fn new() -> Self {
-        let mut key = [0u8; Self::SYMMETRIC_KEY_LENGTH];
+        let mut key = [0u8; Self::SYMMETRIC_KEY_SIZE];
         fill_random_data(&mut key);
         Self(key)
     }
 
     /// Create a new symmetric key from data.
-    pub const fn from_data(data: [u8; Self::SYMMETRIC_KEY_LENGTH]) -> Self {
+    pub const fn from_data(data: [u8; Self::SYMMETRIC_KEY_SIZE]) -> Self {
         Self(data)
     }
 
     /// Create a new symmetric key from data.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::SYMMETRIC_KEY_LENGTH {
+        if data.len() != Self::SYMMETRIC_KEY_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::SYMMETRIC_KEY_LENGTH];
+        let mut arr = [0u8; Self::SYMMETRIC_KEY_SIZE];
         arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }

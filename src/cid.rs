@@ -5,30 +5,30 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 use crate::tags_registry;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct CID ([u8; Self::CID_LENGTH]);
+pub struct CID ([u8; Self::CID_SIZE]);
 
 impl CID {
-    pub const CID_LENGTH: usize = 32;
+    pub const CID_SIZE: usize = 32;
 
     /// Create a new CID from bytes.
-    pub fn from_data(data: [u8; Self::CID_LENGTH]) -> Self {
+    pub fn from_data(data: [u8; Self::CID_SIZE]) -> Self {
         Self(data)
     }
 
     /// Create a new CID from bytes.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::CID_LENGTH {
+        if data.len() != Self::CID_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::CID_LENGTH];
+        let mut arr = [0u8; Self::CID_SIZE];
         arr.copy_from_slice(data);
         Some(Self::from_data(arr))
     }
 
     /// Create a new random CID.
     pub fn new() -> Self {
-        let data = random_data(Self::CID_LENGTH);
+        let data = random_data(Self::CID_SIZE);
         Self::from_data_ref(&data).unwrap()
     }
 

@@ -8,13 +8,13 @@ use crate::{digest_provider::DigestProvider, tags_registry};
 ///
 /// Implemented with SHA-256.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct Digest([u8; Self::DIGEST_LENGTH]);
+pub struct Digest([u8; Self::DIGEST_SIZE]);
 
 impl Digest {
-    pub const DIGEST_LENGTH: usize = 32;
+    pub const DIGEST_SIZE: usize = 32;
 
     /// Create a new digest from data.
-    pub fn from_data(data: [u8; Self::DIGEST_LENGTH]) -> Self {
+    pub fn from_data(data: [u8; Self::DIGEST_SIZE]) -> Self {
         Self(data)
     }
 
@@ -23,10 +23,10 @@ impl Digest {
     /// Returns `None` if the data is not the correct length.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
-        if data.len() != Self::DIGEST_LENGTH {
+        if data.len() != Self::DIGEST_SIZE {
             return None;
         }
-        let mut arr = [0u8; Self::DIGEST_LENGTH];
+        let mut arr = [0u8; Self::DIGEST_SIZE];
         arr.copy_from_slice(data.as_ref());
         Some(Self::from_data(arr))
     }
@@ -206,7 +206,7 @@ mod tests {
     fn test_digest() {
         let data = "hello world";
         let digest = Digest::from_image(&data.as_bytes());
-        assert_eq!(digest.data().len(), Digest::DIGEST_LENGTH);
+        assert_eq!(digest.data().len(), Digest::DIGEST_SIZE);
         assert_eq!(*digest.data(), sha256(data.as_bytes()));
         assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
     }
@@ -214,7 +214,7 @@ mod tests {
     #[test]
     fn test_digest_from_hex() {
         let digest = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
-        assert_eq!(digest.data().len(), Digest::DIGEST_LENGTH);
+        assert_eq!(digest.data().len(), Digest::DIGEST_SIZE);
         assert_eq!(*digest.data(), sha256("hello world".as_bytes()));
         assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
     }
