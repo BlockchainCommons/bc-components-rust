@@ -1,8 +1,8 @@
 use std::rc::Rc;
 use crate::{EncryptedMessage, Nonce, tags_registry};
-use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad, fill_random_data, Error as CryptoError};
+use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad, fill_random_data};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, Error, CBORTaggedDecodable};
+use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_LENGTH]);
@@ -72,7 +72,7 @@ impl SymmetricKey {
     }
 
     /// Decrypt the given encrypted message with this key.
-    pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, CryptoError> {
+    pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, bc_crypto::Error> {
         decrypt_aead_chacha20_poly1305_with_aad(message.ciphertext(), self, message.nonce(), message.aad(), message.auth())
     }
 }
@@ -136,15 +136,15 @@ impl CBORTaggedEncodable for SymmetricKey {
 impl UREncodable for SymmetricKey { }
 
 impl CBORDecodable for SymmetricKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_data_ref(&bytes.data()).ok_or(Error::InvalidFormat)?;
+        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }

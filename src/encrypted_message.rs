@@ -1,7 +1,7 @@
 use std::{rc::Rc, borrow::Cow};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, Error, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, Bytes};
 
 use crate::{Nonce, Digest, DigestProvider, tags_registry};
 
@@ -73,7 +73,7 @@ impl CBOREncodable for EncryptedMessage {
 }
 
 impl CBORDecodable for EncryptedMessage {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -97,11 +97,11 @@ impl CBORTaggedEncodable for EncryptedMessage {
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         match cbor {
             CBOR::Array(elements) => {
                 if elements.len() < 3 {
-                    return Err(Error::InvalidFormat);
+                    return Err(dcbor::Error::InvalidFormat);
                 }
                 let ciphertext = Bytes::from_cbor(&elements[0])?.data().to_vec();
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?.into();
@@ -113,7 +113,7 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 };
                 Ok(Rc::new(Self::new(ciphertext, aad, nonce, auth)))
             },
-            _ => Err(Error::InvalidFormat),
+            _ => Err(dcbor::Error::InvalidFormat),
         }
     }
 }
@@ -182,10 +182,10 @@ impl CBOREncodable for Auth {
 }
 
 impl CBORDecodable for Auth {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         let bytes = dcbor::Bytes::from_cbor(cbor)?;
         let data = bytes.data();
-        let instance = Self::from_data_ref(&data).ok_or(Error::InvalidFormat)?;
+        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(Rc::new(instance))
     }
 }

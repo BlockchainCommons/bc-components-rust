@@ -1,5 +1,5 @@
 use std::{rc::Rc, str::FromStr};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes, Error};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
 use crate::tags_registry;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -36,15 +36,15 @@ impl CBORTaggedEncodable for UUID {
 }
 
 impl CBORDecodable for UUID {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for UUID {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         let bytes = Bytes::from_cbor(cbor)?;
-        let uuid = String::from_utf8(bytes.data().to_vec()).map_err(|_| Error::InvalidFormat)?;
+        let uuid = String::from_utf8(bytes.data().to_vec()).map_err(|_| dcbor::Error::InvalidFormat)?;
         Ok(Rc::new(Self::new(uuid)))
     }
 }
