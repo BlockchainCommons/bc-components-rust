@@ -62,7 +62,7 @@ impl Digest {
 
     /// Get the data of the digest.
     pub fn data(&self) -> &[u8; 32] {
-        &self.0
+        self.into()
     }
 
     /// Validate the digest against the given image.
@@ -100,6 +100,12 @@ impl Digest {
             Some(digest) => digest.validate(image),
             None => true,
         }
+    }
+}
+
+impl<'a> From<&'a Digest> for &'a [u8; Digest::DIGEST_SIZE] {
+    fn from(value: &'a Digest) -> Self {
+        &value.0
     }
 }
 
@@ -168,13 +174,6 @@ impl CBORTaggedDecodable for Digest {
 impl URDecodable for Digest { }
 
 impl URCodable for Digest { }
-
-// Convert from an instance to a reference to a byte array.
-impl AsRef<[u8]> for Digest {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
-}
 
 // Convert from a reference to a byte vector to an instance.
 impl From<&Digest> for Digest {

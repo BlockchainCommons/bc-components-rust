@@ -26,11 +26,11 @@ impl ECPrivateKey {
 
 impl ECPrivateKey {
     pub fn schnorr_public_key(&self) -> SchnorrPublicKey {
-        bc_crypto::schnorr_public_key_from_private_key(self.data()).into()
+        bc_crypto::schnorr_public_key_from_private_key(self.into()).into()
     }
 
-    pub fn ecdsa_sign<T>(&self, message: &T) -> Vec<u8> where T: AsRef<[u8]> {
-        bc_crypto::ecdsa_sign(self.data(), message.as_ref())
+    pub fn ecdsa_sign<T>(&self, message: &T) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] where T: AsRef<[u8]> {
+        bc_crypto::ecdsa_sign(&self.0, message.as_ref())
     }
 
     pub fn schnorr_sign_using<D1, D2>(
@@ -38,15 +38,15 @@ impl ECPrivateKey {
         message: &D1,
         tag: &D2,
         rng: &mut impl bc_crypto::RandomNumberGenerator
-    ) -> Vec<u8>
+    ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>
     {
-        bc_crypto::schnorr_sign_using(message, tag, self, rng)
+        bc_crypto::schnorr_sign_using(message, tag, &self.0, rng)
     }
 
-    pub fn schnorr_sign<D1, D2>(&self, message: &D1, tag: &D2) -> Vec<u8>
+    pub fn schnorr_sign<D1, D2>(&self, message: &D1, tag: &D2) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>
@@ -86,6 +86,18 @@ impl Default for ECPrivateKey {
     }
 }
 
+impl<'a> From<&'a ECPrivateKey> for &'a [u8; ECPrivateKey::KEY_SIZE] {
+    fn from(value: &'a ECPrivateKey) -> Self {
+        &value.0
+    }
+}
+
+impl<'a> From<&'a ECPrivateKey> for &'a [u8] {
+    fn from(value: &'a ECPrivateKey) -> Self {
+        value.as_ref()
+    }
+}
+
 impl ECKeyBase for ECPrivateKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
 
@@ -100,13 +112,13 @@ impl ECKeyBase for ECPrivateKey {
     }
 
     fn data(&self) -> &[u8] {
-        &self.0
+        self.into()
     }
 }
 
 impl ECKey for ECPrivateKey {
     fn public_key(&self) -> ECPublicKey {
-        bc_crypto::ecdsa_public_key_from_private_key(self.data()).into()
+        bc_crypto::ecdsa_public_key_from_private_key(&self.0).into()
     }
 }
 

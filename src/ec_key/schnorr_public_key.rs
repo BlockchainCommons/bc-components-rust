@@ -1,3 +1,5 @@
+use bc_crypto::SCHNORR_SIGNATURE_SIZE;
+
 use crate::ECKeyBase;
 
 
@@ -12,13 +14,18 @@ impl SchnorrPublicKey {
 }
 
 impl SchnorrPublicKey {
-    pub fn schnorr_verify<D1, D2, D3>(&self, signature: D1, tag: D2, message: D3) -> bool
+    pub fn schnorr_verify<D2, D3>(&self, signature: &[u8; SCHNORR_SIGNATURE_SIZE], tag: D2, message: D3) -> bool
     where
-        D1: AsRef<[u8]>,
         D2: AsRef<[u8]>,
         D3: AsRef<[u8]>
     {
-        bc_crypto::schnorr_verify(message, tag, signature, self)
+        bc_crypto::schnorr_verify(message, tag, signature, self.into())
+    }
+}
+
+impl<'a> From<&'a SchnorrPublicKey> for &'a [u8; SchnorrPublicKey::KEY_SIZE] {
+    fn from(value: &'a SchnorrPublicKey) -> Self {
+        &value.0
     }
 }
 

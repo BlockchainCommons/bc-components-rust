@@ -1,16 +1,13 @@
 use std::rc::Rc;
-use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key_using};
+use bc_crypto::{RandomNumberGenerator, ecdsa_new_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
-use crate::tags_registry;
+use crate::{tags_registry, ECPrivateKey, Signature};
 
-/// A Curve25519 private key used for X25519 key agreement.
-///
-/// https://datatracker.ietf.org/doc/html/rfc7748
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPrivateKey ([u8; Self::KEY_SIZE]);
+pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
 
-impl AgreementPrivateKey {
+impl SigningPrivateKey {
     pub const KEY_SIZE: usize = 32;
 
     pub fn new() -> Self {
@@ -19,7 +16,7 @@ impl AgreementPrivateKey {
     }
 
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
-        Self(x25519_new_agreement_private_key_using(rng))
+        Self(ecdsa_new_private_key_using(rng))
     }
 
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
@@ -49,47 +46,55 @@ impl AgreementPrivateKey {
     }
 }
 
-impl Default for AgreementPrivateKey {
+impl SigningPrivateKey {
+    pub fn ecdsa_sign<T>(&self, message: &T) -> Signature where T: AsRef<[u8]> {
+        let private_key = ECPrivateKey::from_data(*self.data());
+        let sig = private_key.ecdsa_sign(message);
+        Signature::ecdsa_from_data(sig)
+    }
+}
+
+impl<'a> From<&'a SigningPrivateKey> for &'a [u8; SigningPrivateKey::KEY_SIZE] {
+    fn from(value: &'a SigningPrivateKey) -> Self {
+        &value.0
+    }
+}
+
+impl Default for SigningPrivateKey {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a> From<&'a AgreementPrivateKey> for &'a [u8; AgreementPrivateKey::KEY_SIZE] {
-    fn from(value: &'a AgreementPrivateKey) -> Self {
-        &value.0
-    }
-}
-
-impl From<Rc<AgreementPrivateKey>> for AgreementPrivateKey {
-    fn from(value: Rc<AgreementPrivateKey>) -> Self {
+impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
+    fn from(value: Rc<SigningPrivateKey>) -> Self {
         value.as_ref().clone()
     }
 }
 
-impl CBORTagged for AgreementPrivateKey {
+impl CBORTagged for SigningPrivateKey {
     const CBOR_TAG: Tag = tags_registry::AGREEMENT_PRIVATE_KEY;
 }
 
-impl CBOREncodable for AgreementPrivateKey {
+impl CBOREncodable for SigningPrivateKey {
     fn cbor(&self) -> CBOR {
         self.tagged_cbor()
     }
 }
 
-impl CBORTaggedEncodable for AgreementPrivateKey {
+impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         Bytes::from_data(self.data()).cbor()
     }
 }
 
-impl CBORDecodable for AgreementPrivateKey {
+impl CBORDecodable for SigningPrivateKey {
     fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
-impl CBORTaggedDecodable for AgreementPrivateKey {
+impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
@@ -98,35 +103,35 @@ impl CBORTaggedDecodable for AgreementPrivateKey {
     }
 }
 
-impl UREncodable for AgreementPrivateKey { }
+impl UREncodable for SigningPrivateKey { }
 
-impl URDecodable for AgreementPrivateKey { }
+impl URDecodable for SigningPrivateKey { }
 
-impl URCodable for AgreementPrivateKey { }
+impl URCodable for SigningPrivateKey { }
 
-impl std::fmt::Debug for AgreementPrivateKey {
+impl std::fmt::Debug for SigningPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AgreementPrivateKey({})", self.hex())
+        write!(f, "SigningPrivateKey")
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPrivateKey.
-impl From<&AgreementPrivateKey> for AgreementPrivateKey {
-    fn from(key: &AgreementPrivateKey) -> Self {
+// Convert from a reference to a byte vector to a SigningPrivateKey.
+impl From<&SigningPrivateKey> for SigningPrivateKey {
+    fn from(key: &SigningPrivateKey) -> Self {
         key.clone()
     }
 }
 
-// Convert from a byte vector to a AgreementPrivateKey.
-impl From<AgreementPrivateKey> for Vec<u8> {
-    fn from(key: AgreementPrivateKey) -> Self {
+// Convert from a byte vector to a SigningPrivateKey.
+impl From<SigningPrivateKey> for Vec<u8> {
+    fn from(key: SigningPrivateKey) -> Self {
         key.0.to_vec()
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPrivateKey.
-impl From<&AgreementPrivateKey> for Vec<u8> {
-    fn from(key: &AgreementPrivateKey) -> Self {
+// Convert from a reference to a byte vector to a SigningPrivateKey.
+impl From<&SigningPrivateKey> for Vec<u8> {
+    fn from(key: &SigningPrivateKey) -> Self {
         key.0.to_vec()
     }
 }

@@ -45,7 +45,7 @@ impl ECKeyBase for ECUncompressedPublicKey {
 
 impl ECKey for ECUncompressedPublicKey {
     fn public_key(&self) -> ECPublicKey {
-        bc_crypto::ecdsa_compress_public_key(self.data()).into()
+        bc_crypto::ecdsa_compress_public_key(&self.0).into()
     }
 }
 

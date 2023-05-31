@@ -40,8 +40,8 @@ impl SymmetricKey {
     }
 
     /// Get the data of the symmetric key.
-    pub fn data(&self) -> &[u8] {
-        &self.0
+    pub fn data(&self) -> &[u8; Self::SYMMETRIC_KEY_SIZE] {
+        self.into()
     }
 
     /// Create a new symmetric key from the given hexadecimal string.
@@ -58,13 +58,13 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given additional authenticated data and nonce.
-    pub fn encrypt_with_nonce<D, A>(&self, plaintext: D, aad: A, nonce: Nonce) -> EncryptedMessage
+    pub fn encrypt_with_nonce<D1, D2>(&self, plaintext: D1, aad: D2, nonce: Nonce) -> EncryptedMessage
     where
-        D: AsRef<[u8]>,
-        A: Into<Vec<u8>>,
+        D1: AsRef<[u8]>,
+        D2: Into<Vec<u8>>,
     {
         let aad: Vec<u8> = aad.into();
-        let (ciphertext, auth) = encrypt_aead_chacha20_poly1305_with_aad(plaintext, self, &nonce, &aad);
+        let (ciphertext, auth) = encrypt_aead_chacha20_poly1305_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
     }
 
@@ -79,7 +79,7 @@ impl SymmetricKey {
 
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, bc_crypto::Error> {
-        decrypt_aead_chacha20_poly1305_with_aad(message.ciphertext(), self, message.nonce(), message.aad(), message.auth())
+        decrypt_aead_chacha20_poly1305_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.auth().into())
     }
 }
 
@@ -89,10 +89,9 @@ impl Default for SymmetricKey {
     }
 }
 
-// Convert from a SymmetricKey to a reference to a byte array.
-impl AsRef<[u8]> for SymmetricKey {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+impl<'a> From<&'a SymmetricKey> for &'a [u8; SymmetricKey::SYMMETRIC_KEY_SIZE] {
+    fn from(digest: &'a SymmetricKey) -> Self {
+        &digest.0
     }
 }
 

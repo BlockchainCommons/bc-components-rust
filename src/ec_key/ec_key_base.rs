@@ -7,8 +7,7 @@ pub trait ECKeyBase:
     std::fmt::Debug +
     Clone +
     PartialEq + Eq +
-    core::hash::Hash +
-    AsRef<[u8]>
+    core::hash::Hash
 {
     const KEY_SIZE: usize;
 

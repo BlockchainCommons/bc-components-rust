@@ -147,7 +147,7 @@ impl Auth {
     }
 
     pub fn data(&self) -> &[u8; Self::AUTH_SIZE] {
-        &self.0
+        self.into()
     }
 }
 
@@ -157,15 +157,21 @@ impl From<Rc<Auth>> for Auth {
     }
 }
 
-impl AsRef<[u8]> for Auth {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+impl<'a> From<&'a Auth> for &'a [u8; Auth::AUTH_SIZE] {
+    fn from(value: &'a Auth) -> Self {
+        &value.0
     }
 }
 
 impl From<&[u8]> for Auth {
     fn from(data: &[u8]) -> Self {
         Self::from_data_ref(&data).unwrap()
+    }
+}
+
+impl From<[u8; Self::AUTH_SIZE]> for Auth {
+    fn from(data: [u8; Self::AUTH_SIZE]) -> Self {
+        Self::from_data(data)
     }
 }
 

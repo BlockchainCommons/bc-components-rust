@@ -20,7 +20,7 @@ impl Salt {
 
     /// Return the data of the salt.
     pub fn data(&self) -> &[u8] {
-        &self.0
+        self.into()
     }
 
     /// Create a specific number of bytes of salt.
@@ -77,6 +77,12 @@ impl Salt {
     /// The data as a hexadecimal string.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
+    }
+}
+
+impl<'a> From<&'a Salt> for &'a [u8] {
+    fn from(value: &'a Salt) -> Self {
+        value.data()
     }
 }
 

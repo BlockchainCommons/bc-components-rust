@@ -1,3 +1,4 @@
+use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::UREncodable;
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, Map};
 
@@ -14,12 +15,11 @@ impl ECPublicKey {
 }
 
 impl ECPublicKey {
-    pub fn verify<D1, D2>(&self, signature: D1, message: D2) -> bool
+    pub fn verify<D1, D2>(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: D2) -> bool
     where
-        D1: AsRef<[u8]>,
         D2: AsRef<[u8]>,
     {
-        bc_crypto::ecdsa_verify(self, message, signature)
+        bc_crypto::ecdsa_verify(&self.0, message, signature)
     }
 }
 
@@ -49,7 +49,7 @@ impl ECKeyBase for ECPublicKey {
     }
 
     fn data(&self) -> &[u8] {
-        &self.0
+        self.into()
     }
 }
 
@@ -61,7 +61,13 @@ impl ECKey for ECPublicKey {
 
 impl ECPublicKeyBase for ECPublicKey {
     fn uncompressed_public_key(&self) -> crate::ECUncompressedPublicKey {
-        bc_crypto::ecdsa_decompress_public_key(self.data()).into()
+        bc_crypto::ecdsa_decompress_public_key(&self.0).into()
+    }
+}
+
+impl<'a> From<&'a ECPublicKey> for &'a [u8; ECPublicKey::KEY_SIZE] {
+    fn from(value: &'a ECPublicKey) -> Self {
+        &value.0
     }
 }
 
@@ -71,9 +77,9 @@ impl From<[u8; Self::KEY_SIZE]> for ECPublicKey {
     }
 }
 
-impl AsRef<[u8]> for ECPublicKey {
-    fn as_ref(&self) -> &[u8] {
-        self.data()
+impl<'a> From<&'a ECPublicKey> for &'a [u8] {
+    fn from(value: &'a ECPublicKey) -> Self {
+        &value.0
     }
 }
 

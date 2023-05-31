@@ -34,6 +34,15 @@ pub use agreement_public_key::AgreementPublicKey;
 mod agreement_private_key;
 pub use agreement_private_key::AgreementPrivateKey;
 
+mod signature;
+pub use signature::Signature;
+
+mod signing_private_key;
+pub use signing_private_key::SigningPrivateKey;
+
+mod signing_public_key;
+// pub use signing_public_key::SigningPublicKey;
+
 mod ec_key;
 pub use ec_key::*;
 

@@ -34,7 +34,7 @@ impl Nonce {
 
     /// Get the data of the nonce.
     pub fn data(&self) -> &[u8; Self::NONCE_SIZE] {
-        &self.0
+        self.into()
     }
 
     /// Create a new nonce from the given hexadecimal string.
@@ -63,9 +63,9 @@ impl From<Rc<Nonce>> for Nonce {
     }
 }
 
-impl AsRef<[u8]> for Nonce {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+impl<'a> From<&'a Nonce> for &'a [u8; Nonce::NONCE_SIZE] {
+    fn from(value: &'a Nonce) -> Self {
+        &value.0
     }
 }
 

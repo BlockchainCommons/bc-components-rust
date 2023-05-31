@@ -34,7 +34,7 @@ impl CID {
 
     /// Get the data of the CID.
     pub fn data(&self) -> &[u8] {
-        &self.0
+        self.into()
     }
 
     /// Create a new CID from the given hexadecimal string.
@@ -53,6 +53,12 @@ impl CID {
     /// The first four bytes of the CID as a hexadecimal string.
     pub fn short_description(&self) -> String {
         hex::encode(&self.0[0..4])
+    }
+}
+
+impl<'a> From<&'a CID> for &'a [u8] {
+    fn from(value: &'a CID) -> Self {
+        &value.0
     }
 }
 

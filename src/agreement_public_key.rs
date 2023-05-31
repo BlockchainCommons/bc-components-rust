@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
 use crate::tags_registry;
 
@@ -26,7 +27,7 @@ impl AgreementPublicKey {
     }
 
     pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
-        &self.0
+        self.into()
     }
 
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
@@ -44,9 +45,9 @@ impl From<Rc<AgreementPublicKey>> for AgreementPublicKey {
     }
 }
 
-impl AsRef<[u8]> for AgreementPublicKey {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
+impl<'a> From<&'a AgreementPublicKey> for &'a [u8; AgreementPublicKey::KEY_SIZE] {
+    fn from(value: &'a AgreementPublicKey) -> Self {
+        &value.0
     }
 }
 
@@ -80,6 +81,12 @@ impl CBORTaggedDecodable for AgreementPublicKey {
         Ok(Rc::new(instance))
     }
 }
+
+impl UREncodable for AgreementPublicKey { }
+
+impl URDecodable for AgreementPublicKey { }
+
+impl URCodable for AgreementPublicKey { }
 
 impl std::fmt::Debug for AgreementPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
