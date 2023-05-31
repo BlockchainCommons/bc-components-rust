@@ -1,4 +1,9 @@
-use crate::ECKeyBase;
+use std::rc::Rc;
+
+use bc_ur::{UREncodable, URDecodable, URCodable};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
+
+use crate::{ECKeyBase, ECKey, tags_registry};
 
 /// An elliptic curve private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -39,3 +44,45 @@ impl ECKeyBase for ECPrivateKey {
         &self.0
     }
 }
+
+impl ECKey for ECPrivateKey {
+    fn public_key(&self) -> crate::ECPublicKey {
+        bc_crypto::ecdsa_public_key_from_private_key(self.data()).into()
+    }
+}
+
+impl CBORTagged for ECPrivateKey {
+    const CBOR_TAG: Tag = tags_registry::EC_KEY;
+}
+
+impl CBOREncodable for ECPrivateKey {
+    fn cbor(&self) -> CBOR {
+        self.tagged_cbor()
+    }
+}
+
+impl CBORTaggedEncodable for ECPrivateKey {
+    fn untagged_cbor(&self) -> CBOR {
+        Bytes::from_data(self.0).cbor()
+    }
+}
+
+impl UREncodable for ECPrivateKey { }
+
+impl CBORDecodable for ECPrivateKey {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+        Self::from_untagged_cbor(cbor)
+    }
+}
+
+impl CBORTaggedDecodable for ECPrivateKey {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+        let bytes = Bytes::from_cbor(cbor)?;
+        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
+        Ok(Rc::new(instance))
+    }
+}
+
+impl URDecodable for ECPrivateKey { }
+
+impl URCodable for ECPrivateKey { }

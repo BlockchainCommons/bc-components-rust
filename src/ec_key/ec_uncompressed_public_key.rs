@@ -1,6 +1,9 @@
-use crate::{ECKeyBase, ECKey};
+use std::rc::Rc;
 
-use super::ec_public_key_base::ECPublicKeyBase;
+use bc_ur::{UREncodable, URDecodable, URCodable};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
+
+use crate::{ECKeyBase, ECKey, tags_registry, ECPublicKeyBase};
 
 /// An uncompressed elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -63,3 +66,39 @@ impl From<[u8; Self::KEY_SIZE]> for ECUncompressedPublicKey {
         Self::from_data(value)
     }
 }
+
+impl CBORTagged for ECUncompressedPublicKey {
+    const CBOR_TAG: Tag = tags_registry::EC_KEY;
+}
+
+impl CBOREncodable for ECUncompressedPublicKey {
+    fn cbor(&self) -> CBOR {
+        self.tagged_cbor()
+    }
+}
+
+impl CBORTaggedEncodable for ECUncompressedPublicKey {
+    fn untagged_cbor(&self) -> CBOR {
+        Bytes::from_data(self.0).cbor()
+    }
+}
+
+impl UREncodable for ECUncompressedPublicKey { }
+
+impl CBORDecodable for ECUncompressedPublicKey {
+    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+        Self::from_untagged_cbor(cbor)
+    }
+}
+
+impl CBORTaggedDecodable for ECUncompressedPublicKey {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+        let bytes = Bytes::from_cbor(cbor)?;
+        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
+        Ok(Rc::new(instance))
+    }
+}
+
+impl URDecodable for ECUncompressedPublicKey { }
+
+impl URCodable for ECUncompressedPublicKey { }

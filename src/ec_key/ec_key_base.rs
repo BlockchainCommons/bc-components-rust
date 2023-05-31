@@ -1,3 +1,5 @@
+use bc_ur::UREncodable;
+
 use crate::ECPublicKey;
 
 pub trait ECKeyBase:
@@ -22,6 +24,6 @@ pub trait ECKeyBase:
     }
 }
 
-pub trait ECKey: ECKeyBase {
+pub trait ECKey: ECKeyBase + UREncodable {
     fn public_key(&self) -> ECPublicKey;
 }
