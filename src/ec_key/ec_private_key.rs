@@ -1,17 +1,70 @@
-use std::rc::Rc;
+use bc_ur::UREncodable;
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, Map};
 
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
-
-use crate::{ECKeyBase, ECKey, tags_registry};
+use crate::{ECKeyBase, ECKey, tags_registry, SchnorrPublicKey, ECPublicKey};
 
 /// An elliptic curve private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
 
 impl ECPrivateKey {
+    pub fn new() -> Self {
+        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        Self::new_using(&mut rng)
+    }
+
+    pub fn new_using(rng: &mut impl bc_crypto::RandomNumberGenerator) -> Self {
+        let mut key = [0u8; Self::KEY_SIZE];
+        rng.fill_random_data(&mut key);
+        Self::from_data(key)
+    }
+
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
+    }
+}
+
+impl ECPrivateKey {
+    pub fn schnorr_public_key(&self) -> SchnorrPublicKey {
+        bc_crypto::schnorr_public_key_from_private_key(self.data()).into()
+    }
+
+    pub fn ecdsa_sign<T>(&self, message: &T) -> Vec<u8> where T: AsRef<[u8]> {
+        bc_crypto::ecdsa_sign(self.data(), message.as_ref())
+    }
+
+    pub fn schnorr_sign_using<D1, D2>(
+        &self,
+        message: &D1,
+        tag: &D2,
+        rng: &mut impl bc_crypto::RandomNumberGenerator
+    ) -> Vec<u8>
+    where
+        D1: AsRef<[u8]>,
+        D2: AsRef<[u8]>
+    {
+        bc_crypto::schnorr_sign_using(message, tag, self, rng)
+    }
+
+    pub fn schnorr_sign<D1, D2>(&self, message: &D1, tag: &D2) -> Vec<u8>
+    where
+        D1: AsRef<[u8]>,
+        D2: AsRef<[u8]>
+    {
+        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        self.schnorr_sign_using(message, tag, &mut rng)
+    }
+}
+
+impl From<[u8; 32]> for ECPrivateKey {
+    fn from(data: [u8; 32]) -> Self {
+        Self::from_data(data)
+    }
+}
+
+impl AsRef<[u8]> for ECPrivateKey {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
     }
 }
 
@@ -24,6 +77,12 @@ impl std::fmt::Display for ECPrivateKey {
 impl std::fmt::Debug for ECPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ECPrivateKey({})", self.hex())
+    }
+}
+
+impl Default for ECPrivateKey {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -46,7 +105,7 @@ impl ECKeyBase for ECPrivateKey {
 }
 
 impl ECKey for ECPrivateKey {
-    fn public_key(&self) -> crate::ECPublicKey {
+    fn public_key(&self) -> ECPublicKey {
         bc_crypto::ecdsa_public_key_from_private_key(self.data()).into()
     }
 }
@@ -63,26 +122,11 @@ impl CBOREncodable for ECPrivateKey {
 
 impl CBORTaggedEncodable for ECPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.0).cbor()
+        let mut m = Map::new();
+        m.insert_into(2, true);
+        m.insert_into(3, Bytes::from_data(self.0));
+        m.cbor()
     }
 }
 
 impl UREncodable for ECPrivateKey { }
-
-impl CBORDecodable for ECPrivateKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        Self::from_untagged_cbor(cbor)
-    }
-}
-
-impl CBORTaggedDecodable for ECPrivateKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
-    }
-}
-
-impl URDecodable for ECPrivateKey { }
-
-impl URCodable for ECPrivateKey { }

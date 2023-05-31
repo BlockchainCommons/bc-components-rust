@@ -1,9 +1,7 @@
-use std::rc::Rc;
+use bc_ur::UREncodable;
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, Map};
 
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
-
-use crate::{ECKeyBase, ECKey, tags_registry, ECPublicKeyBase};
+use crate::{ECKeyBase, ECKey, tags_registry, ECPublicKeyBase, ECPublicKey};
 
 /// An uncompressed elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -46,7 +44,7 @@ impl ECKeyBase for ECUncompressedPublicKey {
 }
 
 impl ECKey for ECUncompressedPublicKey {
-    fn public_key(&self) -> crate::ECPublicKey {
+    fn public_key(&self) -> ECPublicKey {
         bc_crypto::ecdsa_compress_public_key(self.data()).into()
     }
 }
@@ -63,6 +61,12 @@ impl From<[u8; Self::KEY_SIZE]> for ECUncompressedPublicKey {
     }
 }
 
+impl AsRef<[u8]> for ECUncompressedPublicKey {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
+    }
+}
+
 impl CBORTagged for ECUncompressedPublicKey {
     const CBOR_TAG: Tag = tags_registry::EC_KEY;
 }
@@ -75,26 +79,10 @@ impl CBOREncodable for ECUncompressedPublicKey {
 
 impl CBORTaggedEncodable for ECUncompressedPublicKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.0).cbor()
+        let mut m = Map::new();
+        m.insert_into(3, Bytes::from_data(self.0));
+        m.cbor()
     }
 }
 
 impl UREncodable for ECUncompressedPublicKey { }
-
-impl CBORDecodable for ECUncompressedPublicKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        Self::from_untagged_cbor(cbor)
-    }
-}
-
-impl CBORTaggedDecodable for ECUncompressedPublicKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
-    }
-}
-
-impl URDecodable for ECUncompressedPublicKey { }
-
-impl URCodable for ECUncompressedPublicKey { }

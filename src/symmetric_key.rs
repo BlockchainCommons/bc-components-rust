@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use crate::{EncryptedMessage, Nonce, tags_registry};
-use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad, fill_random_data};
+use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
 
@@ -12,9 +12,15 @@ impl SymmetricKey {
 
     /// Create a new random symmetric key.
     pub fn new() -> Self {
+        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        Self::new_using(&mut rng)
+    }
+
+    /// Create a new random symmetric key using the given random number generator.
+    pub fn new_using(rng: &mut impl bc_crypto::RandomNumberGenerator) -> Self {
         let mut key = [0u8; Self::SYMMETRIC_KEY_SIZE];
-        fill_random_data(&mut key);
-        Self(key)
+        rng.fill_random_data(&mut key);
+        Self::from_data(key)
     }
 
     /// Create a new symmetric key from data.

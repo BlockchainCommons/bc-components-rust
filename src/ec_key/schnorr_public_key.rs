@@ -11,6 +11,29 @@ impl SchnorrPublicKey {
     }
 }
 
+impl SchnorrPublicKey {
+    pub fn schnorr_verify<D1, D2, D3>(&self, signature: D1, tag: D2, message: D3) -> bool
+    where
+        D1: AsRef<[u8]>,
+        D2: AsRef<[u8]>,
+        D3: AsRef<[u8]>
+    {
+        bc_crypto::schnorr_verify(message, tag, signature, self)
+    }
+}
+
+impl From<[u8; Self::KEY_SIZE]> for SchnorrPublicKey {
+    fn from(value: [u8; Self::KEY_SIZE]) -> Self {
+        Self::from_data(value)
+    }
+}
+
+impl AsRef<[u8]> for SchnorrPublicKey {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
+    }
+}
+
 impl std::fmt::Display for SchnorrPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.hex())

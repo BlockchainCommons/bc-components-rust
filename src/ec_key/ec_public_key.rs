@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::UREncodable;
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, Map};
 
 use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags_registry};
 
@@ -12,6 +10,16 @@ pub struct ECPublicKey([u8; Self::KEY_SIZE]);
 impl ECPublicKey {
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
+    }
+}
+
+impl ECPublicKey {
+    pub fn verify<D1, D2>(&self, signature: D1, message: D2) -> bool
+    where
+        D1: AsRef<[u8]>,
+        D2: AsRef<[u8]>,
+    {
+        bc_crypto::ecdsa_verify(self, message, signature)
     }
 }
 
@@ -63,6 +71,12 @@ impl From<[u8; Self::KEY_SIZE]> for ECPublicKey {
     }
 }
 
+impl AsRef<[u8]> for ECPublicKey {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
+    }
+}
+
 impl CBORTagged for ECPublicKey {
     const CBOR_TAG: Tag = tags_registry::EC_KEY;
 }
@@ -75,26 +89,10 @@ impl CBOREncodable for ECPublicKey {
 
 impl CBORTaggedEncodable for ECPublicKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.0).cbor()
+        let mut m = Map::new();
+        m.insert_into(3, Bytes::from_data(self.0));
+        m.cbor()
     }
 }
 
 impl UREncodable for ECPublicKey { }
-
-impl CBORDecodable for ECPublicKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        Self::from_untagged_cbor(cbor)
-    }
-}
-
-impl CBORTaggedDecodable for ECPublicKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
-    }
-}
-
-impl URDecodable for ECPublicKey { }
-
-impl URCodable for ECPublicKey { }
