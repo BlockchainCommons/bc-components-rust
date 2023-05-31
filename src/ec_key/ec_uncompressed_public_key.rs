@@ -52,11 +52,7 @@ impl ECKey for ECUncompressedPublicKey {
 }
 
 impl ECPublicKeyBase for ECUncompressedPublicKey {
-    fn compressed(&self) -> crate::ECPublicKey {
-        self.public_key()
-    }
-
-    fn uncompressed(&self) -> ECUncompressedPublicKey {
+    fn uncompressed_public_key(&self) -> ECUncompressedPublicKey {
         self.clone()
     }
 }

@@ -1,6 +1,5 @@
-use crate::{ECKey, ECUncompressedPublicKey, ECPublicKey};
+use crate::{ECKey, ECUncompressedPublicKey};
 
 pub trait ECPublicKeyBase: ECKey {
-    fn compressed(&self) -> ECPublicKey;
-    fn uncompressed(&self) -> ECUncompressedPublicKey;
+    fn uncompressed_public_key(&self) -> ECUncompressedPublicKey;
 }

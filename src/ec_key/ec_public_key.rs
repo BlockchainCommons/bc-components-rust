@@ -52,11 +52,7 @@ impl ECKey for ECPublicKey {
 }
 
 impl ECPublicKeyBase for ECPublicKey {
-    fn compressed(&self) -> ECPublicKey {
-        self.public_key()
-    }
-
-    fn uncompressed(&self) -> crate::ECUncompressedPublicKey {
+    fn uncompressed_public_key(&self) -> crate::ECUncompressedPublicKey {
         bc_crypto::ecdsa_decompress_public_key(self.data()).into()
     }
 }
