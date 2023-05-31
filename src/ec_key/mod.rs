@@ -1,11 +1,8 @@
-mod ec_key_base_trait;
-pub use ec_key_base_trait::ECKeyBaseTrait;
+mod ec_key_base;
+pub use ec_key_base::{ECKeyBase, ECKey};
 
-mod ec_key_trait;
-pub use ec_key_trait::ECKeyTrait;
-
-mod ec_public_key_trait;
-pub use ec_public_key_trait::ECPublicKeyTrait;
+mod ec_public_key_base;
+pub use ec_public_key_base::ECPublicKeyBase;
 
 mod ec_private_key;
 pub use ec_private_key::ECPrivateKey;

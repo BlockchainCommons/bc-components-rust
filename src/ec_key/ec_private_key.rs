@@ -1,5 +1,6 @@
-use crate::ECKeyBaseTrait;
+use crate::ECKeyBase;
 
+/// An elliptic curve private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
 
@@ -21,7 +22,7 @@ impl std::fmt::Debug for ECPrivateKey {
     }
 }
 
-impl ECKeyBaseTrait for ECPrivateKey {
+impl ECKeyBase for ECPrivateKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
 
     fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {

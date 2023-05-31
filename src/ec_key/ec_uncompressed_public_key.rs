@@ -1,8 +1,8 @@
-use crate::ECKeyBaseTrait;
+use crate::{ECKeyBase, ECKey};
 
-use super::{ec_key_trait::ECKeyTrait, ec_public_key_trait::ECPublicKeyTrait};
+use super::ec_public_key_base::ECPublicKeyBase;
 
-
+/// An uncompressed elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECUncompressedPublicKey([u8; Self::KEY_SIZE]);
 
@@ -24,7 +24,7 @@ impl std::fmt::Debug for ECUncompressedPublicKey {
     }
 }
 
-impl ECKeyBaseTrait for ECUncompressedPublicKey {
+impl ECKeyBase for ECUncompressedPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
 
     fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {
@@ -42,13 +42,13 @@ impl ECKeyBaseTrait for ECUncompressedPublicKey {
     }
 }
 
-impl ECKeyTrait for ECUncompressedPublicKey {
+impl ECKey for ECUncompressedPublicKey {
     fn public_key(&self) -> crate::ECPublicKey {
         bc_crypto::ecdsa_compress_public_key(self.data()).into()
     }
 }
 
-impl ECPublicKeyTrait for ECUncompressedPublicKey {
+impl ECPublicKeyBase for ECUncompressedPublicKey {
     fn compressed(&self) -> crate::ECPublicKey {
         self.public_key()
     }

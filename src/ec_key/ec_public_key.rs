@@ -1,5 +1,6 @@
-use crate::{ECKeyBaseTrait, ECKeyTrait, ECPublicKeyTrait};
+use crate::{ECKeyBase, ECKey, ECPublicKeyBase};
 
+/// A compressed elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECPublicKey([u8; Self::KEY_SIZE]);
 
@@ -21,7 +22,7 @@ impl std::fmt::Debug for ECPublicKey {
     }
 }
 
-impl ECKeyBaseTrait for ECPublicKey {
+impl ECKeyBase for ECPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
     fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {
@@ -39,13 +40,13 @@ impl ECKeyBaseTrait for ECPublicKey {
     }
 }
 
-impl ECKeyTrait for ECPublicKey {
+impl ECKey for ECPublicKey {
     fn public_key(&self) -> ECPublicKey {
         self.clone()
     }
 }
 
-impl ECPublicKeyTrait for ECPublicKey {
+impl ECPublicKeyBase for ECPublicKey {
     fn compressed(&self) -> ECPublicKey {
         self.public_key()
     }

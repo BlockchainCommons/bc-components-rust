@@ -1,4 +1,6 @@
-pub trait ECKeyBaseTrait:
+use crate::ECPublicKey;
+
+pub trait ECKeyBase:
     std::fmt::Display +
     std::fmt::Debug +
     Clone +
@@ -18,4 +20,8 @@ pub trait ECKeyBaseTrait:
         let data = hex::decode(hex).ok()?;
         Self::from_data_ref(&data)
     }
+}
+
+pub trait ECKey: ECKeyBase {
+    fn public_key(&self) -> ECPublicKey;
 }

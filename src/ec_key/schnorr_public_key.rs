@@ -1,6 +1,7 @@
-use crate::ECKeyBaseTrait;
+use crate::ECKeyBase;
 
 
+/// A Schnorr (x-only) elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SchnorrPublicKey([u8; Self::KEY_SIZE]);
 
@@ -22,7 +23,7 @@ impl std::fmt::Debug for SchnorrPublicKey {
     }
 }
 
-impl ECKeyBaseTrait for SchnorrPublicKey {
+impl ECKeyBase for SchnorrPublicKey {
     const KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 
     fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {
