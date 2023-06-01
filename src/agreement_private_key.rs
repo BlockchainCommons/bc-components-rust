@@ -2,7 +2,7 @@ use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
-use crate::tags_registry;
+use crate::{tags_registry, AgreementPublicKey, SymmetricKey};
 
 /// A Curve25519 private key used for X25519 key agreement.
 ///
@@ -47,6 +47,20 @@ impl AgreementPrivateKey {
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
+
+    pub fn public_key(&self) -> AgreementPublicKey {
+        AgreementPublicKey::from_data(bc_crypto::x25519_agreement_public_key_from_private_key(self.into()))
+    }
+
+    pub fn derive_from_key_material<D>(key_material: D) -> Self
+        where D: AsRef<[u8]>
+    {
+        Self::from_data(bc_crypto::x25519_derive_agreement_private_key(key_material))
+    }
+
+    pub fn shared_key_with(&self, public_key: &AgreementPublicKey) -> SymmetricKey {
+        SymmetricKey::from_data(bc_crypto::x25519_shared_key(self.into(), public_key.into()))
+    }
 }
 
 impl Default for AgreementPrivateKey {
@@ -55,6 +69,7 @@ impl Default for AgreementPrivateKey {
     }
 }
 
+// Convert from an `AgreementPrivateKey` to a `&'a [u8; AgreementPrivateKey::KEY_SIZE]`.
 impl<'a> From<&'a AgreementPrivateKey> for &'a [u8; AgreementPrivateKey::KEY_SIZE] {
     fn from(value: &'a AgreementPrivateKey) -> Self {
         &value.0

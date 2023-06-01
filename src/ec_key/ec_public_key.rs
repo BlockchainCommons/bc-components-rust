@@ -19,7 +19,7 @@ impl ECPublicKey {
     where
         D2: AsRef<[u8]>,
     {
-        bc_crypto::ecdsa_verify(&self.0, message, signature)
+        bc_crypto::ecdsa_verify(&self.0, signature, message)
     }
 }
 

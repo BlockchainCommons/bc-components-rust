@@ -19,7 +19,7 @@ impl SchnorrPublicKey {
         D2: AsRef<[u8]>,
         D3: AsRef<[u8]>
     {
-        bc_crypto::schnorr_verify(message, tag, signature, self.into())
+        bc_crypto::schnorr_verify(self.into(), signature, message, tag)
     }
 }
 
@@ -56,7 +56,7 @@ impl std::fmt::Debug for SchnorrPublicKey {
 impl ECKeyBase for SchnorrPublicKey {
     const KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {
+    fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             return None;

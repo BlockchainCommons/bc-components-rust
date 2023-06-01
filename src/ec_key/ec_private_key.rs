@@ -29,24 +29,24 @@ impl ECPrivateKey {
         bc_crypto::schnorr_public_key_from_private_key(self.into()).into()
     }
 
-    pub fn ecdsa_sign<T>(&self, message: &T) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] where T: AsRef<[u8]> {
+    pub fn ecdsa_sign<T>(&self, message: T) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] where T: AsRef<[u8]> {
         bc_crypto::ecdsa_sign(&self.0, message.as_ref())
     }
 
     pub fn schnorr_sign_using<D1, D2>(
         &self,
-        message: &D1,
-        tag: &D2,
+        message: D1,
+        tag: D2,
         rng: &mut impl bc_crypto::RandomNumberGenerator
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>
     {
-        bc_crypto::schnorr_sign_using(message, tag, &self.0, rng)
+        bc_crypto::schnorr_sign_using(&self.0, message, tag, rng)
     }
 
-    pub fn schnorr_sign<D1, D2>(&self, message: &D1, tag: &D2) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
+    pub fn schnorr_sign<D1, D2>(&self, message: D1, tag: D2) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>

@@ -2,7 +2,7 @@ use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, ecdsa_new_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
-use crate::{tags_registry, ECPrivateKey, Signature};
+use crate::{tags_registry, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
@@ -44,6 +44,20 @@ impl SigningPrivateKey {
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
+
+    pub fn ecdsa_public_key(&self) -> SigningPublicKey {
+        SigningPublicKey::from_ecdsa(ECPrivateKey::from_data(*self.data()).public_key())
+    }
+
+    pub fn schnorr_public_key(&self) -> SigningPublicKey {
+        SigningPublicKey::from_schnorr(ECPrivateKey::from_data(*self.data()).schnorr_public_key())
+    }
+
+    pub fn derive_from_key_material<D>(key_material: D) -> Self
+        where D: AsRef<[u8]>
+    {
+        Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
+    }
 }
 
 impl SigningPrivateKey {
@@ -51,6 +65,35 @@ impl SigningPrivateKey {
         let private_key = ECPrivateKey::from_data(*self.data());
         let sig = private_key.ecdsa_sign(message);
         Signature::ecdsa_from_data(sig)
+    }
+
+    pub fn schnorr_sign_using<D1, D2>(
+        &self,
+        message: D1,
+        tag: D2,
+        rng: &mut impl bc_crypto::RandomNumberGenerator
+    ) -> Signature
+    where
+        D1: AsRef<[u8]>,
+        D2: Into<Vec<u8>>,
+    {
+        let tag = tag.into();
+        let private_key = ECPrivateKey::from_data(*self.data());
+        let sig = private_key.schnorr_sign_using(message, &tag, rng);
+        Signature::schnorr_from_data(sig, tag)
+    }
+
+    pub fn schnorr_sign<D1, D2>(
+        &self,
+        message: D1,
+        tag: D2,
+    ) -> Signature
+    where
+        D1: AsRef<[u8]>,
+        D2: Into<Vec<u8>>,
+    {
+        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        self.schnorr_sign_using(message, tag, &mut rng)
     }
 }
 
@@ -73,7 +116,7 @@ impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
 }
 
 impl CBORTagged for SigningPrivateKey {
-    const CBOR_TAG: Tag = tags_registry::AGREEMENT_PRIVATE_KEY;
+    const CBOR_TAG: Tag = tags_registry::SIGNING_PRIVATE_KEY;
 }
 
 impl CBOREncodable for SigningPrivateKey {
