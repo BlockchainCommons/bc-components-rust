@@ -15,9 +15,9 @@ impl ECPublicKey {
 }
 
 impl ECPublicKey {
-    pub fn verify<D1, D2>(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: D2) -> bool
+    pub fn verify<D>(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: D) -> bool
     where
-        D2: AsRef<[u8]>,
+        D: AsRef<[u8]>,
     {
         bc_crypto::ecdsa_verify(&self.0, signature, message)
     }

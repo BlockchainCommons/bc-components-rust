@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase};
+use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
 
@@ -30,6 +30,26 @@ impl SigningPublicKey {
         match self {
             Self::ECDSA(key) => Some(key),
             _ => None,
+        }
+    }
+
+    pub fn verify<D>(&self, signature: &Signature, message: D) -> bool
+    where
+        D: AsRef<[u8]>,
+    {
+        match self {
+            SigningPublicKey::Schnorr(key) => {
+                match signature {
+                    Signature::Schnorr { sig, tag } => key.schnorr_verify(sig, message, tag),
+                    Signature::ECDSA(_) => false,
+                }
+            },
+            SigningPublicKey::ECDSA(key) => {
+                match signature {
+                    Signature::Schnorr { .. } => false,
+                    Signature::ECDSA(sig) => key.verify(sig, message),
+                }
+            },
         }
     }
 }
