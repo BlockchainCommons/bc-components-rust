@@ -49,6 +49,15 @@ pub use ec_key::*;
 pub mod tags_registry;
 pub use tags_registry::KNOWN_TAGS;
 
+mod private_keys_data_provider;
+pub use private_keys_data_provider::PrivateKeysDataProvider;
+
+mod private_key_base;
+pub use private_key_base::PrivateKeyBase;
+
+mod public_key_base;
+pub use public_key_base::PublicKeyBase;
+
 #[cfg(test)]
 mod tests {
     use crate::{AgreementPrivateKey, AgreementPublicKey, tags_registry, SigningPrivateKey, SigningPublicKey};
