@@ -109,6 +109,12 @@ impl<'a> From<&'a Digest> for &'a [u8; Digest::DIGEST_SIZE] {
     }
 }
 
+impl<'a> From<&'a Digest> for &'a [u8] {
+    fn from(value: &'a Digest) -> Self {
+        &value.0
+    }
+}
+
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
