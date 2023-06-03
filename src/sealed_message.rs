@@ -7,14 +7,29 @@ pub struct SealedMessage {
 }
 
 impl SealedMessage {
-    pub fn new<D>(
+    pub fn new<D>(plaintext: D, recipient: &PublicKeyBase) -> Self
+    where
+        D: AsRef<[u8]>
+    {
+        Self::new_with_aad(plaintext, recipient, None)
+    }
+
+    pub fn new_with_aad<D>(plaintext: D, recipient: &PublicKeyBase, aad: Option<&[u8]>) -> Self
+    where
+        D: AsRef<[u8]>
+    {
+        Self::new_opt(plaintext, recipient, aad, None, None)
+    }
+
+    pub fn new_opt<D>(
         plaintext: D,
         recipient: &PublicKeyBase,
         aad: Option<&[u8]>,
         test_key_material: Option<&[u8]>,
         test_nonce: Option<Nonce>
     ) -> Self
-    where D: AsRef<[u8]>
+    where
+        D: AsRef<[u8]>
     {
         let ephemeral_sender = PrivateKeyBase::from_optional_data(test_key_material);
         let recipient_public_key = recipient.agreement_public_key();
@@ -71,7 +86,7 @@ mod tests {
         // let carol_public_keys = carol_private_keys.public_keys();
 
         // Alice constructs a message for Bob's eyes only.
-        let sealed_message = SealedMessage::new(plaintext, &bob_public_keys, None, None, None);
+        let sealed_message = SealedMessage::new(plaintext, &bob_public_keys);
 
         // Bob decrypts and reads the message.
         assert_eq!(sealed_message.decrypt(&bob_private_keys).unwrap(), plaintext);
