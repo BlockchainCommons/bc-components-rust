@@ -11,6 +11,10 @@ impl SchnorrPublicKey {
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
+
+    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
+        &self.0
+    }
 }
 
 impl SchnorrPublicKey {

@@ -213,7 +213,7 @@ mod test {
     const AUTH: Auth = Auth::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
 
     fn encrypted_message() -> EncryptedMessage {
-        KEY.encrypt_with_nonce(PLAINTEXT, AAD, NONCE)
+        KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE))
     }
 
     #[test]
@@ -233,7 +233,7 @@ mod test {
     fn test_random_key_and_nonce() -> Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
         let nonce = Nonce::new();
-        let encrypted_message = key.encrypt_with_nonce(PLAINTEXT, AAD, nonce);
+        let encrypted_message = key.encrypt(PLAINTEXT, Some(&AAD), Some(nonce));
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(PLAINTEXT, decrypted_plaintext.as_slice());
         Ok(())
@@ -242,7 +242,7 @@ mod test {
     #[test]
     fn test_empty_data() -> Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
-        let encrypted_message = key.encrypt([], []);
+        let encrypted_message = key.encrypt([], None, None);
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(&[] as &[u8], decrypted_plaintext.as_slice());
         Ok(())

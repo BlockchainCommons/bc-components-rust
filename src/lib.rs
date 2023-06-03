@@ -58,6 +58,9 @@ pub use private_key_base::PrivateKeyBase;
 mod public_key_base;
 pub use public_key_base::PublicKeyBase;
 
+mod sealed_message;
+pub use sealed_message::SealedMessage;
+
 #[cfg(test)]
 mod tests {
     use crate::{AgreementPrivateKey, AgreementPublicKey, tags_registry, SigningPrivateKey, SigningPublicKey};

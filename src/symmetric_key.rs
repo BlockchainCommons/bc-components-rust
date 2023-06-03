@@ -58,23 +58,14 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given additional authenticated data and nonce.
-    pub fn encrypt_with_nonce<D1, D2>(&self, plaintext: D1, aad: D2, nonce: Nonce) -> EncryptedMessage
+    pub fn encrypt<D>(&self, plaintext: D, aad: Option<&[u8]>, nonce: Option<Nonce>) -> EncryptedMessage
     where
-        D1: AsRef<[u8]>,
-        D2: Into<Vec<u8>>,
+        D: AsRef<[u8]>
     {
-        let aad: Vec<u8> = aad.into();
+        let aad = aad.unwrap_or(&[]).into();
+        let nonce = nonce.unwrap_or_else(Nonce::new);
         let (ciphertext, auth) = encrypt_aead_chacha20_poly1305_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
-    }
-
-    /// Encrypt the given plaintext with this key, and the given additional authenticated data and a random nonce.
-    pub fn encrypt<D, A>(&self, plaintext: D, aad: A) -> EncryptedMessage
-    where
-        D: AsRef<[u8]>,
-        A: Into<Vec<u8>>,
-    {
-        self.encrypt_with_nonce(plaintext, aad, Nonce::new())
     }
 
     /// Decrypt the given encrypted message with this key.

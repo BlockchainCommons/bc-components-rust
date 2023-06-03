@@ -5,6 +5,10 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecod
 
 use crate::{SigningPublicKey, AgreementPublicKey, tags_registry};
 
+/// Holds information used to communicate cryptographically with a remote entity.
+///
+/// Includes the entity's public signing key for verifying signatures, and
+/// the entity's public agreement key used for X25519 key agreement.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
