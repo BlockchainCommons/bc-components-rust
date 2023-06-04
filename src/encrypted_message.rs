@@ -50,6 +50,10 @@ impl EncryptedMessage {
     pub fn opt_digest(&self) -> Option<Digest> {
         Digest::from_cbor_data(self.aad()).ok().map(|x| x.as_ref().clone())
     }
+
+    pub fn has_digest(&self) -> bool {
+        self.opt_digest().is_some()
+    }
 }
 
 impl DigestProvider for EncryptedMessage {
