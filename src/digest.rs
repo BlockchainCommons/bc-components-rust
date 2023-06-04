@@ -165,7 +165,7 @@ impl UREncodable for Digest { }
 
 impl CBORDecodable for Digest {
     fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
-        Self::from_untagged_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 

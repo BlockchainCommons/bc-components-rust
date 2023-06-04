@@ -13,7 +13,7 @@ use crate::{Nonce, Digest, DigestProvider, tags_registry};
 ///
 /// To facilitate decoding, it is recommended that the plaintext of an `EncryptedMessage` be
 /// tagged CBOR.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct EncryptedMessage {
     ciphertext: Vec<u8>,
     aad: Vec<u8>, // Additional authenticated data (AAD) per RFC8439
@@ -53,6 +53,17 @@ impl EncryptedMessage {
 
     pub fn has_digest(&self) -> bool {
         self.opt_digest().is_some()
+    }
+}
+
+impl std::fmt::Debug for EncryptedMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("EncryptedMessage")
+            .field("ciphertext", &hex::encode(&self.ciphertext))
+            .field("aad", &hex::encode(&self.aad))
+            .field("nonce", &self.nonce)
+            .field("auth", &self.auth)
+            .finish()
     }
 }
 
@@ -127,7 +138,7 @@ impl URDecodable for EncryptedMessage { }
 
 impl URCodable for EncryptedMessage { }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct Auth([u8; Self::AUTH_SIZE]);
 
 impl Auth {
@@ -149,6 +160,14 @@ impl Auth {
 
     pub fn data(&self) -> &[u8; Self::AUTH_SIZE] {
         self.into()
+    }
+}
+
+impl std::fmt::Debug for Auth {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Auth")
+            .field(&hex::encode(self.data()))
+            .finish()
     }
 }
 
