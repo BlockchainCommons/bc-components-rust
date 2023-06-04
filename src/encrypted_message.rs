@@ -47,18 +47,15 @@ impl EncryptedMessage {
         &self.auth
     }
 
-    pub fn has_digest(&self) -> bool {
-        todo!();
-    }
-
-    pub fn digest_ref_opt(&self) -> Option<&Digest> {
-        todo!();
+    pub fn opt_digest(&self) -> Option<Digest> {
+        Digest::from_cbor_data(self.aad()).ok().map(|x| x.as_ref().clone())
     }
 }
 
 impl DigestProvider for EncryptedMessage {
     fn digest(&self) -> Cow<Digest> {
-        todo!();
+        let a = self.opt_digest().unwrap();
+        Cow::Owned(a)
     }
 }
 
@@ -242,7 +239,7 @@ mod test {
     #[test]
     fn test_empty_data() -> Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
-        let encrypted_message = key.encrypt([], None, None);
+        let encrypted_message = key.encrypt([], None, None::<Nonce>);
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(&[] as &[u8], decrypted_plaintext.as_slice());
         Ok(())

@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use crate::{EncryptedMessage, Nonce, tags_registry};
+use crate::{EncryptedMessage, Nonce, tags_registry, Digest};
 use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
@@ -58,14 +58,24 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given additional authenticated data and nonce.
-    pub fn encrypt<D>(&self, plaintext: D, aad: Option<&[u8]>, nonce: Option<Nonce>) -> EncryptedMessage
+    pub fn encrypt<D, N>(&self, plaintext: D, aad: Option<&[u8]>, nonce: Option<N>) -> EncryptedMessage
     where
-        D: AsRef<[u8]>
+        D: AsRef<[u8]>,
+        N: AsRef<Nonce>
     {
         let aad = aad.unwrap_or(&[]).into();
-        let nonce = nonce.unwrap_or_else(Nonce::new);
+        let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_else(Nonce::new);
         let (ciphertext, auth) = encrypt_aead_chacha20_poly1305_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
+    }
+
+    /// Encrypt the given plaintext with this key, and the given digest of the plaintext, and nonce.
+    pub fn encrypt_with_digest<D, N>(&self, plaintext: D, digest: &Digest, nonce: Option<N>) -> EncryptedMessage
+    where
+        D: AsRef<[u8]>,
+        N: AsRef<Nonce>,
+    {
+        self.encrypt(plaintext, Some(&digest.cbor_data()), nonce)
     }
 
     /// Decrypt the given encrypted message with this key.

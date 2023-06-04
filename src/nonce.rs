@@ -69,6 +69,12 @@ impl<'a> From<&'a Nonce> for &'a [u8; Nonce::NONCE_SIZE] {
     }
 }
 
+impl AsRef<Nonce> for Nonce {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
 impl CBORTagged for Nonce {
     const CBOR_TAG: Tag = tags_registry::NONCE;
 }

@@ -18,18 +18,19 @@ impl SealedMessage {
     where
         D: AsRef<[u8]>
     {
-        Self::new_opt(plaintext, recipient, aad, None, None)
+        Self::new_opt(plaintext, recipient, aad, None, None::<Nonce>)
     }
 
-    pub fn new_opt<D>(
+    pub fn new_opt<D, N>(
         plaintext: D,
         recipient: &PublicKeyBase,
         aad: Option<&[u8]>,
         test_key_material: Option<&[u8]>,
-        test_nonce: Option<Nonce>
+        test_nonce: Option<N>
     ) -> Self
     where
-        D: AsRef<[u8]>
+        D: AsRef<[u8]>,
+        N: AsRef<Nonce>,
     {
         let ephemeral_sender = PrivateKeyBase::from_optional_data(test_key_material);
         let recipient_public_key = recipient.agreement_public_key();
