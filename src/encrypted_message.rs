@@ -1,7 +1,7 @@
 use std::{rc::Rc, borrow::Cow};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, bstring, into_bstring};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, bstring, expect_bstring};
 
 use crate::{Nonce, Digest, DigestProvider, tags_registry};
 
@@ -115,11 +115,11 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 if elements.len() < 3 {
                     return Err(dcbor::Error::InvalidFormat);
                 }
-                let ciphertext = into_bstring(&elements[0])?.to_vec();
+                let ciphertext = expect_bstring(&elements[0])?.to_vec();
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
                 let auth = Auth::from_cbor(&elements[2])?;
                 let aad = if elements.len() > 3 {
-                    into_bstring(&elements[3])?.to_vec()
+                    expect_bstring(&elements[3])?.to_vec()
                 } else {
                     Vec::<u8>::new()
                 };
@@ -209,7 +209,7 @@ impl CBOREncodable for Auth {
 
 impl CBORDecodable for Auth {
     fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = into_bstring(cbor)?;
+        let data = expect_bstring(cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }

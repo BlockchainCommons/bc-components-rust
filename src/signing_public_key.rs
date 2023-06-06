@@ -1,6 +1,6 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, bstring};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, bstring, into_bstring};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SigningPublicKey {
@@ -89,14 +89,14 @@ impl CBORDecodable for SigningPublicKey {
 impl CBORTaggedDecodable for SigningPublicKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match untagged_cbor {
-            CBOR::Bytes(data) => {
+            CBOR::ByteString(data) => {
                 Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?))
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Unsigned(1) = &elements[0] {
-                        if let CBOR::Bytes(data) = &elements[1] {
-                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?));
+                        if let Some(data) = into_bstring(&elements[1]) {
+                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?));
                         }
                     }
                 }

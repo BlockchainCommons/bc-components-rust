@@ -1,6 +1,6 @@
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::UREncodable;
-use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring};
+use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, into_bstring};
 
 use crate::tags_registry;
 
@@ -113,18 +113,18 @@ impl CBORDecodable for Signature {
 impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match cbor {
-            CBOR::Bytes(bytes) => {
+            CBOR::ByteString(bytes) => {
                 Ok(Self::schnorr_from_data_ref(bytes, []).ok_or(dcbor::Error::InvalidFormat)?)
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
-                    if let CBOR::Bytes(data) = &elements[0] {
-                        if let CBOR::Bytes(tag) = &elements[1] {
+                    if let Some(data) = into_bstring(&elements[0]) {
+                        if let Some(tag) = into_bstring(&elements[1]) {
                             return Self::schnorr_from_data_ref(data, tag).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }
                     if let CBOR::Unsigned(1) = &elements[0] {
-                        if let CBOR::Bytes(data) = &elements[1] {
+                        if let Some(data) = into_bstring(&elements[1]) {
                             return Self::ecdsa_from_data_ref(data).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }

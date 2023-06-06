@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, into_bstring};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, expect_bstring};
 use bc_crypto::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags_registry;
 
@@ -110,7 +110,7 @@ impl CBORDecodable for Salt {
 
 impl CBORTaggedDecodable for Salt {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = into_bstring(untagged_cbor)?;
+        let data = expect_bstring(untagged_cbor)?;
         let instance = Self::from_data_ref(&data);
         Ok(instance)
     }
