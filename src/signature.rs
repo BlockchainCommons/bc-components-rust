@@ -1,6 +1,6 @@
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::UREncodable;
-use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, Bytes, CBORDecodable, CBORTaggedDecodable};
+use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring};
 
 use crate::tags_registry;
 
@@ -84,18 +84,18 @@ impl CBORTaggedEncodable for Signature {
         match self {
             Signature::Schnorr{ sig: data, tag } => {
                 if tag.is_empty() {
-                    Bytes::from_data(data).cbor()
+                    bstring(data)
                 } else {
                     vec![
-                        Bytes::from_data(data),
-                        Bytes::from_data(tag),
+                        bstring(data),
+                        bstring(tag),
                     ].cbor()
                 }
             },
             Signature::ECDSA(data) => {
                 vec![
                     1.cbor(),
-                    Bytes::from_data(data).cbor(),
+                    bstring(data),
                 ].cbor()
             },
         }
@@ -114,18 +114,18 @@ impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match cbor {
             CBOR::Bytes(bytes) => {
-                Ok(Self::schnorr_from_data_ref(bytes.data(), []).ok_or(dcbor::Error::InvalidFormat)?)
+                Ok(Self::schnorr_from_data_ref(bytes, []).ok_or(dcbor::Error::InvalidFormat)?)
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Bytes(data) = &elements[0] {
                         if let CBOR::Bytes(tag) = &elements[1] {
-                            return Self::schnorr_from_data_ref(data.data(), tag.data()).ok_or(dcbor::Error::InvalidFormat);
+                            return Self::schnorr_from_data_ref(data, tag).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }
                     if let CBOR::Unsigned(1) = &elements[0] {
                         if let CBOR::Bytes(data) = &elements[1] {
-                            return Self::ecdsa_from_data_ref(data.data()).ok_or(dcbor::Error::InvalidFormat);
+                            return Self::ecdsa_from_data_ref(data).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }
                 }

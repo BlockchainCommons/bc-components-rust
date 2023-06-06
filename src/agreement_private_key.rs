@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, bstring, into_bstring};
 use crate::{tags_registry, AgreementPublicKey, SymmetricKey};
 
 /// A Curve25519 private key used for X25519 key agreement.
@@ -94,7 +94,7 @@ impl CBOREncodable for AgreementPrivateKey {
 
 impl CBORTaggedEncodable for AgreementPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.data()).cbor()
+        bstring(self.data())
     }
 }
 
@@ -106,9 +106,8 @@ impl CBORDecodable for AgreementPrivateKey {
 
 impl CBORTaggedDecodable for AgreementPrivateKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(untagged_cbor)?;
-        let data = bytes.data();
-        let instance = Self::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?;
+        let data = into_bstring(untagged_cbor)?;
+        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
 }

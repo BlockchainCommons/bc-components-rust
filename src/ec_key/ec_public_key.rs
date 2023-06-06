@@ -1,6 +1,6 @@
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::UREncodable;
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Bytes, Map};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map, bstring};
 
 use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags_registry};
 
@@ -96,7 +96,7 @@ impl CBOREncodable for ECPublicKey {
 impl CBORTaggedEncodable for ECPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         let mut m = Map::new();
-        m.insert_into(3, Bytes::from_data(self.0));
+        m.insert_into(3, bstring(self.0));
         m.cbor()
     }
 }

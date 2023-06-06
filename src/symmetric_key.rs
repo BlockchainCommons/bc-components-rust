@@ -1,7 +1,7 @@
 use crate::{EncryptedMessage, Nonce, tags_registry, Digest};
 use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, Bytes, CBORDecodable, CBORTaggedDecodable};
+use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable, bstring, into_bstring};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_SIZE]);
@@ -134,7 +134,7 @@ impl CBOREncodable for SymmetricKey {
 
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.0).cbor()
+        bstring(self.0)
     }
 }
 
@@ -148,8 +148,8 @@ impl CBORDecodable for SymmetricKey {
 
 impl CBORTaggedDecodable for SymmetricKey {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(cbor)?;
-        let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
+        let bytes = into_bstring(cbor)?;
+        let instance = Self::from_data_ref(&bytes).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
 }

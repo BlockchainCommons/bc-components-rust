@@ -1,7 +1,7 @@
 use std::{rc::Rc, borrow::Cow};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable, bstring, into_bstring};
 
 use crate::{Nonce, Digest, DigestProvider, tags_registry};
 
@@ -95,13 +95,13 @@ impl CBORCodable for EncryptedMessage { }
 impl CBORTaggedEncodable for EncryptedMessage {
     fn untagged_cbor(&self) -> CBOR {
         let mut a = vec![
-            Bytes::from_data(&self.ciphertext).cbor(),
-            Bytes::from_data(self.nonce.data()).cbor(),
-            Bytes::from_data(self.auth.data()).cbor()
+            bstring(&self.ciphertext),
+            bstring(self.nonce.data()),
+            bstring(self.auth.data())
         ];
 
         if !self.aad.is_empty() {
-            a.push(Bytes::from_data(&self.aad).cbor());
+            a.push(bstring(&self.aad));
         }
 
         a.cbor()
@@ -115,11 +115,11 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 if elements.len() < 3 {
                     return Err(dcbor::Error::InvalidFormat);
                 }
-                let ciphertext = Bytes::from_cbor(&elements[0])?.data().to_vec();
+                let ciphertext = into_bstring(&elements[0])?.to_vec();
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
                 let auth = Auth::from_cbor(&elements[2])?;
                 let aad = if elements.len() > 3 {
-                    Bytes::from_cbor(&elements[3])?.data().to_vec()
+                    into_bstring(&elements[3])?.to_vec()
                 } else {
                     Vec::<u8>::new()
                 };
@@ -203,14 +203,13 @@ impl From<Vec<u8>> for Auth {
 
 impl CBOREncodable for Auth {
     fn cbor(&self) -> CBOR {
-        dcbor::Bytes::from_data(self.data()).cbor()
+        bstring(self.data())
     }
 }
 
 impl CBORDecodable for Auth {
     fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = dcbor::Bytes::from_cbor(cbor)?;
-        let data = bytes.data();
+        let data = into_bstring(cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }

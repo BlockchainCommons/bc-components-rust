@@ -1,21 +1,48 @@
-use std::str::FromStr;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, into_bstring, bstring};
 use crate::tags_registry;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct UUID(String);
+pub struct UUID([u8; Self::UUID_SIZE]);
 
 impl UUID {
-    pub fn new<T>(uuid: T) -> Self where T: Into<String> {
-        Self(uuid.into())
+    pub const UUID_SIZE: usize = 16;
+
+    pub fn new() -> Self {
+        let mut uuid = [0u8; Self::UUID_SIZE];
+        bc_crypto::fill_random_data(&mut uuid);
+        uuid[6] = (uuid[6] & 0x0F) | 0x40; // set version to 4
+        uuid[8] = (uuid[8] & 0x3F) | 0x80; // set variant to 2
+        Self(uuid)
+    }
+
+    pub fn from_data(data: [u8; Self::UUID_SIZE]) -> Self {
+        Self(data)
+    }
+
+    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+        let data = data.as_ref();
+        if data.len() != Self::UUID_SIZE {
+            return None;
+        }
+        let mut arr = [0u8; Self::UUID_SIZE];
+        arr.copy_from_slice(data);
+        Some(Self::from_data(arr))
+    }
+
+    pub fn data(&self) -> &[u8; Self::UUID_SIZE] {
+        self.into()
     }
 }
 
-impl FromStr for UUID {
-    type Err = ();
+impl Default for UUID {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::new(s))
+impl<'a> From<&'a UUID> for &'a [u8; UUID::UUID_SIZE] {
+    fn from(value: &'a UUID) -> Self {
+        &value.0
     }
 }
 
@@ -31,7 +58,7 @@ impl CBOREncodable for UUID {
 
 impl CBORTaggedEncodable for UUID {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.0.as_bytes()).cbor()
+        bstring(self.0)
     }
 }
 
@@ -43,42 +70,32 @@ impl CBORDecodable for UUID {
 
 impl CBORTaggedDecodable for UUID {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(cbor)?;
-        let uuid = String::from_utf8(bytes.data().to_vec()).map_err(|_| dcbor::Error::InvalidFormat)?;
-        Ok(Self::new(uuid))
+        let bytes = into_bstring(cbor)?;
+        if bytes.len() != Self::UUID_SIZE {
+            return Err(dcbor::Error::InvalidFormat);
+        }
+        let mut uuid = [0u8; Self::UUID_SIZE];
+        uuid.copy_from_slice(bytes);
+        Ok(Self::from_data(uuid))
     }
 }
 
 impl std::fmt::Display for UUID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
-// Convert from a string to a UUID.
-impl From<&str> for UUID {
-    fn from(uuid: &str) -> Self {
-        Self::new(uuid)
-    }
-}
-
-// Convert from a string to a UUID.
-impl From<String> for UUID {
-    fn from(uuid: String) -> Self {
-        Self::new(uuid)
+        write!(f, "{}", hex::encode(self.0))
     }
 }
 
 // Convert from a UUID to a string.
 impl From<UUID> for String {
     fn from(uuid: UUID) -> Self {
-        uuid.0
+        hex::encode(uuid.0)
     }
 }
 
 // Convert from a UUID to a string.
 impl From<&UUID> for String {
     fn from(uuid: &UUID) -> Self {
-        uuid.0.clone()
+        hex::encode(uuid.0)
     }
 }

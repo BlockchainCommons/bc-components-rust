@@ -1,6 +1,6 @@
 use bc_crypto::RandomNumberGenerator;
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, bstring, into_bstring};
 
 use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags_registry};
 
@@ -92,7 +92,7 @@ impl CBOREncodable for PrivateKeyBase {
 
 impl CBORTaggedEncodable for PrivateKeyBase {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(&self.0).cbor()
+        bstring(&self.0)
     }
 }
 
@@ -106,9 +106,8 @@ impl CBORDecodable for PrivateKeyBase {
 
 impl CBORTaggedDecodable for PrivateKeyBase {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(untagged_cbor)?;
-        let data = bytes.data();
-        let instance = Self::from_data_ref(data);
+        let data = into_bstring(untagged_cbor)?;
+        let instance = Self::from_data_ref(&data);
         Ok(instance)
     }
 }

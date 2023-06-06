@@ -1,6 +1,6 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, bstring};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SigningPublicKey {
@@ -66,12 +66,12 @@ impl CBORTaggedEncodable for SigningPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {
             SigningPublicKey::Schnorr(key) => {
-                Bytes::from_data(key.data()).cbor()
+                bstring(key.data())
             },
             SigningPublicKey::ECDSA(key) => {
                 vec![
                     1.cbor(),
-                    Bytes::from_data(key.data()).cbor(),
+                    bstring(key.data()),
                 ].cbor()
             },
         }

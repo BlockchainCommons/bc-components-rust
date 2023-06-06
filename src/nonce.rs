@@ -1,10 +1,10 @@
 use std::rc::Rc;
 use bc_crypto::fill_random_data;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, into_bstring};
 use crate::tags_registry;
 
- #[derive(Clone, Eq, PartialEq)]
- pub struct Nonce ([u8; Self::NONCE_SIZE]);
+#[derive(Clone, Eq, PartialEq)]
+pub struct Nonce ([u8; Self::NONCE_SIZE]);
 
 impl Nonce {
     pub const NONCE_SIZE: usize = 12;
@@ -87,7 +87,7 @@ impl CBOREncodable for Nonce {
 
 impl CBORTaggedEncodable for Nonce {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.data()).cbor()
+        bstring(self.data())
     }
 }
 
@@ -99,9 +99,8 @@ impl CBORDecodable for Nonce {
 
 impl CBORTaggedDecodable for Nonce {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(untagged_cbor)?;
-        let data = bytes.data();
-        let instance = Self::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?;
+        let data = into_bstring(untagged_cbor)?;
+        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
 }

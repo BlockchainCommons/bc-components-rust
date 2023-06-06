@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, bstring, into_bstring};
 use crate::tags_registry;
 
 /// A Curve25519 public key used for X25519 key agreement.
@@ -63,7 +63,7 @@ impl CBOREncodable for AgreementPublicKey {
 
 impl CBORTaggedEncodable for AgreementPublicKey {
     fn untagged_cbor(&self) -> CBOR {
-        Bytes::from_data(self.data()).cbor()
+        bstring(self.data())
     }
 }
 
@@ -75,9 +75,8 @@ impl CBORDecodable for AgreementPublicKey {
 
 impl CBORTaggedDecodable for AgreementPublicKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = Bytes::from_cbor(untagged_cbor)?;
-        let data = bytes.data();
-        let instance = Self::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?;
+        let data = into_bstring(untagged_cbor)?;
+        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
 }
