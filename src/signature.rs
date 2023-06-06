@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::UREncodable;
 use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, Bytes, CBORDecodable, CBORTaggedDecodable};
@@ -107,27 +105,27 @@ impl CBORTaggedEncodable for Signature {
 impl UREncodable for Signature { }
 
 impl CBORDecodable for Signature {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Signature {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match cbor {
             CBOR::Bytes(bytes) => {
-                Ok(Rc::new(Self::schnorr_from_data_ref(bytes.data(), []).ok_or(dcbor::Error::InvalidFormat)?))
+                Ok(Self::schnorr_from_data_ref(bytes.data(), []).ok_or(dcbor::Error::InvalidFormat)?)
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Bytes(data) = &elements[0] {
                         if let CBOR::Bytes(tag) = &elements[1] {
-                            return Ok(Rc::new(Self::schnorr_from_data_ref(data.data(), tag.data()).ok_or(dcbor::Error::InvalidFormat)?));
+                            return Self::schnorr_from_data_ref(data.data(), tag.data()).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }
                     if let CBOR::Unsigned(1) = &elements[0] {
                         if let CBOR::Bytes(data) = &elements[1] {
-                            return Ok(Rc::new(Self::ecdsa_from_data_ref(data.data()).ok_or(dcbor::Error::InvalidFormat)?));
+                            return Self::ecdsa_from_data_ref(data.data()).ok_or(dcbor::Error::InvalidFormat);
                         }
                     }
                 }
@@ -174,7 +172,7 @@ mod tests {
         )
         "#}.trim());
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
-        assert_eq!(signature, *received_signature);
+        assert_eq!(signature, received_signature);
     }
 
     #[test]
@@ -204,6 +202,6 @@ mod tests {
         )
         "#}.trim());
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
-        assert_eq!(signature, *received_signature);
+        assert_eq!(signature, received_signature);
     }
 }

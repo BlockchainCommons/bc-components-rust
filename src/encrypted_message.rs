@@ -48,7 +48,7 @@ impl EncryptedMessage {
     }
 
     pub fn opt_digest(&self) -> Option<Digest> {
-        Digest::from_cbor_data(self.aad()).ok().map(|x| x.as_ref().clone())
+        Digest::from_cbor_data(self.aad()).ok()
     }
 
     pub fn has_digest(&self) -> bool {
@@ -85,7 +85,7 @@ impl CBOREncodable for EncryptedMessage {
 }
 
 impl CBORDecodable for EncryptedMessage {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -109,21 +109,21 @@ impl CBORTaggedEncodable for EncryptedMessage {
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match cbor {
             CBOR::Array(elements) => {
                 if elements.len() < 3 {
                     return Err(dcbor::Error::InvalidFormat);
                 }
                 let ciphertext = Bytes::from_cbor(&elements[0])?.data().to_vec();
-                let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?.into();
-                let auth = Auth::from_cbor(&elements[2])?.into();
+                let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
+                let auth = Auth::from_cbor(&elements[2])?;
                 let aad = if elements.len() > 3 {
                     Bytes::from_cbor(&elements[3])?.data().to_vec()
                 } else {
                     Vec::<u8>::new()
                 };
-                Ok(Rc::new(Self::new(ciphertext, aad, nonce, auth)))
+                Ok(Self::new(ciphertext, aad, nonce, auth))
             },
             _ => Err(dcbor::Error::InvalidFormat),
         }
@@ -208,11 +208,11 @@ impl CBOREncodable for Auth {
 }
 
 impl CBORDecodable for Auth {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = dcbor::Bytes::from_cbor(cbor)?;
         let data = bytes.data();
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
+        Ok(instance)
     }
 }
 
@@ -308,7 +308,7 @@ mod test {
         let encrypted_message = encrypted_message();
         let cbor = encrypted_message.cbor();
         let decoded = EncryptedMessage::from_cbor(&cbor)?;
-        assert_eq!(encrypted_message, *decoded);
+        assert_eq!(encrypted_message, decoded);
         Ok(())
     }
 
@@ -319,7 +319,7 @@ mod test {
         let expected_ur = "ur:encrypted/lrhdjptecylgeeiemnhnuykglnperfguwskbsaoxpmwegydtjtayzeptvoreosenwyidtbfsrnoxhylkptiobglfzszointnmojplucyjsuebknnambddtahtbonrpkbsnfrenmoutrylbdpktlulkmkaxplvldeascwhdzsqddkvezstbkpmwgolplalufdehtsrffhwkuewtmngrknntvwkotdihlntoswgrhscmgsataeaeaefzfpfwfxfyfefgflgdcyvybdhkgwasvoimkbmhdmsbtihnammegsgdgygmgurtsesasrssskswstcfnbpdct";
         assert_eq!(ur.to_string(), expected_ur);
         let decoded = EncryptedMessage::from_ur(&ur).unwrap();
-        assert_eq!(encrypted_message, *decoded);
+        assert_eq!(encrypted_message, decoded);
         Ok(())
     }
 }

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 
@@ -54,25 +52,22 @@ impl CBORTaggedEncodable for PublicKeyBase {
 impl UREncodable for PublicKeyBase { }
 
 impl CBORDecodable for PublicKeyBase {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PublicKeyBase {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match untagged_cbor {
             CBOR::Array(elements) => {
                 if elements.len() != 2 {
                     return Err(dcbor::Error::InvalidFormat);
                 }
 
-                let signing_public_key: Rc<SigningPublicKey> = SigningPublicKey::from_cbor(&elements[0])?;
-                let agreement_public_key: Rc<AgreementPublicKey> = AgreementPublicKey::from_cbor(&elements[1])?;
-
-                let signing_public_key = (*signing_public_key).clone();
-                let agreement_public_key = (*agreement_public_key).clone();
-                Ok(Rc::new(Self::new(signing_public_key, agreement_public_key)))
+                let signing_public_key = SigningPublicKey::from_cbor(&elements[0])?;
+                let agreement_public_key = AgreementPublicKey::from_cbor(&elements[1])?;
+                Ok(Self::new(signing_public_key, agreement_public_key))
             },
             _ => Err(dcbor::Error::InvalidFormat),
         }

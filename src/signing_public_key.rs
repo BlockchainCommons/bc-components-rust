@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, Bytes};
@@ -83,22 +81,22 @@ impl CBORTaggedEncodable for SigningPublicKey {
 impl UREncodable for SigningPublicKey { }
 
 impl CBORDecodable for SigningPublicKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SigningPublicKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
         match untagged_cbor {
             CBOR::Bytes(data) => {
-                Ok(Rc::new(Self::Schnorr(SchnorrPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?)))
+                Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?))
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Unsigned(1) = &elements[0] {
                         if let CBOR::Bytes(data) = &elements[1] {
-                            return Ok(Rc::new(Self::ECDSA(ECPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?)));
+                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?));
                         }
                     }
                 }

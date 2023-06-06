@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use bc_crypto::RandomNumberGenerator;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, Bytes};
@@ -101,17 +99,17 @@ impl CBORTaggedEncodable for PrivateKeyBase {
 impl UREncodable for PrivateKeyBase { }
 
 impl CBORDecodable for PrivateKeyBase {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PrivateKeyBase {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
         let instance = Self::from_data_ref(data);
-        Ok(Rc::new(instance))
+        Ok(instance)
     }
 }
 
@@ -138,6 +136,6 @@ mod tests {
 
         let ur = private_key_base.ur_string();
         assert_eq!(ur, "ur:crypto-prvkeys/gdhkwzdtfthptokigtvwnnjsqzcxknsktdsfecsbbk");
-        assert_eq!(*PrivateKeyBase::from_ur_string(&ur).unwrap(), private_key_base);
+        assert_eq!(PrivateKeyBase::from_ur_string(&ur).unwrap(), private_key_base);
     }
 }

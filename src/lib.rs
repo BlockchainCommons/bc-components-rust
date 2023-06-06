@@ -80,12 +80,12 @@ mod tests {
         let private_key = AgreementPrivateKey::new_using(&mut rng);
         let private_key_ur = private_key.ur_string();
         assert_eq!(private_key_ur, "ur:agreement-private-key/hdcxkbrehkrkrsjztodseytknecfgewmgdmwfsvdvysbpmghuozsprknfwkpnehydlweynwkrtct");
-        assert_eq!(AgreementPrivateKey::from_ur_string(private_key_ur).unwrap().as_ref(), &private_key);
+        assert_eq!(AgreementPrivateKey::from_ur_string(private_key_ur).unwrap(), private_key);
 
         let public_key = private_key.public_key();
         let public_key_ur = public_key.ur_string();
         assert_eq!(public_key_ur, "ur:agreement-public-key/hdcxwnryknkbbymnoxhswmptgydsotwswsghfmrkksfxntbzjyrnuornkildchgswtdahehpwkrl");
-        assert_eq!(AgreementPublicKey::from_ur_string(public_key_ur).unwrap().as_ref(), &public_key);
+        assert_eq!(AgreementPublicKey::from_ur_string(public_key_ur).unwrap(), public_key);
 
         let derived_private_key = AgreementPrivateKey::derive_from_key_material("password".as_bytes());
         assert_eq!(derived_private_key.ur_string(), "ur:agreement-private-key/hdcxkgcfkomeeyiemywkftvabnrdolmttlrnfhjnguvaiehlrldmdpemgyjlatdthsnecytdoxat");
@@ -111,17 +111,17 @@ mod tests {
         let private_key = SigningPrivateKey::new_using(&mut rng);
         let private_key_ur = private_key.ur_string();
         assert_eq!(private_key_ur, "ur:signing-private-key/hdcxkbrehkrkrsjztodseytknecfgewmgdmwfsvdvysbpmghuozsprknfwkpnehydlweynwkrtct");
-        assert_eq!(SigningPrivateKey::from_ur_string(private_key_ur).unwrap().as_ref(), &private_key);
+        assert_eq!(SigningPrivateKey::from_ur_string(private_key_ur).unwrap(), private_key);
 
         let ecdsa_public_key = private_key.ecdsa_public_key();
         let ecdsa_public_key_ur = ecdsa_public_key.ur_string();
         assert_eq!(ecdsa_public_key_ur, "ur:signing-public-key/lfadhdclaojsrhdnidbgosndmobzwntdglzonnidmwoyrnuomdrpsptkcskerhfljssgaoidjedkwftboe");
-        assert_eq!(SigningPublicKey::from_ur_string(ecdsa_public_key_ur).unwrap().as_ref(), &ecdsa_public_key);
+        assert_eq!(SigningPublicKey::from_ur_string(ecdsa_public_key_ur).unwrap(), ecdsa_public_key);
 
         let schnorr_public_key = private_key.schnorr_public_key();
         let schnorr_public_key_ur = schnorr_public_key.ur_string();
         assert_eq!(schnorr_public_key_ur, "ur:signing-public-key/hdcxjsrhdnidbgosndmobzwntdglzonnidmwoyrnuomdrpsptkcskerhfljssgaoidjewyjymhcp");
-        assert_eq!(SigningPublicKey::from_ur_string(schnorr_public_key_ur).unwrap().as_ref(), &schnorr_public_key);
+        assert_eq!(SigningPublicKey::from_ur_string(schnorr_public_key_ur).unwrap(), schnorr_public_key);
 
         let derived_private_key = SigningPrivateKey::derive_from_key_material("password".as_bytes());
         assert_eq!(derived_private_key.ur_string(), "ur:signing-private-key/hdcxahsfgobtpkkpahmnhsfmhnjnmkmkzeuraonneshkbysseyjkoeayrlvtvsmndicwkkvattfs");

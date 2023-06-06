@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use crate::{EncryptedMessage, Nonce, tags_registry, Digest};
 use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
@@ -142,16 +141,16 @@ impl CBORTaggedEncodable for SymmetricKey {
 impl UREncodable for SymmetricKey { }
 
 impl CBORDecodable for SymmetricKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = Bytes::from_cbor(cbor)?;
         let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
+        Ok(instance)
     }
 }
 

@@ -92,17 +92,17 @@ impl CBORTaggedEncodable for Nonce {
 }
 
 impl CBORDecodable for Nonce {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = Bytes::from_cbor(untagged_cbor)?;
         let data = bytes.data();
         let instance = Self::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
+        Ok(instance)
     }
 }
 
@@ -179,6 +179,6 @@ mod test {
         let nonce = Nonce::new();
         let cbor = nonce.cbor();
         let decoded_nonce = Nonce::from_cbor(&cbor).unwrap();
-        assert_eq!(nonce, *decoded_nonce);
+        assert_eq!(nonce, decoded_nonce);
     }
 }

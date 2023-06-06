@@ -1,4 +1,4 @@
-use std::{rc::Rc, str::FromStr};
+use std::str::FromStr;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
 use crate::tags_registry;
 
@@ -36,16 +36,16 @@ impl CBORTaggedEncodable for URI {
 }
 
 impl CBORDecodable for URI {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for URI {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = Bytes::from_cbor(cbor)?;
         let uri = String::from_utf8(bytes.data().to_vec()).map_err(|_| dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(Self::new(uri)))
+        Ok(Self::new(uri))
     }
 }
 

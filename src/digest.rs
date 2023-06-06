@@ -1,4 +1,4 @@
-use std::{rc::Rc, borrow::Cow};
+use std::borrow::Cow;
 use bc_crypto::hash::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, Bytes};
 use bc_ur::{UREncodable, URDecodable, URCodable};
@@ -115,6 +115,12 @@ impl<'a> From<&'a Digest> for &'a [u8] {
     }
 }
 
+impl AsRef<[u8]> for Digest {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
@@ -164,16 +170,16 @@ impl CBORTaggedEncodable for Digest {
 impl UREncodable for Digest { }
 
 impl CBORDecodable for Digest {
-    fn from_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Rc<Self>, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
         let bytes = Bytes::from_cbor(cbor)?;
         let instance = Self::from_data_ref(&bytes.data()).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(Rc::new(instance))
+        Ok(instance)
     }
 }
 
@@ -232,7 +238,7 @@ mod tests {
         let expected_ur_string = "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
         assert_eq!(ur_string, expected_ur_string);
         let digest2 = Digest::from_ur_string(&ur_string).unwrap();
-        assert_eq!(digest, *digest2);
+        assert_eq!(digest, digest2);
     }
 
     #[test]
