@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_crypto::fill_random_data;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, expect_bstring};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, byte_string, expect_byte_string};
 use crate::tags_registry;
 
 #[derive(Clone, Eq, PartialEq)]
@@ -87,7 +87,7 @@ impl CBOREncodable for Nonce {
 
 impl CBORTaggedEncodable for Nonce {
     fn untagged_cbor(&self) -> CBOR {
-        bstring(self.data())
+        byte_string(self.data())
     }
 }
 
@@ -99,7 +99,7 @@ impl CBORDecodable for Nonce {
 
 impl CBORTaggedDecodable for Nonce {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = expect_bstring(untagged_cbor)?;
+        let data = expect_byte_string(untagged_cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }

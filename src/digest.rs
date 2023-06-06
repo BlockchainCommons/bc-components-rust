@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, bstring, expect_bstring};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, byte_string, expect_byte_string};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::{digest_provider::DigestProvider, tags_registry};
 
@@ -163,7 +163,7 @@ impl CBOREncodable for Digest {
 
 impl CBORTaggedEncodable for Digest {
     fn untagged_cbor(&self) -> CBOR {
-        bstring(self.0)
+        byte_string(self.0)
     }
 }
 
@@ -177,7 +177,7 @@ impl CBORDecodable for Digest {
 
 impl CBORTaggedDecodable for Digest {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = expect_bstring(cbor)?;
+        let data = expect_byte_string(cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }

@@ -1,5 +1,5 @@
 use bc_ur::UREncodable;
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map, bstring};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map, byte_string};
 
 use crate::{ECKeyBase, ECKey, tags_registry, SchnorrPublicKey, ECPublicKey};
 
@@ -136,7 +136,7 @@ impl CBORTaggedEncodable for ECPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         let mut m = Map::new();
         m.insert_into(2, true);
-        m.insert_into(3, bstring(self.0));
+        m.insert_into(3, byte_string(self.0));
         m.cbor()
     }
 }

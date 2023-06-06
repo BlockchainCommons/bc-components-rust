@@ -1,7 +1,7 @@
 use crate::{EncryptedMessage, Nonce, tags_registry, Digest};
 use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable, bstring, expect_bstring};
+use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable, byte_string, expect_byte_string};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_SIZE]);
@@ -134,7 +134,7 @@ impl CBOREncodable for SymmetricKey {
 
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
-        bstring(self.0)
+        byte_string(self.0)
     }
 }
 
@@ -148,7 +148,7 @@ impl CBORDecodable for SymmetricKey {
 
 impl CBORTaggedDecodable for SymmetricKey {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = expect_bstring(cbor)?;
+        let bytes = expect_byte_string(cbor)?;
         let instance = Self::from_data_ref(&bytes).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
