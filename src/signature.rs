@@ -106,7 +106,7 @@ impl UREncodable for Signature { }
 
 impl CBORDecodable for Signature {
     fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        Self::from_untagged_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 

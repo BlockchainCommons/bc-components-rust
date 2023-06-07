@@ -75,12 +75,13 @@ impl SigningPrivateKey {
     ) -> Signature
     where
         D1: AsRef<[u8]>,
-        D2: Into<Vec<u8>>,
+        D2: AsRef<[u8]>,
     {
-        let tag = tag.into();
+        // let tag = tag.into();
         let private_key = ECPrivateKey::from_data(*self.data());
-        let sig = private_key.schnorr_sign_using(message, &tag, rng);
-        Signature::schnorr_from_data(sig, tag)
+        let tag_copy = tag.as_ref().to_vec();
+        let sig = private_key.schnorr_sign_using(message, tag, rng);
+        Signature::schnorr_from_data(sig, tag_copy)
     }
 
     pub fn schnorr_sign<D1, D2>(
@@ -90,7 +91,7 @@ impl SigningPrivateKey {
     ) -> Signature
     where
         D1: AsRef<[u8]>,
-        D2: Into<Vec<u8>>,
+        D2: AsRef<[u8]>,
     {
         let mut rng = bc_crypto::SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, tag, &mut rng)
