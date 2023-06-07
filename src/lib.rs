@@ -67,6 +67,7 @@ pub use sskr::{
     SSKRSecret,
     SSKRShare,
     SSKRSpec,
+    SSKRError,
     sskr_generate,
     sskr_generate_using,
     sskr_combine,

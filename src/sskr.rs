@@ -28,6 +28,36 @@ impl SSKRShare {
     }
 }
 
+impl SSKRShare {
+    pub fn identifier(&self) -> u16 {
+        (u16::from(self.0[0]) << 8) | u16::from(self.0[1])
+    }
+
+    pub fn identifier_hex(&self) -> String {
+        hex::encode(&self.0[0..=1])
+    }
+
+    pub fn group_threshold(&self) -> usize {
+        usize::from(self.0[2] >> 4) + 1
+    }
+
+    pub fn group_count(&self) -> usize {
+        usize::from(self.0[2] & 0xf) + 1
+    }
+
+    pub fn group_index(&self) -> usize {
+        usize::from(self.0[3] >> 4)
+    }
+
+    pub fn member_threshold(&self) -> usize {
+        usize::from(self.0[3] & 0xf) + 1
+    }
+
+    pub fn member_index(&self) -> usize {
+        usize::from(self.0[4] & 0xf)
+    }
+}
+
 impl CBORTagged for SSKRShare {
     const CBOR_TAG: Tag = tags_registry::DIGEST;
 }
@@ -86,7 +116,8 @@ pub fn sskr_generate_using(
     Ok(shares)
 }
 
-pub fn sskr_combine(shares: &[&SSKRShare]) -> Result<SSKRSecret, SSKRError> {
+pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError>
+{
     let shares: Vec<Vec<u8>> = shares.iter().map(|share| share.data().to_vec()).collect();
     bc_sskr::sskr_combine(&shares)
 }
