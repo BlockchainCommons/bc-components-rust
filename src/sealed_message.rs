@@ -1,4 +1,7 @@
-use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce};
+use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags_registry};
+
+use bc_ur::{UREncodable, URDecodable, URCodable};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct SealedMessage {
@@ -49,21 +52,58 @@ impl SealedMessage {
     }
 }
 
-/*
-```swift
-    func testSealedMessage() throws {
-        // Alice constructs a message for Bob's eyes only.
-        let sealedMessage = SealedMessage(plaintext: plaintextMysteries, recipient: bobPublicKeys)
+impl CBORTagged for SealedMessage {
+    const CBOR_TAG: Tag = tags_registry::SEALED_MESSAGE;
+}
 
-        // Bob decrypts and reads the message.
-        XCTAssertEqual(try sealedMessage.decrypt(with: bobPrivateKeys), plaintextMysteries.utf8Data)
-
-        // No one else can decrypt the message, not even the sender.
-        XCTAssertThrowsError(try sealedMessage.decrypt(with: alicePrivateKeys))
-        XCTAssertThrowsError(try sealedMessage.decrypt(with: carolPrivateKeys))
+impl CBOREncodable for SealedMessage {
+    fn cbor(&self) -> CBOR {
+        self.tagged_cbor()
     }
-```
- */
+}
+
+impl CBORDecodable for SealedMessage {
+    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+        Self::from_tagged_cbor(cbor)
+    }
+}
+
+impl CBORCodable for SealedMessage { }
+
+impl CBORTaggedEncodable for SealedMessage {
+    fn untagged_cbor(&self) -> CBOR {
+        let message = self.message.cbor();
+        let ephemeral_public_key = self.ephemeral_public_key.cbor();
+        [message, ephemeral_public_key].cbor()
+    }
+}
+
+impl CBORTaggedDecodable for SealedMessage {
+    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+        match cbor {
+            CBOR::Array(elements) => {
+                if elements.len() != 2 {
+                    return Err(dcbor::Error::InvalidFormat);
+                }
+                let message = EncryptedMessage::from_cbor(&elements[0])?;
+                let ephemeral_public_key = AgreementPublicKey::from_cbor(&elements[1])?;
+                Ok(Self {
+                    message,
+                    ephemeral_public_key,
+                })
+            },
+            _ => Err(dcbor::Error::InvalidFormat),
+        }
+    }
+}
+
+impl CBORTaggedCodable for SealedMessage { }
+
+impl UREncodable for SealedMessage { }
+
+impl URDecodable for SealedMessage { }
+
+impl URCodable for SealedMessage { }
 
 #[cfg(test)]
 mod tests {
