@@ -61,6 +61,17 @@ pub use public_key_base::PublicKeyBase;
 mod sealed_message;
 pub use sealed_message::SealedMessage;
 
+mod sskr;
+pub use sskr::{
+    SSKRGroupSpec,
+    SSKRSecret,
+    SSKRShare,
+    SSKRSpec,
+    sskr_generate,
+    sskr_generate_using,
+    sskr_combine,
+};
+
 #[cfg(test)]
 mod tests {
     use crate::{AgreementPrivateKey, AgreementPublicKey, tags_registry, SigningPrivateKey, SigningPublicKey};
