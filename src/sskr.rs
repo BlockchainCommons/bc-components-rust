@@ -59,7 +59,7 @@ impl SSKRShare {
 }
 
 impl CBORTagged for SSKRShare {
-    const CBOR_TAG: Tag = tags_registry::DIGEST;
+    const CBOR_TAG: Tag = tags_registry::SSKR_SHARE;
 }
 
 impl CBOREncodable for SSKRShare {
