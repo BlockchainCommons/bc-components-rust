@@ -157,7 +157,7 @@ impl CBORDecodable for Compressed {
 
 impl CBORTaggedDecodable for Compressed {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let elements = cbor.as_array()?;
+        let elements = cbor.expect_array()?;
         if elements.len() < 3 || elements.len() > 4 {
             return Err(dcbor::Error::InvalidFormat);
         }

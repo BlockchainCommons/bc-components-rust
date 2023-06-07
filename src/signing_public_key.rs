@@ -1,6 +1,6 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, byte_string, from_byte_string};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SigningPublicKey {
@@ -66,12 +66,12 @@ impl CBORTaggedEncodable for SigningPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {
             SigningPublicKey::Schnorr(key) => {
-                byte_string(key.data())
+                CBOR::byte_string(key.data())
             },
             SigningPublicKey::ECDSA(key) => {
                 vec![
                     1.cbor(),
-                    byte_string(key.data()),
+                    CBOR::byte_string(key.data()),
                 ].cbor()
             },
         }
@@ -95,7 +95,7 @@ impl CBORTaggedDecodable for SigningPublicKey {
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Unsigned(1) = &elements[0] {
-                        if let Some(data) = from_byte_string(&elements[1]) {
+                        if let Some(data) = CBOR::as_byte_string(&elements[1]) {
                             return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?));
                         }
                     }

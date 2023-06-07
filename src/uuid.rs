@@ -1,4 +1,4 @@
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, expect_byte_string, byte_string};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags_registry;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -58,7 +58,7 @@ impl CBOREncodable for UUID {
 
 impl CBORTaggedEncodable for UUID {
     fn untagged_cbor(&self) -> CBOR {
-        byte_string(self.0)
+        CBOR::byte_string(self.0)
     }
 }
 
@@ -70,7 +70,7 @@ impl CBORDecodable for UUID {
 
 impl CBORTaggedDecodable for UUID {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let bytes = expect_byte_string(cbor)?;
+        let bytes = CBOR::expect_byte_string(cbor)?;
         if bytes.len() != Self::UUID_SIZE {
             return Err(dcbor::Error::InvalidFormat);
         }

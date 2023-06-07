@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, ecdsa_new_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR, byte_string, expect_byte_string};
+use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 use crate::{tags_registry, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -128,7 +128,7 @@ impl CBOREncodable for SigningPrivateKey {
 
 impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
-        byte_string(self.data())
+        CBOR::byte_string(self.data())
     }
 }
 
@@ -140,7 +140,7 @@ impl CBORDecodable for SigningPrivateKey {
 
 impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = expect_byte_string(untagged_cbor)?;
+        let data = CBOR::expect_byte_string(untagged_cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }

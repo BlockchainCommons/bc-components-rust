@@ -1,5 +1,5 @@
 use bc_crypto::RandomNumberGenerator;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, byte_string, expect_byte_string};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::tags_registry;
 pub use bc_sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret, Error as SSKRError };
@@ -70,7 +70,7 @@ impl CBOREncodable for SSKRShare {
 
 impl CBORTaggedEncodable for SSKRShare {
     fn untagged_cbor(&self) -> CBOR {
-        byte_string(&self.0)
+        CBOR::byte_string(&self.0)
     }
 }
 
@@ -84,7 +84,7 @@ impl CBORDecodable for SSKRShare {
 
 impl CBORTaggedDecodable for SSKRShare {
     fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = expect_byte_string(cbor)?;
+        let data = CBOR::expect_byte_string(cbor)?;
         let instance = Self::from_data_ref(&data);
         Ok(instance)
     }

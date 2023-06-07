@@ -1,5 +1,5 @@
 use bc_crypto::random_data;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable, expect_byte_string, byte_string};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
 use crate::tags_registry;
 
@@ -73,7 +73,7 @@ impl CBOREncodable for CID {
 
 impl CBORTaggedEncodable for CID {
     fn untagged_cbor(&self) -> CBOR {
-        byte_string(self.data())
+        CBOR::byte_string(self.data())
     }
 }
 
@@ -85,7 +85,7 @@ impl CBORDecodable for CID {
 
 impl CBORTaggedDecodable for CID {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = expect_byte_string(untagged_cbor)?;
+        let data = CBOR::expect_byte_string(untagged_cbor)?;
         let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
         Ok(instance)
     }
