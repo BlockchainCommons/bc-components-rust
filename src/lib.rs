@@ -8,7 +8,7 @@ mod digest_provider;
 pub use digest_provider::DigestProvider;
 
 mod compressed;
-pub use compressed::Compressed;
+pub use compressed::{Compressed, CompressedError};
 
 mod nonce;
 pub use nonce::Nonce;

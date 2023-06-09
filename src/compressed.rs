@@ -8,7 +8,7 @@ use crate::{digest::Digest, DigestProvider, tags_registry};
 
 /// Errors for Compressed
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
-pub enum Error {
+pub enum CompressedError {
     /// The compressed data is corrupt.
     Corrupt,
     /// The checksum does not match the uncompressed data.
@@ -48,10 +48,13 @@ impl Compressed {
         })
     }
 
-    pub fn from_uncompressed_data(uncompressed_data: &[u8], digest: Option<Digest>) -> Self {
-        let compressed_data = compress_to_vec(uncompressed_data, 6);
-        let checksum = crc32(uncompressed_data);
-        let uncompressed_size = uncompressed_data.len();
+    pub fn from_uncompressed_data<T>(uncompressed_data: T, digest: Option<Digest>) -> Self
+    where
+        T: AsRef<[u8]>,
+    {
+        let compressed_data = compress_to_vec(uncompressed_data.as_ref(), 6);
+        let checksum = crc32(uncompressed_data.as_ref());
+        let uncompressed_size = uncompressed_data.as_ref().len();
         let compressed_size = compressed_data.len();
         if compressed_size != 0 && compressed_size < uncompressed_size {
             Self {
@@ -64,21 +67,21 @@ impl Compressed {
             Self {
                 checksum,
                 uncompressed_size,
-                compressed_data: uncompressed_data.to_vec(),
+                compressed_data: uncompressed_data.as_ref().to_vec(),
                 digest,
             }
         }
     }
 
-    pub fn uncompress(&self) -> Result<Vec<u8>, Error> {
+    pub fn uncompress(&self) -> Result<Vec<u8>, CompressedError> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
             return Ok(self.compressed_data.clone());
         }
 
-        let uncompressed_data = decompress_to_vec(&self.compressed_data).map_err(|_| Error::Corrupt)?;
+        let uncompressed_data = decompress_to_vec(&self.compressed_data).map_err(|_| CompressedError::Corrupt)?;
         if crc32(&uncompressed_data) != self.checksum {
-            return Err(Error::InvalidChecksum);
+            return Err(CompressedError::InvalidChecksum);
         }
 
         Ok(uncompressed_data)
@@ -138,7 +141,7 @@ impl CBORTaggedEncodable for Compressed {
         let mut elements = vec![
             self.checksum.cbor(),
             self.uncompressed_size.cbor(),
-            self.compressed_data.cbor(),
+            CBOR::byte_string(&self.compressed_data),
         ];
         if let Some(digest) = &self.digest {
             elements.push(digest.cbor());
@@ -163,7 +166,7 @@ impl CBORTaggedDecodable for Compressed {
         }
         let checksum = u32::from_cbor(&elements[0])?;
         let uncompressed_size = usize::from_cbor(&elements[1])?;
-        let compressed_data = Vec::<u8>::from_cbor(&elements[2])?;
+        let compressed_data = elements[2].expect_byte_string()?.to_vec();
         let digest = if elements.len() == 4 {
             Some(Digest::from_cbor(&elements[3])?)
         } else {
