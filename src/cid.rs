@@ -61,6 +61,12 @@ impl<'a> From<&'a CID> for &'a [u8] {
     }
 }
 
+impl AsRef<CID> for CID {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
 impl CBORTagged for CID {
     const CBOR_TAG: Tag = tags_registry::CID;
 }
