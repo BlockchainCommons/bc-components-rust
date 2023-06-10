@@ -20,17 +20,21 @@ impl Salt {
 
     /// Return the data of the salt.
     pub fn data(&self) -> &[u8] {
-        self.into()
+        &self.0
     }
 
     /// Create a specific number of bytes of salt.
-    pub fn new(count: usize) -> Option<Self> {
+    ///
+    /// If the number of bytes is less than 8, this will return `None`.
+    pub fn new_with_len(count: usize) -> Option<Self> {
         let mut rng = SecureRandomNumberGenerator::shared();
-        Self::new_using(count, &mut rng)
+        Self::new_with_len_using(count, &mut rng)
     }
 
     /// Create a specific number of bytes of salt.
-    pub fn new_using<R>(count: usize, rng: &mut R) -> Option<Self>
+    ///
+    /// If the number of bytes is less than 8, this will return `None`.
+    pub fn new_with_len_using<R>(count: usize, rng: &mut R) -> Option<Self>
     where R: RandomNumberGenerator
     {
         if count < 8 {
@@ -40,17 +44,27 @@ impl Salt {
     }
 
     /// Create a number of bytes of salt chosen randomly from the given range.
+    ///
+    /// If the minimum number of bytes is less than 8, this will return `None`.
     pub fn new_in_range(range: RangeInclusive<usize>) -> Option<Self> {
+        if range.start() < &8 {
+            return None;
+        }
         let mut rng = SecureRandomNumberGenerator::shared();
         Self::new_in_range_using(&range, &mut rng)
     }
 
     /// Create a number of bytes of salt chosen randomly from the given range.
+    ///
+    /// If the minimum number of bytes is less than 8, this will return `None`.
     pub fn new_in_range_using<R>(range: &RangeInclusive<usize>, rng: &mut R) -> Option<Self>
     where R: RandomNumberGenerator
     {
+        if range.start() < &8 {
+            return None;
+        }
         let count = rng.next_in_closed_range(range);
-        Self::new_using(count, rng)
+        Self::new_with_len_using(count, rng)
     }
 
     /// Create a number of bytes of salt generally proportionate to the size of the object being salted.
