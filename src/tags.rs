@@ -103,12 +103,12 @@ tag_constant!(OUTPUT_COSIGNER,                  410, "output-cosigner"); // Fixe
 
 tag_constant!(OUTPUT_DESCRIPTOR_RESPONSE, 500, "output-descriptor-response"); // Fixed
 
-pub struct LazyKnownTags {
+pub struct LazyTagsStore {
     init: Once,
     data: Mutex<Option<TagsStore>>,
 }
 
-impl LazyKnownTags {
+impl LazyTagsStore {
     pub fn get(&self) -> std::sync::MutexGuard<'_, Option<TagsStore>> {
         self.init.call_once(|| {
             let m = TagsStore::new([
@@ -176,7 +176,7 @@ impl LazyKnownTags {
     }
 }
 
-pub static KNOWN_TAGS: LazyKnownTags = LazyKnownTags {
+pub static TAGS: LazyTagsStore = LazyTagsStore {
     init: Once::new(),
     data: Mutex::new(None),
 };
@@ -184,7 +184,7 @@ pub static KNOWN_TAGS: LazyKnownTags = LazyKnownTags {
 #[macro_export]
 macro_rules! with_known_tags {
     ($action:expr) => {{
-        let binding = $crate::KNOWN_TAGS.get();
+        let binding = $crate::TAGS.get();
         let known_tags = binding.as_ref().unwrap();
         $action(known_tags)
     }};

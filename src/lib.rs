@@ -47,7 +47,7 @@ mod ec_key;
 pub use ec_key::*;
 
 pub mod tags;
-pub use tags::KNOWN_TAGS;
+pub use tags::TAGS;
 
 mod private_keys_data_provider;
 pub use private_keys_data_provider::PrivateKeysDataProvider;
