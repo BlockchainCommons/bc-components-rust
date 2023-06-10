@@ -176,7 +176,7 @@ impl LazyTagsStore {
     }
 }
 
-pub static TAGS: LazyTagsStore = LazyTagsStore {
+pub static GLOBAL_TAGS: LazyTagsStore = LazyTagsStore {
     init: Once::new(),
     data: Mutex::new(None),
 };
@@ -184,7 +184,7 @@ pub static TAGS: LazyTagsStore = LazyTagsStore {
 #[macro_export]
 macro_rules! with_tags {
     ($action:expr) => {{
-        let binding = $crate::TAGS.get();
+        let binding = $crate::GLOBAL_TAGS.get();
         let tags = binding.as_ref().unwrap();
         $action(tags)
     }};
