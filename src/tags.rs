@@ -182,25 +182,25 @@ pub static TAGS: LazyTagsStore = LazyTagsStore {
 };
 
 #[macro_export]
-macro_rules! with_known_tags {
+macro_rules! with_tags {
     ($action:expr) => {{
         let binding = $crate::TAGS.get();
-        let known_tags = binding.as_ref().unwrap();
-        $action(known_tags)
+        let tags = binding.as_ref().unwrap();
+        $action(tags)
     }};
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::with_known_tags;
+    use crate::with_tags;
 
     #[test]
     fn test_1() {
         use crate::*;
         assert_eq!(tags::LEAF.value(), 24);
         assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
-        with_known_tags!(|known_tags: &dyn dcbor::TagsStoreTrait| {
-            assert_eq!(known_tags.name_for_tag(&tags::LEAF), "leaf");
+        with_tags!(|tags: &dyn dcbor::TagsStoreTrait| {
+            assert_eq!(tags.name_for_tag(&tags::LEAF), "leaf");
         });
     }
 }

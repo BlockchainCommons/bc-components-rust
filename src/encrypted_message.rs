@@ -222,7 +222,7 @@ mod test {
     use hex_literal::hex;
     use indoc::indoc;
 
-    use crate::{SymmetricKey, Nonce, EncryptedMessage, Auth, with_known_tags};
+    use crate::{SymmetricKey, Nonce, EncryptedMessage, Auth, with_tags};
 
     const PLAINTEXT: &[u8] = b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
     const AAD: [u8; 12] = hex!("50515253c0c1c2c3c4c5c6c7");
@@ -269,8 +269,8 @@ mod test {
 
     #[test]
     fn test_cbor_data() {
-        with_known_tags!(|known_tags| {
-            assert_eq!(encrypted_message().cbor().diagnostic_opt(true, Some(known_tags)),
+        with_tags!(|tags| {
+            assert_eq!(encrypted_message().cbor().diagnostic_opt(true, Some(tags)),
             indoc!(r#"
             205(   ; encrypted
                [
@@ -282,7 +282,7 @@ mod test {
             )
             "#).trim());
 
-            assert_eq!(encrypted_message().cbor().hex_opt(true, Some(known_tags)),
+            assert_eq!(encrypted_message().cbor().hex_opt(true, Some(tags)),
             indoc!(r#"
             d8 cd                                    # tag(205)   ; encrypted
                84                                    # array(4)
