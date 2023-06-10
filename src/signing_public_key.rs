@@ -1,4 +1,4 @@
-use crate::{SchnorrPublicKey, ECPublicKey, tags_registry, ECKeyBase, Signature};
+use crate::{SchnorrPublicKey, ECPublicKey, tags, ECKeyBase, Signature};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 
@@ -53,7 +53,7 @@ impl SigningPublicKey {
 }
 
 impl CBORTagged for SigningPublicKey {
-    const CBOR_TAG: Tag = tags_registry::SIGNING_PUBLIC_KEY;
+    const CBOR_TAG: Tag = tags::SIGNING_PUBLIC_KEY;
 }
 
 impl CBOREncodable for SigningPublicKey {

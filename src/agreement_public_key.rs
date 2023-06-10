@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
-use crate::tags_registry;
+use crate::tags;
 
 /// A Curve25519 public key used for X25519 key agreement.
 ///
@@ -52,7 +52,7 @@ impl<'a> From<&'a AgreementPublicKey> for &'a [u8; AgreementPublicKey::KEY_SIZE]
 }
 
 impl CBORTagged for AgreementPublicKey {
-    const CBOR_TAG: Tag = tags_registry::AGREEMENT_PUBLIC_KEY;
+    const CBOR_TAG: Tag = tags::AGREEMENT_PUBLIC_KEY;
 }
 
 impl CBOREncodable for AgreementPublicKey {

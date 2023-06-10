@@ -2,7 +2,7 @@ use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
-use crate::{tags_registry, AgreementPublicKey, SymmetricKey};
+use crate::{tags, AgreementPublicKey, SymmetricKey};
 
 /// A Curve25519 private key used for X25519 key agreement.
 ///
@@ -83,7 +83,7 @@ impl From<Rc<AgreementPrivateKey>> for AgreementPrivateKey {
 }
 
 impl CBORTagged for AgreementPrivateKey {
-    const CBOR_TAG: Tag = tags_registry::AGREEMENT_PRIVATE_KEY;
+    const CBOR_TAG: Tag = tags::AGREEMENT_PRIVATE_KEY;
 }
 
 impl CBOREncodable for AgreementPrivateKey {

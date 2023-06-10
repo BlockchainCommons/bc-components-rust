@@ -4,7 +4,7 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecod
 use bc_crypto::hash::crc32;
 use miniz_oxide::deflate::compress_to_vec;
 use miniz_oxide::inflate::decompress_to_vec;
-use crate::{digest::Digest, DigestProvider, tags_registry};
+use crate::{digest::Digest, DigestProvider, tags};
 
 /// Errors for Compressed
 #[derive(Clone, Debug, Copy, Eq, PartialEq)]
@@ -127,7 +127,7 @@ impl std::fmt::Debug for Compressed {
 }
 
 impl CBORTagged for Compressed {
-    const CBOR_TAG: Tag = tags_registry::COMPRESSED;
+    const CBOR_TAG: Tag = tags::COMPRESSED;
 }
 
 impl CBOREncodable for Compressed {

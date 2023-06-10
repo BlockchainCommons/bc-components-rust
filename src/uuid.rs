@@ -1,5 +1,5 @@
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-use crate::tags_registry;
+use crate::tags;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UUID([u8; Self::UUID_SIZE]);
@@ -47,7 +47,7 @@ impl<'a> From<&'a UUID> for &'a [u8; UUID::UUID_SIZE] {
 }
 
 impl CBORTagged for UUID {
-    const CBOR_TAG: Tag = tags_registry::UUID;
+    const CBOR_TAG: Tag = tags::UUID;
 }
 
 impl CBOREncodable for UUID {

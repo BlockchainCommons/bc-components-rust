@@ -46,8 +46,8 @@ pub use signing_public_key::SigningPublicKey;
 mod ec_key;
 pub use ec_key::*;
 
-pub mod tags_registry;
-pub use tags_registry::KNOWN_TAGS;
+pub mod tags;
+pub use tags::KNOWN_TAGS;
 
 mod private_keys_data_provider;
 pub use private_keys_data_provider::PrivateKeysDataProvider;
@@ -75,15 +75,15 @@ pub use sskr::{
 
 #[cfg(test)]
 mod tests {
-    use crate::{AgreementPrivateKey, AgreementPublicKey, tags_registry, SigningPrivateKey, SigningPublicKey};
+    use crate::{AgreementPrivateKey, AgreementPublicKey, tags, SigningPrivateKey, SigningPublicKey};
     use bc_crypto::{make_fake_random_number_generator, ecdsa_new_private_key_using, ecdsa_public_key_from_private_key, ecdsa_sign, ecdsa_verify, schnorr_public_key_from_private_key, RandomNumberGenerator, schnorr_sign_using, schnorr_verify};
     use bc_ur::{UREncodable, URDecodable};
     use hex_literal::hex;
 
     #[test]
     fn tags() {
-        assert_eq!(tags_registry::LEAF.value(), 24);
-        assert_eq!(tags_registry::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
+        assert_eq!(tags::LEAF.value(), 24);
+        assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
     }
 
     #[test]

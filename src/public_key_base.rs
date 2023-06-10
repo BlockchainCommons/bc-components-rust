@@ -1,7 +1,7 @@
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 
-use crate::{SigningPublicKey, AgreementPublicKey, tags_registry};
+use crate::{SigningPublicKey, AgreementPublicKey, tags};
 
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
@@ -31,7 +31,7 @@ impl PublicKeyBase {
 }
 
 impl CBORTagged for PublicKeyBase {
-    const CBOR_TAG: Tag = tags_registry::PUBLIC_KEYBASE;
+    const CBOR_TAG: Tag = tags::PUBLIC_KEYBASE;
 }
 
 impl CBOREncodable for PublicKeyBase {

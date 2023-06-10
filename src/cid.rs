@@ -1,7 +1,7 @@
 use bc_crypto::random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
-use crate::tags_registry;
+use crate::tags;
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct CID ([u8; Self::CID_SIZE]);
@@ -68,7 +68,7 @@ impl AsRef<CID> for CID {
 }
 
 impl CBORTagged for CID {
-    const CBOR_TAG: Tag = tags_registry::CID;
+    const CBOR_TAG: Tag = tags::CID;
 }
 
 impl CBOREncodable for CID {

@@ -2,7 +2,7 @@ use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::UREncodable;
 use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
-use crate::tags_registry;
+use crate::tags;
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Signature {
@@ -70,7 +70,7 @@ impl std::fmt::Debug for Signature {
 }
 
 impl CBORTagged for Signature {
-    const CBOR_TAG: dcbor::Tag = tags_registry::SIGNATURE;
+    const CBOR_TAG: dcbor::Tag = tags::SIGNATURE;
 }
 
 impl CBOREncodable for Signature {

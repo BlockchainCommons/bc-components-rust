@@ -1,4 +1,4 @@
-use crate::{EncryptedMessage, Nonce, tags_registry, Digest};
+use crate::{EncryptedMessage, Nonce, tags, Digest};
 use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable};
@@ -123,7 +123,7 @@ impl std::fmt::Debug for SymmetricKey {
 }
 
 impl CBORTagged for SymmetricKey {
-    const CBOR_TAG: Tag = tags_registry::SYMMETRIC_KEY;
+    const CBOR_TAG: Tag = tags::SYMMETRIC_KEY;
 }
 
 impl CBOREncodable for SymmetricKey {

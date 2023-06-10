@@ -3,7 +3,7 @@ use std::{rc::Rc, borrow::Cow};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
-use crate::{Nonce, Digest, DigestProvider, tags_registry};
+use crate::{Nonce, Digest, DigestProvider, tags};
 
 /// A secure encrypted message.
 ///
@@ -75,7 +75,7 @@ impl DigestProvider for EncryptedMessage {
 }
 
 impl CBORTagged for EncryptedMessage {
-    const CBOR_TAG: Tag = tags_registry::ENCRYPTED;
+    const CBOR_TAG: Tag = tags::ENCRYPTED;
 }
 
 impl CBOREncodable for EncryptedMessage {

@@ -1,7 +1,7 @@
 use bc_crypto::RandomNumberGenerator;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
-use crate::tags_registry;
+use crate::tags;
 pub use bc_sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret, Error as SSKRError };
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -59,7 +59,7 @@ impl SSKRShare {
 }
 
 impl CBORTagged for SSKRShare {
-    const CBOR_TAG: Tag = tags_registry::SSKR_SHARE;
+    const CBOR_TAG: Tag = tags::SSKR_SHARE;
 }
 
 impl CBOREncodable for SSKRShare {

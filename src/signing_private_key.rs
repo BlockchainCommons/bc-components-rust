@@ -2,7 +2,7 @@ use std::rc::Rc;
 use bc_crypto::{RandomNumberGenerator, ecdsa_new_private_key_using};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
-use crate::{tags_registry, ECPrivateKey, Signature, ECKey, SigningPublicKey};
+use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
@@ -117,7 +117,7 @@ impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
 }
 
 impl CBORTagged for SigningPrivateKey {
-    const CBOR_TAG: Tag = tags_registry::SIGNING_PRIVATE_KEY;
+    const CBOR_TAG: Tag = tags::SIGNING_PRIVATE_KEY;
 }
 
 impl CBOREncodable for SigningPrivateKey {

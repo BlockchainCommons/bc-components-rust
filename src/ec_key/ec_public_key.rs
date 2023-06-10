@@ -2,7 +2,7 @@ use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::UREncodable;
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
 
-use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags_registry};
+use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags};
 
 /// A compressed elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -84,7 +84,7 @@ impl<'a> From<&'a ECPublicKey> for &'a [u8] {
 }
 
 impl CBORTagged for ECPublicKey {
-    const CBOR_TAG: Tag = tags_registry::EC_KEY;
+    const CBOR_TAG: Tag = tags::EC_KEY;
 }
 
 impl CBOREncodable for ECPublicKey {

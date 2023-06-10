@@ -2,7 +2,7 @@ use bc_crypto::RandomNumberGenerator;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 
-use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags_registry};
+use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 
 /// Holds unique data from which keys for signing and encryption can be derived.
 #[derive(Clone, Eq, PartialEq)]
@@ -81,7 +81,7 @@ impl<'a> From<&'a PrivateKeyBase> for &'a [u8] {
 }
 
 impl CBORTagged for PrivateKeyBase {
-    const CBOR_TAG: Tag = tags_registry::PRIVATE_KEYBASE;
+    const CBOR_TAG: Tag = tags::PRIVATE_KEYBASE;
 }
 
 impl CBOREncodable for PrivateKeyBase {

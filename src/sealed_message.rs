@@ -1,4 +1,4 @@
-use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags_registry};
+use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags};
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
@@ -53,7 +53,7 @@ impl SealedMessage {
 }
 
 impl CBORTagged for SealedMessage {
-    const CBOR_TAG: Tag = tags_registry::SEALED_MESSAGE;
+    const CBOR_TAG: Tag = tags::SEALED_MESSAGE;
 }
 
 impl CBOREncodable for SealedMessage {

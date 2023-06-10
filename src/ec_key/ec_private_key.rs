@@ -1,7 +1,7 @@
 use bc_ur::UREncodable;
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
 
-use crate::{ECKeyBase, ECKey, tags_registry, SchnorrPublicKey, ECPublicKey};
+use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
 
 /// An elliptic curve private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -123,7 +123,7 @@ impl ECKey for ECPrivateKey {
 }
 
 impl CBORTagged for ECPrivateKey {
-    const CBOR_TAG: Tag = tags_registry::EC_KEY;
+    const CBOR_TAG: Tag = tags::EC_KEY;
 }
 
 impl CBOREncodable for ECPrivateKey {

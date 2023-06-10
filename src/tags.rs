@@ -1,7 +1,7 @@
 use dcbor::Tag;
 use paste::paste;
 use std::sync::{Once, Mutex};
-use dcbor::KnownTagsDict;
+use dcbor::TagsStore;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
 
@@ -105,13 +105,13 @@ tag_constant!(OUTPUT_DESCRIPTOR_RESPONSE, 500, "output-descriptor-response"); //
 
 pub struct LazyKnownTags {
     init: Once,
-    data: Mutex<Option<KnownTagsDict>>,
+    data: Mutex<Option<TagsStore>>,
 }
 
 impl LazyKnownTags {
-    pub fn get(&self) -> std::sync::MutexGuard<'_, Option<KnownTagsDict>> {
+    pub fn get(&self) -> std::sync::MutexGuard<'_, Option<TagsStore>> {
         self.init.call_once(|| {
-            let m = KnownTagsDict::new([
+            let m = TagsStore::new([
                 LEAF,
 
                 ENVELOPE,
@@ -197,10 +197,10 @@ mod tests {
     #[test]
     fn test_1() {
         use crate::*;
-        assert_eq!(tags_registry::LEAF.value(), 24);
-        assert_eq!(tags_registry::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
-        with_known_tags!(|known_tags: &dyn dcbor::KnownTags| {
-            assert_eq!(known_tags.name_for_tag(&tags_registry::LEAF), "leaf");
+        assert_eq!(tags::LEAF.value(), 24);
+        assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
+        with_known_tags!(|known_tags: &dyn dcbor::TagsStoreTrait| {
+            assert_eq!(known_tags.name_for_tag(&tags::LEAF), "leaf");
         });
     }
 }

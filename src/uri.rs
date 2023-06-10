@@ -1,6 +1,6 @@
 use std::str::FromStr;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-use crate::tags_registry;
+use crate::tags;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct URI(String);
@@ -20,7 +20,7 @@ impl FromStr for URI {
 }
 
 impl CBORTagged for URI {
-    const CBOR_TAG: Tag = tags_registry::URI;
+    const CBOR_TAG: Tag = tags::URI;
 }
 
 impl CBOREncodable for URI {
