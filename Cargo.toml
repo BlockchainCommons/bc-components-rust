@@ -8,10 +8,11 @@ keywords = ["cryptography"]
 repository = "https://github.com/BlockchainCommons/bc-components-rust"
 readme = "README.md"
 categories = ["cryptography"]
+documentation = "https://docs.rs/bc-components"
 
 [dependencies]
 bc-crypto = { path = "../bc-crypto-rust" }
-dcbor = { path = "../bc-dcbor-rust" }
+dcbor = "0.7.0"
 bc-ur = { path = "../bc-ur-rust" }
 sskr = { path = "../bc-sskr-rust" }
 hex = "0.4.3"
