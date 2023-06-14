@@ -105,7 +105,7 @@ impl Compressed {
 }
 
 impl DigestProvider for Compressed {
-    fn digest(&self) -> Cow<Digest> {
+    fn digest(&self) -> Cow<'_, Digest> {
         Cow::Owned(self.digest.as_ref().unwrap().clone())
     }
 }

@@ -68,7 +68,7 @@ impl std::fmt::Debug for EncryptedMessage {
 }
 
 impl DigestProvider for EncryptedMessage {
-    fn digest(&self) -> Cow<Digest> {
+    fn digest(&self) -> Cow<'_, Digest> {
         let a = self.opt_digest().unwrap();
         Cow::Owned(a)
     }

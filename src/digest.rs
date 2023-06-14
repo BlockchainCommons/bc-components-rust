@@ -134,7 +134,7 @@ impl std::cmp::Ord for Digest {
 }
 
 impl DigestProvider for Digest {
-    fn digest(&self) -> Cow<Digest> {
+    fn digest(&self) -> Cow<'_, Digest> {
         Cow::Borrowed(self)
     }
 }

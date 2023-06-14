@@ -1,3 +1,6 @@
+#![doc(html_root_url = "https://docs.rs/bc-components/0.1.0")]
+#![warn(rust_2018_idioms)]
+
 mod digest;
 pub use digest::Digest;
 

@@ -98,7 +98,7 @@ impl CBORTaggedDecodable for CID {
 }
 
 impl std::fmt::Display for CID {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "CID({})", self.hex())
     }
 }
