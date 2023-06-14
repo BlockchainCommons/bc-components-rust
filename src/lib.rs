@@ -159,4 +159,14 @@ mod tests {
         assert_eq!(schnorr_signature, hex!("15d7396ed2862dfa813679a0a0377d8d55310ff693ef913bc9cddd48aa93e0542e416b52e0572ec20a2b47db1904c9e7632f1229d8b16af09fb4f6e3f8feefa0"));
         assert!(schnorr_verify(&schnorr_public_key, &schnorr_signature, MESSAGE, tag));
     }
+
+    #[test]
+    fn test_readme_deps() {
+        version_sync::assert_markdown_deps_updated!("README.md");
+    }
+
+    #[test]
+    fn test_html_root_url() {
+        version_sync::assert_html_root_url_updated!("src/lib.rs");
+    }
 }
