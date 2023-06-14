@@ -64,8 +64,8 @@ pub use public_key_base::PublicKeyBase;
 mod sealed_message;
 pub use sealed_message::SealedMessage;
 
-mod sskr;
-pub use sskr::{
+mod sskr_mod;
+pub use sskr_mod::{
     SSKRGroupSpec,
     SSKRSecret,
     SSKRShare,
