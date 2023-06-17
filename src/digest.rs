@@ -4,9 +4,7 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::{digest_provider::DigestProvider, tags};
 
-/// A cryptographically secure digest.
-///
-/// Implemented with SHA-256.
+/// A cryptographically secure digest, implemented with SHA-256.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Digest([u8; Self::DIGEST_SIZE]);
 

@@ -8,7 +8,14 @@
 
 ## Introduction
 
-* All the types care CBOR serializable, and some of them can also be serialized to and from URs.
+A collection of useful primitives for cryptography, semantic graphs, and
+cryptocurrency, primarily for use in higher-level [Blockchain
+Commons](https://blockchaincommons.com) projects like [Gordian
+Envelope](https://crates.io/crates/bc-envelope). All the types are
+[CBOR](https://cbor.io) serializable, and a number of them can also be
+serialized to and from [URs](https://crates.io/crates/bc-ur).
+
+Also includes a library of CBOR tags and UR types for use with these types.
 
 ## Getting Started
 
@@ -17,11 +24,36 @@
 bc-components = "0.1.0"
 ```
 
-## Specification
+## Types
 
-
-## Related Projects
-
+| Name | Description |
+| --- | --- |
+| AgreementPrivateKey | A Curve25519 private key used for X25519 key agreement. |
+| AgreementPublicKey | A Curve25519 public key used for X25519 key agreement. |
+| AuthenticationTag | The HMAC authentication tag produced by the encryption process. |
+| CID | A “Common Identifier” (CID) |
+| Compressed | A compressed binary object. |
+| Digest | A cryptographically secure digest, implemented with SHA-256. |
+| ECPrivateKey | An elliptic curve digital signature algorithm (ECDSA) private key. |
+| ECPublicKey | A compressed elliptic curve digital signature algorithm (ECDSA) compressed public key. |
+| ECUncompressedPublicKey | A compressed elliptic curve digital signature algorithm (ECDSA) uncompressed public key. |
+| EncryptedMessage | A secure encrypted message. |
+| Nonce | A random nonce (“number used once”). |
+| PrivateKeyBase | Holds unique data from which keys for signing and encryption can be derived. |
+| PublicKeyBase | Holds information used to communicate cryptographically with a remote entity. |
+| SSKRGroupSpec | A specification for a group of shares within an SSKR split. |
+| SSKRSecret | A secret to be split into shares. |
+| SSKRShare | An SSKR share. Used with the functions `sskr_generate` and `sskr_combine`. |
+| SSKRSpec | A specification for an SSKR split. |
+| Salt | Random salt used to decorrelate other information. |
+| SchnorrPublicKey | A Schnorr (x-only) elliptic curve public key. |
+| SealedMessage | A sealed message can be sent to anyone, but only the intended recipient can decrypt it. |
+| Signature | A cryptographic signature. Supports ECDSA and Schnorr. |
+| SigningPublicKey | A public key that can be used for signing. Supports both ECDSA and |Schnorr. |
+| SigningPrivateKey | A private ECDSA key for signing. |
+| SymmetricKey | A symmetric encryption key. |
+| URI | A URI. |
+| UUID | A UUID. |
 
 ## Status - Alpha
 

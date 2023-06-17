@@ -1,6 +1,24 @@
 #![doc(html_root_url = "https://docs.rs/bc-components/0.1.0")]
 #![warn(rust_2018_idioms)]
 
+//! # Introduction
+//!
+//! A collection of useful primitives for cryptography, semantic graphs, and
+//! cryptocurrency, primarily for use in higher-level [Blockchain
+//! Commons](https://blockchaincommons.com) projects like [Gordian
+//! Envelope](https://crates.io/crates/bc-envelope). All the types are
+//! [CBOR](https://cbor.io) serializable, and a number of them can also be
+//! serialized to and from [URs](https://crates.io/crates/bc-ur).
+//!
+//! Also includes a library of CBOR tags and UR types for use with these types.
+//!
+//! # Getting Started
+//!
+//! ```toml
+//! [dependencies]
+//! bc-components = "0.1.0"
+//! ```
+
 mod digest;
 pub use digest::Digest;
 
