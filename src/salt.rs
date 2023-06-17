@@ -27,7 +27,7 @@ impl Salt {
     ///
     /// If the number of bytes is less than 8, this will return `None`.
     pub fn new_with_len(count: usize) -> Option<Self> {
-        let mut rng = SecureRandomNumberGenerator::shared();
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_with_len_using(count, &mut rng)
     }
 
@@ -50,7 +50,7 @@ impl Salt {
         if range.start() < &8 {
             return None;
         }
-        let mut rng = SecureRandomNumberGenerator::shared();
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_in_range_using(&range, &mut rng)
     }
 
@@ -69,7 +69,7 @@ impl Salt {
 
     /// Create a number of bytes of salt generally proportionate to the size of the object being salted.
     pub fn new_for_size(size: usize) -> Self {
-        let mut rng = SecureRandomNumberGenerator::shared();
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_for_size_using(size, &mut rng)
     }
 

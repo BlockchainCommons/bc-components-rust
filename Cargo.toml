@@ -7,13 +7,14 @@ authors = ["Blockchain Commons"]
 keywords = ["cryptography"]
 repository = "https://github.com/BlockchainCommons/bc-components-rust"
 readme = "README.md"
+license = "BSD-2-Clause-Patent"
 categories = ["cryptography"]
 documentation = "https://docs.rs/bc-components"
 
 [dependencies]
-bc-crypto = { path = "../bc-crypto-rust" }
+bc-crypto = "0.1.0"
 dcbor = "0.7.0"
-bc-ur = { path = "../bc-ur-rust" }
+bc-ur = "0.1.1"
 sskr = { path = "../bc-sskr-rust" }
 hex = "0.4.3"
 miniz_oxide = "0.7.1"

@@ -1,5 +1,5 @@
 use crate::{EncryptedMessage, Nonce, tags, Digest};
-use bc_crypto::{encrypt_aead_chacha20_poly1305_with_aad, decrypt_aead_chacha20_poly1305_with_aad};
+use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable};
 
@@ -64,7 +64,7 @@ impl SymmetricKey {
     {
         let aad = aad.unwrap_or(&[]).into();
         let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_else(Nonce::new);
-        let (ciphertext, auth) = encrypt_aead_chacha20_poly1305_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
+        let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
     }
 
@@ -79,7 +79,7 @@ impl SymmetricKey {
 
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, bc_crypto::Error> {
-        decrypt_aead_chacha20_poly1305_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.auth().into())
+        aead_chacha20_poly1305_decrypt_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.auth().into())
     }
 }
 
