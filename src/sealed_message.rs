@@ -3,6 +3,8 @@ use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase,
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
+/// A sealed message can be sent to anyone, but only the intended recipient can
+/// decrypt it.
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct SealedMessage {
     message: EncryptedMessage,

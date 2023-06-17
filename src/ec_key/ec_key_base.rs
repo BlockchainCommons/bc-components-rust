@@ -2,6 +2,7 @@ use bc_ur::UREncodable;
 
 use crate::ECPublicKey;
 
+/// A type that represents an elliptic curve digital signature algorithm (ECDSA) key.
 pub trait ECKeyBase:
     std::fmt::Display +
     std::fmt::Debug +
@@ -24,6 +25,8 @@ pub trait ECKeyBase:
     }
 }
 
+/// A type that represents an elliptic curve digital signature algorithm (ECDSA) key,
+/// and can be used to derive a public key.
 pub trait ECKey: ECKeyBase + UREncodable {
     fn public_key(&self) -> ECPublicKey;
 }

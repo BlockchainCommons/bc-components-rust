@@ -4,6 +4,7 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::tags;
 pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret, Error as SSKRError };
 
+/// An SSKR share.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SSKRShare(Vec<u8>);
 
@@ -94,6 +95,12 @@ impl URDecodable for SSKRShare { }
 
 impl URCodable for SSKRShare { }
 
+/// Generates SSKR shares for the given `Spec` and `Secret`.
+///
+/// # Arguments
+///
+/// * `spec` - The `Spec` instance that defines the group and member thresholds.
+/// * `master_secret` - The `Secret` instance to be split into shares.
 pub fn sskr_generate(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
@@ -102,6 +109,15 @@ pub fn sskr_generate(
     sskr_generate_using(spec, master_secret, &mut rng)
 }
 
+/// Generates SSKR shares for the given `Spec` and `Secret` using the provided
+/// random number generator.
+///
+/// # Arguments
+///
+/// * `spec` - The `Spec` instance that defines the group and member thresholds.
+/// * `master_secret` - The `Secret` instance to be split into shares.
+/// * `random_generator` - The random number generator to use for generating
+///   shares.
 pub fn sskr_generate_using(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
@@ -116,6 +132,16 @@ pub fn sskr_generate_using(
     Ok(shares)
 }
 
+/// Combines the given SSKR shares into a `Secret`.
+///
+/// # Arguments
+///
+/// * `shares` - A slice of SSKR shares to be combined.
+///
+/// # Errors
+///
+/// Returns an error if the shares do not meet the necessary quorum of groups
+/// and member shares within each group.
 pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError>
 {
     let shares: Vec<Vec<u8>> = shares.iter().map(|share| share.data().to_vec()).collect();

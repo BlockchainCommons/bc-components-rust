@@ -2,6 +2,7 @@ use std::{rc::Rc, borrow::Cow};
 
 use crate::digest::Digest;
 
+/// A type that can provide a single unique digest that characterizes its contents.
 pub trait DigestProvider {
     fn digest(&self) -> Cow<'_, Digest>;
 }

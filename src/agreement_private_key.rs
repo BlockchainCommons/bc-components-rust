@@ -6,7 +6,7 @@ use crate::{tags, AgreementPublicKey, SymmetricKey};
 
 /// A Curve25519 private key used for X25519 key agreement.
 ///
-/// https://datatracker.ietf.org/doc/html/rfc7748
+/// <https://datatracker.ietf.org/doc/html/rfc7748>
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct AgreementPrivateKey ([u8; Self::KEY_SIZE]);
 

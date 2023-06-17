@@ -4,6 +4,7 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 use bc_crypto::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags;
 
+/// Random salt used to decorrelate other information.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Salt(Vec<u8>);
 

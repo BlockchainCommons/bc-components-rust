@@ -3,6 +3,7 @@ use bc_crypto::fill_random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
 
+/// A random nonce ("number used once").
 #[derive(Clone, Eq, PartialEq)]
 pub struct Nonce ([u8; Self::NONCE_SIZE]);
 

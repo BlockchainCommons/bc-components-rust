@@ -4,9 +4,9 @@ use std::sync::{Once, Mutex};
 use dcbor::TagsStore;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
-
+//
 // https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2020-006-urtypes.md
-
+//
 // As of August 13 2022, the [IANA registry of CBOR tags](https://www.iana.org/assignments/cbor-tags/cbor-tags.xhtml)
 // has the following low-numbered values available:
 //
@@ -18,6 +18,7 @@ use dcbor::TagsStore;
 // Tags in the range 24-255 only require two bytes to encode.
 // Higher numbered tags are first-come, first-served.
 
+/// A macro for statically defining a CBOR tag constant.
 #[macro_export]
 macro_rules! tag_constant {
     ($const_name:ident, $value:expr, $name:expr) => {
@@ -181,6 +182,7 @@ pub static GLOBAL_TAGS: LazyTagsStore = LazyTagsStore {
     data: Mutex::new(None),
 };
 
+/// A macro for accessing the global tags store.
 #[macro_export]
 macro_rules! with_tags {
     ($action:expr) => {{

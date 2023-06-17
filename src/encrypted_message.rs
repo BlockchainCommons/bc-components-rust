@@ -1,15 +1,15 @@
-use std::{rc::Rc, borrow::Cow};
+use std::borrow::Cow;
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
-use crate::{Nonce, Digest, DigestProvider, tags};
+use crate::{Nonce, Digest, DigestProvider, tags, AuthenticationTag};
 
 /// A secure encrypted message.
 ///
 /// Implemented using the IETF ChaCha20-Poly1305 encryption.
 ///
-/// https://datatracker.ietf.org/doc/html/rfc8439
+/// <https://datatracker.ietf.org/doc/html/rfc8439>
 ///
 /// To facilitate decoding, it is recommended that the plaintext of an `EncryptedMessage` be
 /// tagged CBOR.
@@ -18,11 +18,11 @@ pub struct EncryptedMessage {
     ciphertext: Vec<u8>,
     aad: Vec<u8>, // Additional authenticated data (AAD) per RFC8439
     nonce: Nonce,
-    auth: Auth,
+    auth: AuthenticationTag,
 }
 
 impl EncryptedMessage {
-    pub fn new(ciphertext: Vec<u8>, aad: Vec<u8>, nonce: Nonce, auth: Auth) -> Self {
+    pub fn new(ciphertext: Vec<u8>, aad: Vec<u8>, nonce: Nonce, auth: AuthenticationTag) -> Self {
         Self {
             ciphertext,
             aad,
@@ -43,7 +43,7 @@ impl EncryptedMessage {
         &self.nonce
     }
 
-    pub fn auth(&self) -> &Auth {
+    pub fn auth(&self) -> &AuthenticationTag {
         &self.auth
     }
 
@@ -117,7 +117,7 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 }
                 let ciphertext = CBOR::expect_byte_string(&elements[0])?.to_vec();
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
-                let auth = Auth::from_cbor(&elements[2])?;
+                let auth = AuthenticationTag::from_cbor(&elements[2])?;
                 let aad = if elements.len() > 3 {
                     CBOR::expect_byte_string(&elements[3])?.to_vec()
                 } else {
@@ -138,83 +138,6 @@ impl URDecodable for EncryptedMessage { }
 
 impl URCodable for EncryptedMessage { }
 
-#[derive(Clone, Eq, PartialEq)]
-pub struct Auth([u8; Self::AUTH_SIZE]);
-
-impl Auth {
-    pub const AUTH_SIZE: usize = 16;
-
-    pub const fn from_data(data: [u8; Self::AUTH_SIZE]) -> Self {
-        Self(data)
-    }
-
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
-        let data = data.as_ref();
-        if data.len() != Self::AUTH_SIZE {
-            return None;
-        }
-        let mut arr = [0u8; Self::AUTH_SIZE];
-        arr.copy_from_slice(data.as_ref());
-        Some(Self::from_data(arr))
-    }
-
-    pub fn data(&self) -> &[u8; Self::AUTH_SIZE] {
-        self.into()
-    }
-}
-
-impl std::fmt::Debug for Auth {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Auth")
-            .field(&hex::encode(self.data()))
-            .finish()
-    }
-}
-
-impl From<Rc<Auth>> for Auth {
-    fn from(value: Rc<Auth>) -> Self {
-        (*value).clone()
-    }
-}
-
-impl<'a> From<&'a Auth> for &'a [u8; Auth::AUTH_SIZE] {
-    fn from(value: &'a Auth) -> Self {
-        &value.0
-    }
-}
-
-impl From<&[u8]> for Auth {
-    fn from(data: &[u8]) -> Self {
-        Self::from_data_ref(&data).unwrap()
-    }
-}
-
-impl From<[u8; Self::AUTH_SIZE]> for Auth {
-    fn from(data: [u8; Self::AUTH_SIZE]) -> Self {
-        Self::from_data(data)
-    }
-}
-
-impl From<Vec<u8>> for Auth {
-    fn from(data: Vec<u8>) -> Self {
-        Self::from_data_ref(&data).unwrap()
-    }
-}
-
-impl CBOREncodable for Auth {
-    fn cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
-impl CBORDecodable for Auth {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
-        let data = CBOR::expect_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
-    }
-}
-
 #[cfg(test)]
 mod test {
     use bc_ur::{UREncodable, URDecodable};
@@ -222,14 +145,14 @@ mod test {
     use hex_literal::hex;
     use indoc::indoc;
 
-    use crate::{SymmetricKey, Nonce, EncryptedMessage, Auth, with_tags};
+    use crate::{SymmetricKey, Nonce, EncryptedMessage, AuthenticationTag, with_tags};
 
     const PLAINTEXT: &[u8] = b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
     const AAD: [u8; 12] = hex!("50515253c0c1c2c3c4c5c6c7");
     const KEY: SymmetricKey = SymmetricKey::from_data(hex!("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f"));
     const NONCE: Nonce = Nonce::from_data(hex!("070000004041424344454647"));
     const CIPHERTEXT: [u8; 114] = hex!("d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116");
-    const AUTH: Auth = Auth::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
+    const AUTH: AuthenticationTag = AuthenticationTag::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
 
     fn encrypted_message() -> EncryptedMessage {
         KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE))

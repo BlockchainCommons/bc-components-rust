@@ -4,6 +4,7 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 
+/// A private ECDSA key for signing.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
 

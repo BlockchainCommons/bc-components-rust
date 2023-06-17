@@ -5,7 +5,7 @@ use crate::tags;
 
 /// A Curve25519 public key used for X25519 key agreement.
 ///
-/// https://datatracker.ietf.org/doc/html/rfc7748
+/// <https://datatracker.ietf.org/doc/html/rfc7748>
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct AgreementPublicKey ([u8; Self::KEY_SIZE]);
 

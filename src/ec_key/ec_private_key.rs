@@ -3,7 +3,7 @@ use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
 
 use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
 
-/// An elliptic curve private key.
+/// An elliptic curve digital signature algorithm (ECDSA) private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
 

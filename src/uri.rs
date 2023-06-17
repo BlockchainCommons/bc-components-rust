@@ -2,6 +2,7 @@ use std::str::FromStr;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
 
+/// A URI.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct URI(String);
 

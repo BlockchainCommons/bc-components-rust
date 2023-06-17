@@ -1,6 +1,7 @@
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
 
+/// A UUID.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct UUID([u8; Self::UUID_SIZE]);
 

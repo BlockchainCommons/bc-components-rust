@@ -3,7 +3,9 @@ use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
 
 use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
 
-/// An uncompressed elliptic curve public key.
+/// A compressed elliptic curve digital signature algorithm (ECDSA) uncompressed public key.
+///
+/// This is considered a "legacy" key type, and is not recommended for use.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ECUncompressedPublicKey([u8; Self::KEY_SIZE]);
 

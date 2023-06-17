@@ -3,6 +3,7 @@ use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable};
 
+/// A symmetric encryption key.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_SIZE]);
 

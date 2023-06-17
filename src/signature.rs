@@ -4,6 +4,7 @@ use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable,
 
 use crate::tags;
 
+/// A cryptographic signature. Supports ECDSA and Schnorr.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Signature {
     Schnorr{ sig: [u8; SCHNORR_SIGNATURE_SIZE], tag: Vec<u8> },

@@ -20,7 +20,10 @@ mod symmetric_key;
 pub use symmetric_key::SymmetricKey;
 
 mod encrypted_message;
-pub use encrypted_message::{EncryptedMessage, Auth};
+pub use encrypted_message::EncryptedMessage;
+
+mod authentication_tag;
+pub use authentication_tag::AuthenticationTag;
 
 mod salt;
 pub use salt::Salt;
@@ -49,6 +52,7 @@ pub use signing_public_key::SigningPublicKey;
 mod ec_key;
 pub use ec_key::*;
 
+/// CBOR Tags used or defined by this crate.
 pub mod tags;
 pub use tags::GLOBAL_TAGS;
 

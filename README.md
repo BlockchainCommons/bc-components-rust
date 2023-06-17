@@ -8,6 +8,8 @@
 
 ## Introduction
 
+* All the types care CBOR serializable, and some of them can also be serialized to and from URs.
+
 ## Getting Started
 
 ```toml

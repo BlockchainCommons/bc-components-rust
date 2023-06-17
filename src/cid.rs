@@ -3,6 +3,9 @@ use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecod
 
 use crate::tags;
 
+/// A "Common Identifier" (CID)
+///
+/// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-cid-common-identifier.md).
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct CID ([u8; Self::CID_SIZE]);
 
