@@ -12,12 +12,18 @@ pub struct CID ([u8; Self::CID_SIZE]);
 impl CID {
     pub const CID_SIZE: usize = 32;
 
-    /// Create a new CID from bytes.
+    /// Create a new random CID.
+    pub fn new() -> Self {
+        let data = random_data(Self::CID_SIZE);
+        Self::from_data_ref(&data).unwrap()
+    }
+
+    /// Restore a CID from a fixed-size array of bytes.
     pub fn from_data(data: [u8; Self::CID_SIZE]) -> Self {
         Self(data)
     }
 
-    /// Create a new CID from bytes.
+    /// Create a new CID from a reference to an array of bytes.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::CID_SIZE {
@@ -26,12 +32,6 @@ impl CID {
         let mut arr = [0u8; Self::CID_SIZE];
         arr.copy_from_slice(data);
         Some(Self::from_data(arr))
-    }
-
-    /// Create a new random CID.
-    pub fn new() -> Self {
-        let data = random_data(Self::CID_SIZE);
-        Self::from_data_ref(&data).unwrap()
     }
 
     /// Get the data of the CID.
@@ -55,6 +55,12 @@ impl CID {
     /// The first four bytes of the CID as a hexadecimal string.
     pub fn short_description(&self) -> String {
         hex::encode(&self.0[0..4])
+    }
+}
+
+impl Default for CID {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

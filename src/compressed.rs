@@ -36,6 +36,11 @@ pub struct Compressed {
 }
 
 impl Compressed {
+    /// Creates a new `Compressed` object with the given checksum, uncompressed size, compressed data, and digest.
+    ///
+    /// This is a low-level function that does not check the validity of the compressed data.
+    ///
+    /// Returns `None` if the compressed data is larger than the uncompressed size.
     pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Vec<u8>, digest: Option<Digest>) -> Option<Self> {
         if compressed_data.len() > uncompressed_size {
             return None;
@@ -48,6 +53,12 @@ impl Compressed {
         })
     }
 
+    /// Creates a new `Compressed` object from the given uncompressed data and digest.
+    ///
+    /// The uncompressed data is compressed using the DEFLATE format with a compression level of 6.
+    ///
+    /// If the compressed data is smaller than the uncompressed data, the compressed data is stored in the `compressed_data` field.
+    /// Otherwise, the uncompressed data is stored in the `compressed_data` field.
     pub fn from_uncompressed_data<T>(uncompressed_data: T, digest: Option<Digest>) -> Self
     where
         T: AsRef<[u8]>,
@@ -73,6 +84,9 @@ impl Compressed {
         }
     }
 
+    /// Uncompresses the compressed data and returns the uncompressed data.
+    ///
+    /// Returns an error if the compressed data is corrupt or the checksum does not match the uncompressed data.
     pub fn uncompress(&self) -> Result<Vec<u8>, CompressedError> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
@@ -87,18 +101,22 @@ impl Compressed {
         Ok(uncompressed_data)
     }
 
+    /// Returns the size of the compressed data.
     pub fn compressed_size(&self) -> usize {
         self.compressed_data.len()
     }
 
+    /// Returns the compression ratio of the compressed data.
     pub fn compression_ratio(&self) -> f64 {
         self.compressed_size() as f64 / self.uncompressed_size as f64
     }
 
+    /// Returns a reference to the digest of the compressed data, if it exists.
     pub fn digest_ref_opt(&self) -> Option<&Digest> {
         self.digest.as_ref()
     }
 
+    /// Returns `true` if the compressed data has a digest.
     pub fn has_digest(&self) -> bool {
         self.digest.is_some()
     }

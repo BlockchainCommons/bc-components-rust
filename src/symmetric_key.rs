@@ -80,7 +80,7 @@ impl SymmetricKey {
 
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, bc_crypto::Error> {
-        aead_chacha20_poly1305_decrypt_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.auth().into())
+        aead_chacha20_poly1305_decrypt_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.authentication_tag().into())
     }
 }
 

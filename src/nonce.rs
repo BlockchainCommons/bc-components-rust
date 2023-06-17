@@ -17,12 +17,12 @@ impl Nonce {
         Self(data)
     }
 
-    /// Create a new nonce from data.
+    /// Restores a nonce from data.
     pub const fn from_data(data: [u8; Self::NONCE_SIZE]) -> Self {
         Self(data)
     }
 
-    /// Create a new nonce from data.
+    /// Restores a nonce from data.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::NONCE_SIZE {

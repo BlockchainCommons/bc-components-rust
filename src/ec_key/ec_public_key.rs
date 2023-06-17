@@ -9,12 +9,14 @@ use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags};
 pub struct ECPublicKey([u8; Self::KEY_SIZE]);
 
 impl ECPublicKey {
+    /// Restores an ECDSA public key from a vector of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 }
 
 impl ECPublicKey {
+    /// Verifies the given ECDSA signature for the given message using this ECDSA public key.
     pub fn verify<D>(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: D) -> bool
     where
         D: AsRef<[u8]>,

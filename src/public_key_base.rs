@@ -14,6 +14,7 @@ pub struct PublicKeyBase {
 }
 
 impl PublicKeyBase {
+    /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `AgreementPublicKey`.
     pub fn new(signing_public_key: SigningPublicKey, agreement_public_key: AgreementPublicKey) -> Self {
         Self {
             signing_public_key,
@@ -21,10 +22,12 @@ impl PublicKeyBase {
         }
     }
 
+    /// Returns the `SigningPublicKey` of this `PublicKeyBase`.
     pub fn signing_public_key(&self) -> &SigningPublicKey {
         &self.signing_public_key
     }
 
+    /// Returns the `AgreementPublicKey` of this `PublicKeyBase`.
     pub fn agreement_public_key(&self) -> &AgreementPublicKey {
         &self.agreement_public_key
     }

@@ -8,31 +8,38 @@ use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
 pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
 
 impl ECPrivateKey {
+    /// Creates a new random ECDSA private key.
     pub fn new() -> Self {
         let mut rng = bc_crypto::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
+    /// Creates a new random ECDSA private key using the given random number generator.
     pub fn new_using(rng: &mut impl bc_crypto::RandomNumberGenerator) -> Self {
         let mut key = [0u8; Self::KEY_SIZE];
         rng.fill_random_data(&mut key);
         Self::from_data(key)
     }
 
+    /// Restores an ECDSA private key from a vector of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 }
 
 impl ECPrivateKey {
+    /// Derives the Schnorr public key from this ECDSA private key.
     pub fn schnorr_public_key(&self) -> SchnorrPublicKey {
         bc_crypto::schnorr_public_key_from_private_key(self.into()).into()
     }
 
+    /// ECDSA signs the given message using this ECDSA private key.
     pub fn ecdsa_sign<T>(&self, message: T) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] where T: AsRef<[u8]> {
         bc_crypto::ecdsa_sign(&self.0, message.as_ref())
     }
 
+    /// Schnorr signs the given message using this ECDSA private key, the given
+    /// tag, and the given random number generator.
     pub fn schnorr_sign_using<D1, D2>(
         &self,
         message: D1,
@@ -46,6 +53,7 @@ impl ECPrivateKey {
         bc_crypto::schnorr_sign_using(&self.0, message, tag, rng)
     }
 
+    /// Schnorr signs the given message using this ECDSA private key and the given tag.
     pub fn schnorr_sign<D1, D2>(&self, message: D1, tag: D2) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,

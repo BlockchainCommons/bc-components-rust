@@ -9,10 +9,12 @@ pub struct AuthenticationTag([u8; Self::AUTHENTICATION_TAG_SIZE]);
 impl AuthenticationTag {
     pub const AUTHENTICATION_TAG_SIZE: usize = 16;
 
+    /// Restore an `AuthenticationTag` from a fixed-size array of bytes.
     pub const fn from_data(data: [u8; Self::AUTHENTICATION_TAG_SIZE]) -> Self {
         Self(data)
     }
 
+    /// Restore an `AuthenticationTag` from a reference to an array of bytes.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
@@ -23,6 +25,7 @@ impl AuthenticationTag {
         Some(Self::from_data(arr))
     }
 
+    /// Get a reference to the fixed-size array of bytes.
     pub fn data(&self) -> &[u8; Self::AUTHENTICATION_TAG_SIZE] {
         self.into()
     }

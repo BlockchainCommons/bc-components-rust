@@ -8,6 +8,7 @@ pub struct UUID([u8; Self::UUID_SIZE]);
 impl UUID {
     pub const UUID_SIZE: usize = 16;
 
+    /// Creates a new type 4 (random) UUID.
     pub fn new() -> Self {
         let mut uuid = [0u8; Self::UUID_SIZE];
         bc_crypto::fill_random_data(&mut uuid);
@@ -16,10 +17,12 @@ impl UUID {
         Self(uuid)
     }
 
+    /// Restores a UUID from data.
     pub fn from_data(data: [u8; Self::UUID_SIZE]) -> Self {
         Self(data)
     }
 
+    /// Restores a UUID from data.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::UUID_SIZE {
@@ -30,6 +33,7 @@ impl UUID {
         Some(Self::from_data(arr))
     }
 
+    /// Returns the data of the UUID.
     pub fn data(&self) -> &[u8; Self::UUID_SIZE] {
         self.into()
     }

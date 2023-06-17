@@ -9,23 +9,30 @@ use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, Pub
 pub struct PrivateKeyBase(Vec<u8>);
 
 impl PrivateKeyBase {
-    pub const fn from_vec(data: Vec<u8>) -> Self {
-        Self(data)
-    }
-
-    pub fn from_data(data: &[u8]) -> Self {
-        Self(data.to_vec())
-    }
-
-    pub fn from_data_ref<T>(data: &T) -> Self where T: AsRef<[u8]> {
-        Self(data.as_ref().to_vec())
-    }
-
+    /// Generate a new random `PrivateKeyBase`.
     pub fn new() -> Self {
         let mut rng = bc_crypto::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
+    /// Restores a `PrivateKeyBase` from a vector of bytes.
+    pub const fn from_vec(data: Vec<u8>) -> Self {
+        Self(data)
+    }
+
+    /// Restores a `PrivateKeyBase` from a reference to a vector of bytes.
+    pub fn from_data(data: &[u8]) -> Self {
+        Self(data.to_vec())
+    }
+
+    /// Restores a `PrivateKeyBase` from a reference to a vector of bytes.
+    pub fn from_data_ref<T>(data: &T) -> Self where T: AsRef<[u8]> {
+        Self(data.as_ref().to_vec())
+    }
+
+    /// Restores a `PrivateKeyBase` from an optional reference to a vector of bytes.
+    ///
+    /// If the data is `None`, a new random `PrivateKeyBase` is generated.
     pub fn from_optional_data<D>(data: Option<D>) -> Self where D: AsRef<[u8]> {
         match data {
             Some(data) => Self::from_data_ref(&data),
@@ -33,30 +40,41 @@ impl PrivateKeyBase {
         }
     }
 
+    /// Generate a new random `PrivateKeyBase` using the given random number generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self::from_vec(rng.random_data(32))
     }
 
+    /// Create a new `PrivateKeyBase` from the given private keys data provider.
     pub fn new_with_provider<T: PrivateKeysDataProvider>(provider: &T) -> Self {
         Self::from_vec(provider.private_keys_data())
     }
 
+    /// Derive a new `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn signing_private_key(&self) -> SigningPrivateKey {
         SigningPrivateKey::derive_from_key_material(&self.0)
     }
 
+    /// Derive a new `AgreementPrivateKey` from this `PrivateKeyBase`.
     pub fn agreement_private_key(&self) -> AgreementPrivateKey {
         AgreementPrivateKey::derive_from_key_material(&self.0)
     }
 
+    /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
+    ///
+    /// This is a Schnorr public key for signing.
     pub fn public_keys(&self) -> PublicKeyBase {
         PublicKeyBase::new(self.signing_private_key().schnorr_public_key(), self.agreement_private_key().public_key())
     }
 
+    /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
+    ///
+    /// This is an ECDSA public key for signing.
     pub fn ecdsa_public_keys(&self) -> PublicKeyBase {
         PublicKeyBase::new(self.signing_private_key().ecdsa_public_key(), self.agreement_private_key().public_key())
     }
 
+    /// Get the raw data of this `PrivateKeyBase`.
     pub fn data(&self) -> &[u8] {
         self.into()
     }

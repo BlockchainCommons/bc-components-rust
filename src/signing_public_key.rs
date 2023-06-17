@@ -10,14 +10,17 @@ pub enum SigningPublicKey {
 }
 
 impl SigningPublicKey {
+    /// Restores a `SigningPublicKey` from a `SchnorrPublicKey`.
     pub fn from_schnorr(key: SchnorrPublicKey) -> Self {
         Self::Schnorr(key)
     }
 
+    /// Restores a `SigningPublicKey` from an `ECPublicKey`.
     pub fn from_ecdsa(key: ECPublicKey) -> Self {
         Self::ECDSA(key)
     }
 
+    /// Returns the `SchnorrPublicKey` of this `SigningPublicKey`, if it is a Schnorr key.
     pub fn schnorr(&self) -> Option<&SchnorrPublicKey> {
         match self {
             Self::Schnorr(key) => Some(key),
@@ -25,6 +28,7 @@ impl SigningPublicKey {
         }
     }
 
+    /// Returns the `ECPublicKey` of this `SigningPublicKey`, if it is an ECDSA key.
     pub fn ecdsa(&self) -> Option<&ECPublicKey> {
         match self {
             Self::ECDSA(key) => Some(key),
@@ -32,6 +36,11 @@ impl SigningPublicKey {
         }
     }
 
+    /// Verifies a signature against a message.
+    ///
+    /// The type of signature must match the type of this key, and the
+    /// signature must be valid for the message, or the verification
+    /// will fail.
     pub fn verify<D>(&self, signature: &Signature, message: D) -> bool
     where
         D: AsRef<[u8]>,

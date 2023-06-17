@@ -13,19 +13,23 @@ pub struct AgreementPrivateKey ([u8; Self::KEY_SIZE]);
 impl AgreementPrivateKey {
     pub const KEY_SIZE: usize = 32;
 
+    /// Generate a new random `AgreementPrivateKey`.
     pub fn new() -> Self {
         let mut rng = bc_crypto::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
+    /// Generate a new random `AgreementPrivateKey` using the given random number generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self(x25519_new_agreement_private_key_using(rng))
     }
 
+    /// Restore an `AgreementPrivateKey` from a fixed-size array of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 
+    /// Restore an `AgreementPrivateKey` from a reference to an array of bytes.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
@@ -36,28 +40,38 @@ impl AgreementPrivateKey {
         Some(Self::from_data(arr))
     }
 
+    /// Get a reference to the fixed-size array of bytes.
     pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
         self.into()
     }
 
+    /// Restore an `AgreementPrivateKey` from a hex string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the hex string is invalid or the length is not `AgreementPrivateKey::KEY_SIZE * 2`.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
         Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
+    /// Get the hex string representation of the `AgreementPrivateKey`.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
 
+    /// Get the `AgreementPublicKey` corresponding to this `AgreementPrivateKey`.
     pub fn public_key(&self) -> AgreementPublicKey {
         AgreementPublicKey::from_data(bc_crypto::x25519_agreement_public_key_from_private_key(self.into()))
     }
 
+    /// Derive an `AgreementPrivateKey` from the given key material.
     pub fn derive_from_key_material<D>(key_material: D) -> Self
         where D: AsRef<[u8]>
     {
         Self::from_data(bc_crypto::x25519_derive_agreement_private_key(key_material))
     }
 
+    /// Derive a shared symmetric key from this `AgreementPrivateKey` and the given `AgreementPublicKey`.
     pub fn shared_key_with(&self, public_key: &AgreementPublicKey) -> SymmetricKey {
         SymmetricKey::from_data(bc_crypto::x25519_shared_key(self.into(), public_key.into()))
     }

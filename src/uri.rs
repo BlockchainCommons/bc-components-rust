@@ -7,6 +7,9 @@ use crate::tags;
 pub struct URI(String);
 
 impl URI {
+    /// Creates a new `URI` from a string.
+    ///
+    /// No validation is performed on the string.
     pub fn new<T>(uri: T) -> Self where T: Into<String> {
         Self(uri.into())
     }

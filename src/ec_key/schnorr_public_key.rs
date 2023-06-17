@@ -8,16 +8,19 @@ use crate::ECKeyBase;
 pub struct SchnorrPublicKey([u8; Self::KEY_SIZE]);
 
 impl SchnorrPublicKey {
+    /// Restores a Schnorr public key from a vector of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 
+    /// Returns the Schnorr public key as a vector of bytes.
     pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
         &self.0
     }
 }
 
 impl SchnorrPublicKey {
+    /// Verifies the given Schnorr signature for the given message and tag.
     pub fn schnorr_verify<D1, D2>(&self, signature: &[u8; SCHNORR_SIGNATURE_SIZE],  message: D1, tag: D2) -> bool
     where
         D1: AsRef<[u8]>,

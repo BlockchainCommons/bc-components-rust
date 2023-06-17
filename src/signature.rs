@@ -12,6 +12,7 @@ pub enum Signature {
 }
 
 impl Signature {
+    /// Restores a Schnorr signature from a vector of bytes.
     pub fn schnorr_from_data<D>(data: [u8; SCHNORR_SIGNATURE_SIZE], tag: D) -> Self
     where
         D: Into<Vec<u8>>,
@@ -19,6 +20,7 @@ impl Signature {
         Self::Schnorr{ sig: data, tag: tag.into() }
     }
 
+    /// Restores a Schnorr signature from a vector of bytes.
     pub fn schnorr_from_data_ref<D1, D2>(data: D1, tag: D2) -> Option<Self>
     where
         D1: AsRef<[u8]>,
@@ -34,10 +36,12 @@ impl Signature {
         Some(Self::schnorr_from_data(arr, tag))
     }
 
+    /// Restores an ECDSA signature from a vector of bytes.
     pub fn ecdsa_from_data(data: [u8; ECDSA_SIGNATURE_SIZE]) -> Self {
         Self::ECDSA(data)
     }
 
+    /// Restores an ECDSA signature from a vector of bytes.
     pub fn ecdsa_from_data_ref<D>(data: D) -> Option<Self>
     where
         D: AsRef<[u8]>,

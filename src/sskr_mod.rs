@@ -9,6 +9,7 @@ pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecre
 pub struct SSKRShare(Vec<u8>);
 
 impl SSKRShare {
+    /// Restores an `SSKRShare` from a vector of bytes.
     pub fn from_data_ref<T>(data: &T) -> Self
     where
         T: AsRef<[u8]>,
@@ -16,28 +17,35 @@ impl SSKRShare {
         Self(data.as_ref().to_vec())
     }
 
+    /// Returns the data of this `SSKRShare`.
     pub fn data(&self) -> &[u8] {
         &self.0
     }
 
+    /// Restores an `SSKRShare` from a hex string.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
         Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap())
     }
 
+    /// Returns the data of this `SSKRShare` as a hex string.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
 }
 
 impl SSKRShare {
+    /// Returns the unique identifier of the split to which this share belongs.
     pub fn identifier(&self) -> u16 {
         (u16::from(self.0[0]) << 8) | u16::from(self.0[1])
     }
 
+    /// Returns the unique identifier of the split to which this share belongs as a hex string.
     pub fn identifier_hex(&self) -> String {
         hex::encode(&self.0[0..=1])
     }
 
+    /// Returns the minimum number of groups whose quorum must be met to
+    /// reconstruct the secret.
     pub fn group_threshold(&self) -> usize {
         usize::from(self.0[2] >> 4) + 1
     }
@@ -46,14 +54,19 @@ impl SSKRShare {
         usize::from(self.0[2] & 0xf) + 1
     }
 
+    /// Returns the index of the group to which this share belongs.
     pub fn group_index(&self) -> usize {
         usize::from(self.0[3] >> 4)
     }
 
+    /// Returns the minimum number of shares within the group
+    /// to which this share belongs that must be combined to meet
+    /// the group threshold.
     pub fn member_threshold(&self) -> usize {
         usize::from(self.0[3] & 0xf) + 1
     }
 
+    /// Returns the index of this share within the group to which it belongs.
     pub fn member_index(&self) -> usize {
         usize::from(self.0[4] & 0xf)
     }

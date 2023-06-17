@@ -22,6 +22,9 @@ pub struct EncryptedMessage {
 }
 
 impl EncryptedMessage {
+    /// Restores an EncryptedMessage from its CBOR representation.
+    ///
+    /// This is a low-level function that is not normally needed.
     pub fn new(ciphertext: Vec<u8>, aad: Vec<u8>, nonce: Nonce, auth: AuthenticationTag) -> Self {
         Self {
             ciphertext,
@@ -31,26 +34,32 @@ impl EncryptedMessage {
         }
     }
 
+    /// Returns a reference to the ciphertext data.
     pub fn ciphertext(&self) -> &[u8] {
         &self.ciphertext
     }
 
+    /// Returns a reference to the additional authenticated data (AAD).
     pub fn aad(&self) -> &[u8] {
         &self.aad
     }
 
+    /// Returns a reference to the nonce value used for encryption.
     pub fn nonce(&self) -> &Nonce {
         &self.nonce
     }
 
-    pub fn auth(&self) -> &AuthenticationTag {
+    /// Returns a reference to the authentication tag value used for encryption.
+    pub fn authentication_tag(&self) -> &AuthenticationTag {
         &self.auth
     }
 
+    /// Returns an optional `Digest` instance if the AAD data can be parsed as CBOR.
     pub fn opt_digest(&self) -> Option<Digest> {
         Digest::from_cbor_data(self.aad()).ok()
     }
 
+    /// Returns `true` if the AAD data can be parsed as CBOR.
     pub fn has_digest(&self) -> bool {
         self.opt_digest().is_some()
     }
@@ -164,7 +173,7 @@ mod test {
         assert_eq!(encrypted_message.ciphertext(), &CIPHERTEXT);
         assert_eq!(encrypted_message.aad(), &AAD);
         assert_eq!(encrypted_message.nonce(), &NONCE);
-        assert_eq!(encrypted_message.auth(), &AUTH);
+        assert_eq!(encrypted_message.authentication_tag(), &AUTH);
 
         let decrypted_plaintext = KEY.decrypt(&encrypted_message)?;
         assert_eq!(PLAINTEXT, decrypted_plaintext.as_slice());

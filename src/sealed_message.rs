@@ -12,6 +12,7 @@ pub struct SealedMessage {
 }
 
 impl SealedMessage {
+    /// Creates a new `SealedMessage` from the given plaintext and recipient.
     pub fn new<D>(plaintext: D, recipient: &PublicKeyBase) -> Self
     where
         D: AsRef<[u8]>
@@ -19,6 +20,8 @@ impl SealedMessage {
         Self::new_with_aad(plaintext, recipient, None)
     }
 
+    /// Creates a new `SealedMessage` from the given plaintext, recipient, and
+    /// additional authenticated data.
     pub fn new_with_aad<D>(plaintext: D, recipient: &PublicKeyBase, aad: Option<&[u8]>) -> Self
     where
         D: AsRef<[u8]>
@@ -26,6 +29,9 @@ impl SealedMessage {
         Self::new_opt(plaintext, recipient, aad, None, None::<Nonce>)
     }
 
+    /// Creates a new `SealedMessage` from the given plaintext, recipient, and
+    /// additional authenticated data. Also accepts optional test key material
+    /// and test nonce.
     pub fn new_opt<D, N>(
         plaintext: D,
         recipient: &PublicKeyBase,
@@ -48,6 +54,7 @@ impl SealedMessage {
         }
     }
 
+    /// Decrypts the message using the recipient's private key.
     pub fn decrypt(&self, private_keys: &PrivateKeyBase) -> Result<Vec<u8>, bc_crypto::Error> {
         let shared_key = private_keys.agreement_private_key().shared_key_with(&self.ephemeral_public_key);
         shared_key.decrypt(&self.message)

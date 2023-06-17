@@ -11,19 +11,25 @@ pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
 impl SigningPrivateKey {
     pub const KEY_SIZE: usize = 32;
 
+    /// Generate a new random `SigningPrivateKey`.
     pub fn new() -> Self {
         let mut rng = bc_crypto::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
+    /// Generate a new random `SigningPrivateKey` using the given random number generator.
+    ///
+    /// For testing purposes only.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self(ecdsa_new_private_key_using(rng))
     }
 
+    /// Restores a `SigningPrivateKey` from a vector of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 
+    /// Restores a `SigningPrivateKey` from a reference to a vector of bytes.
     pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
@@ -34,26 +40,36 @@ impl SigningPrivateKey {
         Some(Self::from_data(arr))
     }
 
+    /// Returns a reference to the vector of private key data.
     pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
         self.into()
     }
 
+    /// Restores a `SigningPrivateKey` from a hex string.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the hex string is invalid or the length is not `SigningPrivateKey::KEY_SIZE * 2`.
     pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
         Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
+    /// Returns the private key as a hex string.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
 
+    /// Derives the ECDSA signing public key from this private key.
     pub fn ecdsa_public_key(&self) -> SigningPublicKey {
         SigningPublicKey::from_ecdsa(ECPrivateKey::from_data(*self.data()).public_key())
     }
 
+    /// Derives the Schnorr signing public key from this private key.
     pub fn schnorr_public_key(&self) -> SigningPublicKey {
         SigningPublicKey::from_schnorr(ECPrivateKey::from_data(*self.data()).schnorr_public_key())
     }
 
+    /// Derives a new `SigningPrivateKey` from the given key material.
     pub fn derive_from_key_material<D>(key_material: D) -> Self
         where D: AsRef<[u8]>
     {
