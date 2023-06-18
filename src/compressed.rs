@@ -7,13 +7,25 @@ use miniz_oxide::inflate::decompress_to_vec;
 use crate::{digest::Digest, DigestProvider, tags};
 
 /// Errors for Compressed
-#[derive(Clone, Debug, Copy, Eq, PartialEq)]
+#[derive(Debug)]
 pub enum CompressedError {
     /// The compressed data is corrupt.
     Corrupt,
     /// The checksum does not match the uncompressed data.
     InvalidChecksum,
 }
+
+impl std::fmt::Display for CompressedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            CompressedError::Corrupt => "corrupt compressed data".to_string(),
+            CompressedError::InvalidChecksum => "invalid checksum in compressed data".to_string(),
+        };
+        f.write_str(&s)
+    }
+}
+
+impl std::error::Error for CompressedError { }
 
 /// A compressed binary object.
 ///
