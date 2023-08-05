@@ -41,7 +41,6 @@ tag_constant!(LEAF, 24, "leaf");
 tag_constant!(ENVELOPE,         200, "envelope");
 tag_constant!(ASSERTION,        201, "assertion");
 tag_constant!(KNOWN_VALUE,      202, "known-value");
-tag_constant!(WRAPPED_ENVELOPE, 203, "wrapped-envelope");
 tag_constant!(DIGEST,           204, "digest");
 tag_constant!(ENCRYPTED,        205, "encrypted");
 tag_constant!(COMPRESSED,       206, "compressed");
@@ -118,7 +117,6 @@ impl LazyTagsStore {
                 ENVELOPE,
                 ASSERTION,
                 KNOWN_VALUE,
-                WRAPPED_ENVELOPE,
                 DIGEST,
                 ENCRYPTED,
                 COMPRESSED,
