@@ -39,41 +39,42 @@ tag_constant!(UUID, 37, "uuid");
 tag_constant!(LEAF, 24, "leaf");
 
 tag_constant!(ENVELOPE,         200, "envelope");
-tag_constant!(KNOWN_VALUE,      202, "known-value");
-tag_constant!(DIGEST,           204, "digest");
-tag_constant!(ENCRYPTED,        205, "encrypted");
-tag_constant!(COMPRESSED,       206, "compressed");
 
-// Tags for subtypes specific to Distributed Function Calls. These tags use
-// two-byte encoding.
+// Envelope extension tags
+tag_constant!(KNOWN_VALUE,      40000, "known-value");
+tag_constant!(DIGEST,           40001, "digest");
+tag_constant!(ENCRYPTED,        40002, "encrypted");
+tag_constant!(COMPRESSED,       40003, "compressed");
 
-tag_constant!(REQUEST,      207, "request");
-tag_constant!(RESPONSE,     208, "response");
-tag_constant!(FUNCTION,     209, "function");
-tag_constant!(PARAMETER,    210, "parameter");
-tag_constant!(PLACEHOLDER,  211, "placeholder");
-tag_constant!(REPLACEMENT,  212, "replacement");
+// Tags for subtypes specific to Distributed Function Calls.
+tag_constant!(REQUEST,      40004, "request");
+tag_constant!(RESPONSE,     40005, "response");
+tag_constant!(FUNCTION,     40006, "function");
+tag_constant!(PARAMETER,    40007, "parameter");
+tag_constant!(PLACEHOLDER,  40008, "placeholder");
+tag_constant!(REPLACEMENT,  40009, "replacement");
 
 // These are the utility structures we've identified and speced related to other
 // various applications that aren't specifically Bitcoin-related.
 
 tag_constant!(SEED,                     300, "crypto-seed"); // Fixed
-tag_constant!(AGREEMENT_PRIVATE_KEY,    301, "agreement-private-key");
-tag_constant!(AGREEMENT_PUBLIC_KEY,     302, "agreement-public-key");
 tag_constant!(EC_KEY,                   306, "crypto-eckey"); // Fixed
 tag_constant!(SSKR_SHARE,               309, "crypto-sskr"); // Fixed
-tag_constant!(CID,                      312, "cid");
-tag_constant!(SEED_DIGEST,              313, "seed-digest");
-tag_constant!(NONCE,                    314, "nonce");
-tag_constant!(PASSWORD,                 315, "password");
-tag_constant!(PRIVATE_KEYBASE,          316, "crypto-prvkeys");
-tag_constant!(PUBLIC_KEYBASE,           317, "crypto-pubkeys");
-tag_constant!(SALT,                     318, "salt");
-tag_constant!(SEALED_MESSAGE,           319, "crypto-sealed");
-tag_constant!(SIGNATURE,                320, "signature");
-tag_constant!(SIGNING_PRIVATE_KEY,      321, "signing-private-key");
-tag_constant!(SIGNING_PUBLIC_KEY,       322, "signing-public-key");
-tag_constant!(SYMMETRIC_KEY,            323, "crypto-key");
+
+tag_constant!(AGREEMENT_PRIVATE_KEY,    40010, "agreement-private-key");
+tag_constant!(AGREEMENT_PUBLIC_KEY,     40011, "agreement-public-key");
+tag_constant!(CID,                      40012, "cid");
+tag_constant!(SEED_DIGEST,              40013, "seed-digest");
+tag_constant!(NONCE,                    40014, "nonce");
+tag_constant!(PASSWORD,                 40015, "password");
+tag_constant!(PRIVATE_KEYBASE,          40016, "crypto-prvkeys");
+tag_constant!(PUBLIC_KEYBASE,           40017, "crypto-pubkeys");
+tag_constant!(SALT,                     40018, "salt");
+tag_constant!(SEALED_MESSAGE,           40019, "crypto-sealed");
+tag_constant!(SIGNATURE,                40020, "signature");
+tag_constant!(SIGNING_PRIVATE_KEY,      40021, "signing-private-key");
+tag_constant!(SIGNING_PUBLIC_KEY,       40022, "signing-public-key");
+tag_constant!(SYMMETRIC_KEY,            40023, "crypto-key");
 
 // Bitcoin-related
 
