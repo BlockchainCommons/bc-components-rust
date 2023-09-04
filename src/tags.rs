@@ -63,7 +63,7 @@ tag_constant!(SSKR_SHARE,               309, "crypto-sskr"); // Fixed
 
 tag_constant!(AGREEMENT_PRIVATE_KEY,    40010, "agreement-private-key");
 tag_constant!(AGREEMENT_PUBLIC_KEY,     40011, "agreement-public-key");
-tag_constant!(CID,                      40012, "cid");
+tag_constant!(ARID,                     40012, "arid");
 tag_constant!(SEED_DIGEST,              40013, "seed-digest");
 tag_constant!(NONCE,                    40014, "nonce");
 tag_constant!(PASSWORD,                 40015, "password");
@@ -132,7 +132,7 @@ impl LazyTagsStore {
                 AGREEMENT_PUBLIC_KEY,
                 EC_KEY,
                 SSKR_SHARE,
-                CID,
+                ARID,
                 SEED_DIGEST,
                 NONCE,
                 PASSWORD,

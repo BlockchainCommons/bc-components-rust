@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.2.2")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.3.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,14 +16,14 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.2.2"
+//! bc-components = "0.3.0"
 //! ```
 
 mod digest;
 pub use digest::Digest;
 
-mod cid;
-pub use cid::CID;
+mod arid;
+pub use arid::ARID;
 
 mod digest_provider;
 pub use digest_provider::DigestProvider;

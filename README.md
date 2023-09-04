@@ -21,7 +21,7 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.2.2"
+bc-components = "0.3.0"
 ```
 
 ## Types
@@ -31,7 +31,7 @@ bc-components = "0.2.2"
 | AgreementPrivateKey | A Curve25519 private key used for X25519 key agreement. |
 | AgreementPublicKey | A Curve25519 public key used for X25519 key agreement. |
 | AuthenticationTag | The HMAC authentication tag produced by the encryption process. |
-| CID | A “Common Identifier” (CID) |
+| ARID | An “Apparently Random Identifier” (ARID) |
 | Compressed | A compressed binary object. |
 | Digest | A cryptographically secure digest, implemented with SHA-256. |
 | ECPrivateKey | An elliptic curve digital signature algorithm (ECDSA) private key. |
