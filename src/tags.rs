@@ -185,6 +185,7 @@ macro_rules! with_tags {
     ($action:expr) => {{
         let binding = $crate::GLOBAL_TAGS.get();
         let tags = binding.as_ref().unwrap();
+        #[allow(clippy::redundant_closure_call)]
         $action(tags)
     }};
 }
@@ -197,7 +198,7 @@ mod tests {
     fn test_1() {
         use crate::*;
         assert_eq!(tags::LEAF.value(), 24);
-        assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
+        assert_eq!(tags::LEAF.name().as_ref().unwrap(), "leaf");
         with_tags!(|tags: &dyn dcbor::TagsStoreTrait| {
             assert_eq!(tags.name_for_tag(&tags::LEAF), "leaf");
         });

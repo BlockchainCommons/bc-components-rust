@@ -1,7 +1,7 @@
 use std::ops::RangeInclusive;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-use bc_crypto::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags;
 
 /// Random salt used to decorrelate other information.

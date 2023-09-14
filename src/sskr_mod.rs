@@ -1,4 +1,4 @@
-use bc_crypto::RandomNumberGenerator;
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::tags;
@@ -118,7 +118,7 @@ pub fn sskr_generate(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
 ) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
-    let mut rng = bc_crypto::SecureRandomNumberGenerator;
+    let mut rng = SecureRandomNumberGenerator;
     sskr_generate_using(spec, master_secret, &mut rng)
 }
 

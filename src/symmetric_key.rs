@@ -12,12 +12,12 @@ impl SymmetricKey {
 
     /// Create a new random symmetric key.
     pub fn new() -> Self {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = bc_rand::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
     /// Create a new random symmetric key using the given random number generator.
-    pub fn new_using(rng: &mut impl bc_crypto::RandomNumberGenerator) -> Self {
+    pub fn new_using(rng: &mut impl bc_rand::RandomNumberGenerator) -> Self {
         let mut key = [0u8; Self::SYMMETRIC_KEY_SIZE];
         rng.fill_random_data(&mut key);
         Self::from_data(key)

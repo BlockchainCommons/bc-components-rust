@@ -1,8 +1,9 @@
 use std::rc::Rc;
-use bc_crypto::{RandomNumberGenerator, ecdsa_new_private_key_using};
+use bc_crypto::ecdsa_new_private_key_using;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 
 /// A private ECDSA key for signing.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -13,7 +14,7 @@ impl SigningPrivateKey {
 
     /// Generate a new random `SigningPrivateKey`.
     pub fn new() -> Self {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
@@ -88,7 +89,7 @@ impl SigningPrivateKey {
         &self,
         message: D1,
         tag: D2,
-        rng: &mut impl bc_crypto::RandomNumberGenerator
+        rng: &mut impl RandomNumberGenerator
     ) -> Signature
     where
         D1: AsRef<[u8]>,
@@ -110,7 +111,7 @@ impl SigningPrivateKey {
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>,
     {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, tag, &mut rng)
     }
 }

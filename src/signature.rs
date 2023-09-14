@@ -144,7 +144,7 @@ impl CBORTaggedDecodable for Signature {
 #[cfg(test)]
 mod tests {
     use crate::{SigningPrivateKey, Signature};
-    use bc_crypto::make_fake_random_number_generator;
+    use bc_rand::make_fake_random_number_generator;
     use dcbor::{CBOREncodable, CBOR, CBORTaggedDecodable};
     use hex_literal::hex;
     use indoc::indoc;

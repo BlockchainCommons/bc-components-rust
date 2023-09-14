@@ -10,12 +10,12 @@ pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
 impl ECPrivateKey {
     /// Creates a new random ECDSA private key.
     pub fn new() -> Self {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = bc_rand::SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
     /// Creates a new random ECDSA private key using the given random number generator.
-    pub fn new_using(rng: &mut impl bc_crypto::RandomNumberGenerator) -> Self {
+    pub fn new_using(rng: &mut impl bc_rand::RandomNumberGenerator) -> Self {
         let mut key = [0u8; Self::KEY_SIZE];
         rng.fill_random_data(&mut key);
         Self::from_data(key)
@@ -44,7 +44,7 @@ impl ECPrivateKey {
         &self,
         message: D1,
         tag: D2,
-        rng: &mut impl bc_crypto::RandomNumberGenerator
+        rng: &mut impl bc_rand::RandomNumberGenerator
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
     where
         D1: AsRef<[u8]>,
@@ -59,7 +59,7 @@ impl ECPrivateKey {
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>
     {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = bc_rand::SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, tag, &mut rng)
     }
 }

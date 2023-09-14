@@ -1,5 +1,5 @@
 use std::rc::Rc;
-use bc_crypto::fill_random_data;
+use bc_rand::fill_random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
 

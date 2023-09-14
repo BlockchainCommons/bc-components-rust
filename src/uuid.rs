@@ -11,7 +11,7 @@ impl UUID {
     /// Creates a new type 4 (random) UUID.
     pub fn new() -> Self {
         let mut uuid = [0u8; Self::UUID_SIZE];
-        bc_crypto::fill_random_data(&mut uuid);
+        bc_rand::fill_random_data(&mut uuid);
         uuid[6] = (uuid[6] & 0x0F) | 0x40; // set version to 4
         uuid[8] = (uuid[8] & 0x3F) | 0x80; // set variant to 2
         Self(uuid)

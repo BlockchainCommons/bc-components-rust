@@ -1,4 +1,4 @@
-use bc_crypto::random_data;
+use bc_rand::random_data;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
 use crate::tags;

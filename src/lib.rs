@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.3.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.4.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.3.0"
+//! bc-components = "0.4.0"
 //! ```
 
 mod digest;
@@ -101,14 +101,15 @@ pub use sskr_mod::{
 #[cfg(test)]
 mod tests {
     use crate::{AgreementPrivateKey, AgreementPublicKey, tags, SigningPrivateKey, SigningPublicKey};
-    use bc_crypto::{make_fake_random_number_generator, ecdsa_new_private_key_using, ecdsa_public_key_from_private_key, ecdsa_sign, ecdsa_verify, schnorr_public_key_from_private_key, RandomNumberGenerator, schnorr_sign_using, schnorr_verify};
+    use bc_crypto::{ecdsa_new_private_key_using, ecdsa_public_key_from_private_key, ecdsa_sign, ecdsa_verify, schnorr_public_key_from_private_key, schnorr_sign_using, schnorr_verify};
+    use bc_rand::{make_fake_random_number_generator, RandomNumberGenerator};
     use bc_ur::{UREncodable, URDecodable};
     use hex_literal::hex;
 
     #[test]
     fn tags() {
         assert_eq!(tags::LEAF.value(), 24);
-        assert_eq!(tags::LEAF.name().as_ref().unwrap(), Some("leaf").unwrap());
+        assert_eq!(tags::LEAF.name().as_ref().unwrap(), "leaf");
     }
 
     #[test]

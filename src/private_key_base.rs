@@ -1,4 +1,4 @@
-use bc_crypto::RandomNumberGenerator;
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 
@@ -11,7 +11,7 @@ pub struct PrivateKeyBase(Vec<u8>);
 impl PrivateKeyBase {
     /// Generate a new random `PrivateKeyBase`.
     pub fn new() -> Self {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 

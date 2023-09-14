@@ -1,8 +1,9 @@
 use std::rc::Rc;
-use bc_crypto::{RandomNumberGenerator, x25519_new_agreement_private_key_using};
+use bc_crypto::x25519_new_agreement_private_key_using;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 use crate::{tags, AgreementPublicKey, SymmetricKey};
+use bc_rand::{SecureRandomNumberGenerator, RandomNumberGenerator};
 
 /// A Curve25519 private key used for X25519 key agreement.
 ///
@@ -15,7 +16,7 @@ impl AgreementPrivateKey {
 
     /// Generate a new random `AgreementPrivateKey`.
     pub fn new() -> Self {
-        let mut rng = bc_crypto::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
