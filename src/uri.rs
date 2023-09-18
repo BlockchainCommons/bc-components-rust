@@ -40,13 +40,13 @@ impl CBORTaggedEncodable for URI {
 }
 
 impl CBORDecodable for URI {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for URI {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let uri = String::from_cbor(cbor)?;
         Ok(Self::new(uri))
     }

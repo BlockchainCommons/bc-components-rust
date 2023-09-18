@@ -1,4 +1,5 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags, ECKeyBase, Signature};
+use anyhow::bail;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 
@@ -91,28 +92,28 @@ impl CBORTaggedEncodable for SigningPublicKey {
 impl UREncodable for SigningPublicKey { }
 
 impl CBORDecodable for SigningPublicKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SigningPublicKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         match untagged_cbor {
             CBOR::ByteString(data) => {
-                Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data).ok_or(dcbor::Error::InvalidFormat)?))
+                Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let CBOR::Unsigned(1) = &elements[0] {
                         if let Some(data) = CBOR::as_byte_string(&elements[1]) {
-                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?));
+                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data)?));
                         }
                     }
                 }
-                Err(dcbor::Error::InvalidFormat)
+                bail!("invalid ECDSA public key");
             },
-            _ => Err(dcbor::Error::InvalidFormat),
+            _ => bail!("invalid ECDSA public key"),
         }
     }
 }

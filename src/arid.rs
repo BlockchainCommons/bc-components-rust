@@ -1,7 +1,9 @@
 use bc_rand::random_data;
+use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
 use crate::tags;
+use anyhow::bail;
 
 /// An "Apparently Random Identifier" (ARID)
 ///
@@ -24,14 +26,16 @@ impl ARID {
     }
 
     /// Create a new ARID from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self>
+    where T: AsRef<[u8]>
+    {
         let data = data.as_ref();
         if data.len() != Self::ARID_SIZE {
-            return None;
+            bail!("Invalid ARID size");
         }
         let mut arr = [0u8; Self::ARID_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Get the data of the ARID.
@@ -93,16 +97,15 @@ impl CBORTaggedEncodable for ARID {
 }
 
 impl CBORDecodable for ARID {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for ARID {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
+        Self::from_data_ref(&data)
     }
 }
 
@@ -117,3 +120,9 @@ impl PartialOrd for ARID {
         Some(self.0.cmp(&other.0))
     }
 }
+
+impl UREncodable for ARID { }
+
+impl URDecodable for ARID { }
+
+impl URCodable for ARID { }

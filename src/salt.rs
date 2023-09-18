@@ -3,6 +3,7 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags;
+use anyhow::bail;
 
 /// Random salt used to decorrelate other information.
 #[derive(Clone, Eq, PartialEq)]
@@ -27,7 +28,7 @@ impl Salt {
     /// Create a specific number of bytes of salt.
     ///
     /// If the number of bytes is less than 8, this will return `None`.
-    pub fn new_with_len(count: usize) -> Option<Self> {
+    pub fn new_with_len(count: usize) -> anyhow::Result<Self> {
         let mut rng = SecureRandomNumberGenerator;
         Self::new_with_len_using(count, &mut rng)
     }
@@ -35,21 +36,21 @@ impl Salt {
     /// Create a specific number of bytes of salt.
     ///
     /// If the number of bytes is less than 8, this will return `None`.
-    pub fn new_with_len_using<R>(count: usize, rng: &mut R) -> Option<Self>
+    pub fn new_with_len_using<R>(count: usize, rng: &mut R) -> anyhow::Result<Self>
     where R: RandomNumberGenerator
     {
         if count < 8 {
-            return None;
+            bail!("Salt length is too short");
         }
-        Some(Self(rng.random_data(count)))
+        Ok(Self(rng.random_data(count)))
     }
 
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range(range: RangeInclusive<usize>) -> Option<Self> {
+    pub fn new_in_range(range: RangeInclusive<usize>) -> anyhow::Result<Self> {
         if range.start() < &8 {
-            return None;
+            bail!("Salt length is too short");
         }
         let mut rng = SecureRandomNumberGenerator;
         Self::new_in_range_using(&range, &mut rng)
@@ -58,11 +59,11 @@ impl Salt {
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range_using<R>(range: &RangeInclusive<usize>, rng: &mut R) -> Option<Self>
+    pub fn new_in_range_using<R>(range: &RangeInclusive<usize>, rng: &mut R) -> anyhow::Result<Self>
     where R: RandomNumberGenerator
     {
         if range.start() < &8 {
-            return None;
+            bail!("Salt length is too short");
         }
         let count = rng.next_in_closed_range(range);
         Self::new_with_len_using(count, rng)
@@ -118,13 +119,13 @@ impl CBORTaggedEncodable for Salt {
 }
 
 impl CBORDecodable for Salt {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Salt {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
         let instance = Self::from_data_ref(&data);
         Ok(instance)

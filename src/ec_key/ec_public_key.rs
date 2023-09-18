@@ -1,3 +1,4 @@
+use anyhow::bail;
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::UREncodable;
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
@@ -40,14 +41,14 @@ impl std::fmt::Debug for ECPublicKey {
 impl ECKeyBase for ECPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized {
+    fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]>, Self: Sized {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
-            return None;
+            bail!("Invalid ECDSA public key size");
         }
         let mut key = [0u8; Self::KEY_SIZE];
         key.copy_from_slice(data);
-        Some(Self(key))
+        Ok(Self(key))
     }
 
     fn data(&self) -> &[u8] {

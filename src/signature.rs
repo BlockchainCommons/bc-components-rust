@@ -3,6 +3,7 @@ use bc_ur::UREncodable;
 use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 
 use crate::tags;
+use anyhow::bail;
 
 /// A cryptographic signature. Supports ECDSA and Schnorr.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -21,7 +22,7 @@ impl Signature {
     }
 
     /// Restores a Schnorr signature from a vector of bytes.
-    pub fn schnorr_from_data_ref<D1, D2>(data: D1, tag: D2) -> Option<Self>
+    pub fn schnorr_from_data_ref<D1, D2>(data: D1, tag: D2) -> anyhow::Result<Self>
     where
         D1: AsRef<[u8]>,
         D2: AsRef<[u8]>,
@@ -29,11 +30,11 @@ impl Signature {
         let data = data.as_ref();
         let tag = tag.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
-            return None;
+            bail!("Invalid Schnorr signature size");
         }
         let mut arr = [0u8; SCHNORR_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::schnorr_from_data(arr, tag))
+        Ok(Self::schnorr_from_data(arr, tag))
     }
 
     /// Restores an ECDSA signature from a vector of bytes.
@@ -42,17 +43,17 @@ impl Signature {
     }
 
     /// Restores an ECDSA signature from a vector of bytes.
-    pub fn ecdsa_from_data_ref<D>(data: D) -> Option<Self>
+    pub fn ecdsa_from_data_ref<D>(data: D) -> anyhow::Result<Self>
     where
         D: AsRef<[u8]>,
     {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
-            return None;
+            bail!("Invalid ECDSA signature size");
         }
         let mut arr = [0u8; ECDSA_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::ecdsa_from_data(arr))
+        Ok(Self::ecdsa_from_data(arr))
     }
 }
 
@@ -110,33 +111,33 @@ impl CBORTaggedEncodable for Signature {
 impl UREncodable for Signature { }
 
 impl CBORDecodable for Signature {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Signature {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         match cbor {
             CBOR::ByteString(bytes) => {
-                Ok(Self::schnorr_from_data_ref(bytes, []).ok_or(dcbor::Error::InvalidFormat)?)
+                Self::schnorr_from_data_ref(bytes, [])
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
                     if let Some(data) = CBOR::as_byte_string(&elements[0]) {
                         if let Some(tag) = CBOR::as_byte_string(&elements[1]) {
-                            return Self::schnorr_from_data_ref(data, tag).ok_or(dcbor::Error::InvalidFormat);
+                            return Self::schnorr_from_data_ref(data, tag);
                         }
                     }
                     if let CBOR::Unsigned(1) = &elements[0] {
                         if let Some(data) = CBOR::as_byte_string(&elements[1]) {
-                            return Self::ecdsa_from_data_ref(data).ok_or(dcbor::Error::InvalidFormat);
+                            return Self::ecdsa_from_data_ref(data);
                         }
                     }
                 }
-                Err(dcbor::Error::InvalidFormat)
+                bail!("Invalid signature format");
             },
-            _ => Err(dcbor::Error::InvalidFormat),
+            _ => bail!("Invalid signature format"),
         }
     }
 }

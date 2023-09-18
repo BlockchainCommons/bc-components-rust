@@ -2,6 +2,7 @@ use std::rc::Rc;
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
 use crate::tags;
+use anyhow::bail;
 
 /// A Curve25519 public key used for X25519 key agreement.
 ///
@@ -18,14 +19,14 @@ impl AgreementPublicKey {
     }
 
     /// Restore an `AgreementPublicKey` from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
-            return None;
+            bail!("Invalid agreement public key size");
         }
         let mut arr = [0u8; Self::KEY_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Get a reference to the fixed-size array of bytes.
@@ -77,16 +78,15 @@ impl CBORTaggedEncodable for AgreementPublicKey {
 }
 
 impl CBORDecodable for AgreementPublicKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for AgreementPublicKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
+        Self::from_data_ref(&data)
     }
 }
 

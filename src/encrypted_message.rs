@@ -4,6 +4,7 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
 
 use crate::{Nonce, Digest, DigestProvider, tags, AuthenticationTag};
+use anyhow::bail;
 
 /// A secure encrypted message.
 ///
@@ -94,7 +95,7 @@ impl CBOREncodable for EncryptedMessage {
 }
 
 impl CBORDecodable for EncryptedMessage {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -118,11 +119,11 @@ impl CBORTaggedEncodable for EncryptedMessage {
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         match cbor {
             CBOR::Array(elements) => {
                 if elements.len() < 3 {
-                    return Err(dcbor::Error::InvalidFormat);
+                    bail!("EncryptedMessage must have at least 3 elements");
                 }
                 let ciphertext = CBOR::expect_byte_string(&elements[0])?.to_vec();
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
@@ -134,7 +135,7 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 };
                 Ok(Self::new(ciphertext, aad, nonce, auth))
             },
-            _ => Err(dcbor::Error::InvalidFormat),
+            _ => bail!("EncryptedMessage must be an array"),
         }
     }
 }

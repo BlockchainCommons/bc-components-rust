@@ -29,7 +29,7 @@ mod digest_provider;
 pub use digest_provider::DigestProvider;
 
 mod compressed;
-pub use compressed::{Compressed, CompressedError};
+pub use compressed::Compressed;
 
 mod nonce;
 pub use nonce::Nonce;
@@ -57,6 +57,9 @@ pub use agreement_public_key::AgreementPublicKey;
 
 mod agreement_private_key;
 pub use agreement_private_key::AgreementPrivateKey;
+
+mod seed;
+pub use seed::Seed;
 
 mod signature;
 pub use signature::Signature;
@@ -92,11 +95,12 @@ pub use sskr_mod::{
     SSKRSecret,
     SSKRShare,
     SSKRSpec,
-    SSKRError,
     sskr_generate,
     sskr_generate_using,
     sskr_combine,
 };
+
+pub use sskr::SSKRError;
 
 #[cfg(test)]
 mod tests {

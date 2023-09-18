@@ -2,6 +2,7 @@ use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase,
 
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
+use anyhow::bail;
 
 /// A sealed message can be sent to anyone, but only the intended recipient can
 /// decrypt it.
@@ -72,7 +73,7 @@ impl CBOREncodable for SealedMessage {
 }
 
 impl CBORDecodable for SealedMessage {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -88,11 +89,11 @@ impl CBORTaggedEncodable for SealedMessage {
 }
 
 impl CBORTaggedDecodable for SealedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         match cbor {
             CBOR::Array(elements) => {
                 if elements.len() != 2 {
-                    return Err(dcbor::Error::InvalidFormat);
+                    bail!("SealedMessage must have two elements");
                 }
                 let message = EncryptedMessage::from_cbor(&elements[0])?;
                 let ephemeral_public_key = AgreementPublicKey::from_cbor(&elements[1])?;
@@ -101,7 +102,7 @@ impl CBORTaggedDecodable for SealedMessage {
                     ephemeral_public_key,
                 })
             },
-            _ => Err(dcbor::Error::InvalidFormat),
+            _ => bail!("SealedMessage must be an array"),
         }
     }
 }

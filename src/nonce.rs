@@ -1,7 +1,9 @@
 use std::rc::Rc;
 use bc_rand::fill_random_data;
+use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
+use anyhow::bail;
 
 /// A random nonce ("number used once").
 #[derive(Clone, Eq, PartialEq)]
@@ -23,14 +25,14 @@ impl Nonce {
     }
 
     /// Restores a nonce from data.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::NONCE_SIZE {
-            return None;
+            bail!("Invalid nonce size");
         }
         let mut arr = [0u8; Self::NONCE_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Get the data of the nonce.
@@ -93,16 +95,15 @@ impl CBORTaggedEncodable for Nonce {
 }
 
 impl CBORDecodable for Nonce {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
+        Self::from_data_ref(&data)
     }
 }
 
@@ -156,7 +157,7 @@ mod test {
     fn test_nonce_size() {
         let raw_data = vec![0u8; Nonce::NONCE_SIZE + 1];
         let nonce = Nonce::from_data_ref(&raw_data);
-        assert_eq!(nonce, None);
+        assert!(nonce.is_err());
     }
 
     #[test]
@@ -182,3 +183,9 @@ mod test {
         assert_eq!(nonce, decoded_nonce);
     }
 }
+
+impl UREncodable for Nonce { }
+
+impl URDecodable for Nonce { }
+
+impl URCodable for Nonce { }

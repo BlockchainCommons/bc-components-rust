@@ -2,6 +2,7 @@ use crate::{EncryptedMessage, Nonce, tags, Digest};
 use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable};
+use anyhow::bail;
 
 /// A symmetric encryption key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -29,14 +30,14 @@ impl SymmetricKey {
     }
 
     /// Create a new symmetric key from data.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::SYMMETRIC_KEY_SIZE {
-            return None;
+            bail!("Invalid symmetric key size");
         }
         let mut arr = [0u8; Self::SYMMETRIC_KEY_SIZE];
         arr.copy_from_slice(data);
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Get the data of the symmetric key.
@@ -142,15 +143,15 @@ impl CBORTaggedEncodable for SymmetricKey {
 impl UREncodable for SymmetricKey { }
 
 impl CBORDecodable for SymmetricKey {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let bytes = CBOR::expect_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&bytes).ok_or(dcbor::Error::InvalidFormat)?;
+        let instance = Self::from_data_ref(&bytes)?;
         Ok(instance)
     }
 }

@@ -12,15 +12,15 @@ pub trait ECKeyBase:
 {
     const KEY_SIZE: usize;
 
-    fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]>, Self: Sized;
+    fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]>, Self: Sized;
     fn data(&self) -> &[u8];
 
     fn hex(&self) -> String {
         hex::encode(self.data())
     }
 
-    fn from_hex(hex: &str) -> Option<Self> {
-        let data = hex::decode(hex).ok()?;
+    fn from_hex(hex: &str) -> anyhow::Result<Self> {
+        let data = hex::decode(hex)?;
         Self::from_data_ref(&data)
     }
 }

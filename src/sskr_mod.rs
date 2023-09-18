@@ -1,8 +1,9 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
+use sskr::SSKRError;
 use crate::tags;
-pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret, Error as SSKRError };
+pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
 
 /// An SSKR share.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -91,13 +92,13 @@ impl CBORTaggedEncodable for SSKRShare {
 impl UREncodable for SSKRShare { }
 
 impl CBORDecodable for SSKRShare {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SSKRShare {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;
         let instance = Self::from_data_ref(&data);
         Ok(instance)

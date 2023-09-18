@@ -3,6 +3,7 @@ use bc_crypto::hash::sha256;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 use crate::{digest_provider::DigestProvider, tags};
+use anyhow::bail;
 
 /// A cryptographically secure digest, implemented with SHA-256.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -19,14 +20,14 @@ impl Digest {
     /// Create a new digest from data.
     ///
     /// Returns `None` if the data is not the correct length.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::DIGEST_SIZE {
-            return None;
+            bail!("Invalid digest size");
         }
         let mut arr = [0u8; Self::DIGEST_SIZE];
         arr.copy_from_slice(data.as_ref());
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Create a new digest from the given image.
@@ -168,16 +169,15 @@ impl CBORTaggedEncodable for Digest {
 impl UREncodable for Digest { }
 
 impl CBORDecodable for Digest {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
+        Self::from_data_ref(&data)
     }
 }
 

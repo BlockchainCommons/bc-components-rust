@@ -1,5 +1,6 @@
 use std::rc::Rc;
 
+use anyhow::bail;
 use dcbor::{CBOREncodable, CBOR, CBORDecodable};
 
 /// The HMAC authentication tag produced by the encryption process.
@@ -15,14 +16,14 @@ impl AuthenticationTag {
     }
 
     /// Restore an `AuthenticationTag` from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
-            return None;
+            bail!("Invalid authentication tag size");
         }
         let mut arr = [0u8; Self::AUTHENTICATION_TAG_SIZE];
         arr.copy_from_slice(data.as_ref());
-        Some(Self::from_data(arr))
+        Ok(Self::from_data(arr))
     }
 
     /// Get a reference to the fixed-size array of bytes.
@@ -76,9 +77,8 @@ impl CBOREncodable for AuthenticationTag {
 }
 
 impl CBORDecodable for AuthenticationTag {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&data).ok_or(dcbor::Error::InvalidFormat)?;
-        Ok(instance)
+        Self::from_data_ref(&data)
     }
 }

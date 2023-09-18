@@ -1,3 +1,4 @@
+use anyhow::bail;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use crate::tags;
 
@@ -68,16 +69,16 @@ impl CBORTaggedEncodable for UUID {
 }
 
 impl CBORDecodable for UUID {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for UUID {
-    fn from_untagged_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let bytes = CBOR::expect_byte_string(cbor)?;
         if bytes.len() != Self::UUID_SIZE {
-            return Err(dcbor::Error::InvalidFormat);
+            bail!("invalid UUID size");
         }
         let mut uuid = [0u8; Self::UUID_SIZE];
         uuid.copy_from_slice(bytes);

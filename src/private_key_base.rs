@@ -117,13 +117,13 @@ impl CBORTaggedEncodable for PrivateKeyBase {
 impl UREncodable for PrivateKeyBase { }
 
 impl CBORDecodable for PrivateKeyBase {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PrivateKeyBase {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
         let instance = Self::from_data_ref(&data);
         Ok(instance)

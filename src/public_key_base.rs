@@ -2,6 +2,7 @@ use bc_ur::{UREncodable, URDecodable, URCodable};
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 
 use crate::{SigningPublicKey, AgreementPublicKey, tags};
+use anyhow::bail;
 
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
@@ -55,24 +56,24 @@ impl CBORTaggedEncodable for PublicKeyBase {
 impl UREncodable for PublicKeyBase { }
 
 impl CBORDecodable for PublicKeyBase {
-    fn from_cbor(cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PublicKeyBase {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> Result<Self, dcbor::Error> {
+    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         match untagged_cbor {
             CBOR::Array(elements) => {
                 if elements.len() != 2 {
-                    return Err(dcbor::Error::InvalidFormat);
+                    bail!("PublicKeyBase must have two elements");
                 }
 
                 let signing_public_key = SigningPublicKey::from_cbor(&elements[0])?;
                 let agreement_public_key = AgreementPublicKey::from_cbor(&elements[1])?;
                 Ok(Self::new(signing_public_key, agreement_public_key))
             },
-            _ => Err(dcbor::Error::InvalidFormat),
+            _ => bail!("PublicKeyBase must be an array"),
         }
     }
 }
