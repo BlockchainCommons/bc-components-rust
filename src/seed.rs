@@ -1,7 +1,7 @@
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
 use bc_ur::{UREncodable, URDecodable, URCodable};
 
-use crate::tags;
+use crate::{tags, PrivateKeysDataProvider};
 use anyhow::bail;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -99,6 +99,12 @@ impl Seed {
 impl Default for Seed {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl PrivateKeysDataProvider for Seed {
+    fn private_keys_data(&self) -> Vec<u8> {
+        self.data().to_vec()
     }
 }
 
