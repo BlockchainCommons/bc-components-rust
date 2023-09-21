@@ -1,5 +1,6 @@
 use std::str::FromStr;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
+use dcbor::preamble::*;
+use url::Url;
 use crate::tags;
 
 /// A URI.
@@ -10,16 +11,23 @@ impl URI {
     /// Creates a new `URI` from a string.
     ///
     /// No validation is performed on the string.
-    pub fn new<T>(uri: T) -> Self where T: Into<String> {
-        Self(uri.into())
+    pub fn new<T>(uri: T) ->  anyhow::Result<Self>
+    where T: Into<String>
+    {
+        let uri = uri.into();
+        if Url::parse(&uri).is_ok() {
+            Ok(Self(uri))
+        } else {
+            Err(anyhow::anyhow!("Invalid URI"))
+        }
     }
 }
 
 impl FromStr for URI {
-    type Err = ();
+    type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::new(s))
+        Self::new(s)
     }
 }
 
@@ -48,7 +56,7 @@ impl CBORDecodable for URI {
 impl CBORTaggedDecodable for URI {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let uri = String::from_cbor(cbor)?;
-        Ok(Self::new(uri))
+        Self::new(uri)
     }
 }
 
@@ -61,14 +69,14 @@ impl std::fmt::Display for URI {
 // Convert from a string to a URI.
 impl From<&str> for URI {
     fn from(uri: &str) -> Self {
-        Self::new(uri)
+        Self::new(uri).unwrap()
     }
 }
 
 // Convert from a string to a URI.
 impl From<String> for URI {
     fn from(uri: String) -> Self {
-        Self::new(uri)
+        Self::new(uri).unwrap()
     }
 }
 

@@ -1,7 +1,6 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags, ECKeyBase, Signature};
 use anyhow::bail;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
+use bc_ur::preamble::*;
 
 /// A public key that can be used for signing. Supports both ECDSA and Schnorr.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

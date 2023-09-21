@@ -1,6 +1,5 @@
 use bc_rand::random_data;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::preamble::*;
 
 use crate::tags;
 use anyhow::bail;

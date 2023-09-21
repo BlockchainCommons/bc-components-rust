@@ -1,7 +1,6 @@
 use crate::{EncryptedMessage, Nonce, tags, Digest};
 use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad};
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBORTaggedEncodable, CBOR, CBOREncodable, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::preamble::*;
 use anyhow::bail;
 
 /// A symmetric encryption key.

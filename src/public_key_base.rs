@@ -1,6 +1,4 @@
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
-
+use bc_ur::preamble::*;
 use crate::{SigningPublicKey, AgreementPublicKey, tags};
 use anyhow::bail;
 

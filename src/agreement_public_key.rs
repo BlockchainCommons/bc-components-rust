@@ -1,6 +1,5 @@
 use std::rc::Rc;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
+use bc_ur::preamble::*;
 use crate::tags;
 use anyhow::bail;
 

@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use bc_rand::fill_random_data;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::preamble::*;
 use crate::tags;
 use anyhow::bail;
 

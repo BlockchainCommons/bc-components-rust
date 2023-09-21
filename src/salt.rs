@@ -1,6 +1,5 @@
 use std::ops::RangeInclusive;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::preamble::*;
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use crate::tags;
 use anyhow::bail;

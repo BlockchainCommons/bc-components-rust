@@ -1,8 +1,5 @@
 use std::borrow::Cow;
-
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
-
+use bc_ur::preamble::*;
 use crate::{Nonce, Digest, DigestProvider, tags, AuthenticationTag};
 use anyhow::bail;
 

@@ -1,5 +1,5 @@
 use anyhow::bail;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
+use dcbor::preamble::*;
 use crate::tags;
 
 /// A UUID.

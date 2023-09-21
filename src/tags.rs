@@ -1,7 +1,6 @@
-use dcbor::Tag;
 use paste::paste;
 use std::sync::{Once, Mutex};
-use dcbor::TagsStore;
+use dcbor::preamble::*;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
 //

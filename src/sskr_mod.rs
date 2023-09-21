@@ -1,6 +1,5 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-use bc_ur::{UREncodable, URDecodable, URCodable};
+use bc_ur::preamble::*;
 use sskr::SSKRError;
 use crate::tags;
 pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };

@@ -1,7 +1,5 @@
 use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags};
-
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORDecodable, CBORCodable, CBORTaggedEncodable, CBORTaggedDecodable, CBORTaggedCodable};
+use bc_ur::preamble::*;
 use anyhow::bail;
 
 /// A sealed message can be sent to anyone, but only the intended recipient can

@@ -1,7 +1,6 @@
 use std::rc::Rc;
 use bc_crypto::ecdsa_new_private_key_using;
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable, CBOR};
+use bc_ur::preamble::*;
 use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use anyhow::bail;

@@ -1,7 +1,6 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-use bc_ur::{UREncodable, URDecodable, URCodable};
+use bc_ur::preamble::*;
 use crate::{digest_provider::DigestProvider, tags};
 use anyhow::bail;
 

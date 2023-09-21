@@ -1,6 +1,5 @@
 use anyhow::bail;
-use bc_ur::UREncodable;
-use dcbor::{Tag, CBORTagged, CBOREncodable, CBOR, CBORTaggedEncodable, Map};
+use bc_ur::preamble::*;
 
 use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
 

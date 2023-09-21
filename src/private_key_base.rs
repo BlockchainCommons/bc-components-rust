@@ -1,6 +1,5 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use bc_ur::{UREncodable, URDecodable, URCodable};
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
+use bc_ur::preamble::*;
 
 use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 

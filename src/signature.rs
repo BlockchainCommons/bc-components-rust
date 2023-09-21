@@ -1,7 +1,5 @@
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
-use bc_ur::UREncodable;
-use dcbor::{CBORTagged, CBOREncodable, CBORTaggedEncodable, CBOR, CBORDecodable, CBORTaggedDecodable};
-
+use bc_ur::preamble::*;
 use crate::tags;
 use anyhow::bail;
 
