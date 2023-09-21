@@ -11,7 +11,7 @@ impl URI {
     /// Creates a new `URI` from a string.
     ///
     /// No validation is performed on the string.
-    pub fn new<T>(uri: T) ->  anyhow::Result<Self>
+    pub fn new<T>(uri: T) -> anyhow::Result<Self>
     where T: Into<String>
     {
         let uri = uri.into();

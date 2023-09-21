@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anyhow::bail;
 use dcbor::preamble::*;
 use crate::tags;
@@ -88,20 +90,41 @@ impl CBORTaggedDecodable for UUID {
 
 impl std::fmt::Display for UUID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", hex::encode(self.0))
+        write!(f, "{}", String::from(self))
     }
 }
 
 // Convert from a UUID to a string.
 impl From<UUID> for String {
     fn from(uuid: UUID) -> Self {
-        hex::encode(uuid.0)
+        String::from(&uuid)
     }
 }
 
 // Convert from a UUID to a string.
 impl From<&UUID> for String {
     fn from(uuid: &UUID) -> Self {
-        hex::encode(uuid.0)
+        let hex = hex::encode(uuid.0);
+        format!(
+            "{}-{}-{}-{}-{}",
+            &hex[0..8],
+            &hex[8..12],
+            &hex[12..16],
+            &hex[16..20],
+            &hex[20..32]
+        )
+    }
+}
+
+impl FromStr for UUID {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s.trim();
+        let s = s.replace('-', "");
+        let bytes = hex::decode(s).unwrap();
+        let mut uuid = [0u8; Self::UUID_SIZE];
+        uuid.copy_from_slice(&bytes);
+        Ok(Self::from_data(uuid))
     }
 }
