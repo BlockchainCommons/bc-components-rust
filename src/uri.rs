@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use dcbor::preamble::*;
+use dcbor::prelude::*;
 use url::Url;
 use crate::tags;
 

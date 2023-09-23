@@ -1,5 +1,5 @@
 use std::{fmt::Formatter, borrow::Cow};
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use bc_crypto::hash::crc32;
 use miniz_oxide::{inflate::decompress_to_vec, deflate::compress_to_vec};
 use crate::{digest::Digest, DigestProvider, tags};

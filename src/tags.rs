@@ -1,6 +1,6 @@
 use paste::paste;
 use std::sync::{Once, Mutex};
-use dcbor::preamble::*;
+use dcbor::prelude::*;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
 //

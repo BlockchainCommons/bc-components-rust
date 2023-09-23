@@ -1,4 +1,4 @@
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use crate::{tags, PrivateKeysDataProvider};
 use anyhow::bail;
 

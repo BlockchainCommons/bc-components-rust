@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_crypto::x25519_new_agreement_private_key_using;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use crate::{tags, AgreementPublicKey, SymmetricKey};
 use bc_rand::{SecureRandomNumberGenerator, RandomNumberGenerator};
 use anyhow::bail;

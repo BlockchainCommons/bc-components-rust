@@ -1,5 +1,5 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 
 use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 

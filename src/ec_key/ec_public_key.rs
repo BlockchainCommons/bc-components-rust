@@ -1,6 +1,6 @@
 use anyhow::bail;
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags};
 

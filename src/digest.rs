@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use crate::{digest_provider::DigestProvider, tags};
 use anyhow::bail;
 

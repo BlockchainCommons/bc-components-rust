@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::bail;
-use dcbor::preamble::*;
+use dcbor::prelude::*;
 use crate::tags;
 
 /// A UUID.

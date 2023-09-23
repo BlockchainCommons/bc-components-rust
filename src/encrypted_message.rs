@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use crate::{Nonce, Digest, DigestProvider, tags, AuthenticationTag};
 use anyhow::bail;
 

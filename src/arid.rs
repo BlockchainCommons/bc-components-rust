@@ -1,5 +1,5 @@
 use bc_rand::random_data;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 
 use crate::tags;
 use anyhow::bail;

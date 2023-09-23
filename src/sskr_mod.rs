@@ -1,5 +1,5 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use sskr::SSKRError;
 use crate::tags;
 pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };

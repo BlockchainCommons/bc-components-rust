@@ -1,5 +1,5 @@
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 use crate::tags;
 use anyhow::bail;
 

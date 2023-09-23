@@ -1,5 +1,5 @@
 use anyhow::bail;
-use bc_ur::preamble::*;
+use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
 

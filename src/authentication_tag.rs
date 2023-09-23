@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use anyhow::bail;
-use dcbor::preamble::*;
+use dcbor::prelude::*;
 
 /// The HMAC authentication tag produced by the encryption process.
 #[derive(Clone, Eq, PartialEq)]
