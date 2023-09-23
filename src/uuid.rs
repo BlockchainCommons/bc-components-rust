@@ -72,7 +72,7 @@ impl CBORTaggedEncodable for UUID {
 
 impl CBORDecodable for UUID {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_untagged_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 

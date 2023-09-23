@@ -49,7 +49,7 @@ impl CBORTaggedEncodable for URI {
 
 impl CBORDecodable for URI {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_untagged_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
