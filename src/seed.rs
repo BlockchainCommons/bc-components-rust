@@ -100,6 +100,18 @@ impl Default for Seed {
     }
 }
 
+impl AsRef<[u8]> for Seed {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
+    }
+}
+
+impl AsRef<Seed> for Seed {
+    fn as_ref(&self) -> &Seed {
+        self
+    }
+}
+
 impl PrivateKeysDataProvider for Seed {
     fn private_keys_data(&self) -> Vec<u8> {
         self.data().to_vec()

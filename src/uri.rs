@@ -31,6 +31,24 @@ impl FromStr for URI {
     }
 }
 
+impl AsRef<str> for URI {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<String> for URI {
+    fn as_ref(&self) -> &String {
+        &self.0
+    }
+}
+
+impl AsRef<URI> for URI {
+    fn as_ref(&self) -> &URI {
+        self
+    }
+}
+
 impl CBORTagged for URI {
     const CBOR_TAG: Tag = tags::URI;
 }

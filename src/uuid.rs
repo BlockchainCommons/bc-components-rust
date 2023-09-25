@@ -54,6 +54,18 @@ impl<'a> From<&'a UUID> for &'a [u8; UUID::UUID_SIZE] {
     }
 }
 
+impl AsRef<[u8]> for UUID {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
+impl AsRef<UUID> for UUID {
+    fn as_ref(&self) -> &UUID {
+        self
+    }
+}
+
 impl CBORTagged for UUID {
     const CBOR_TAG: Tag = tags::UUID;
 }

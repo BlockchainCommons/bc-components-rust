@@ -130,6 +130,12 @@ impl Default for SigningPrivateKey {
     }
 }
 
+impl AsRef<SigningPrivateKey> for SigningPrivateKey {
+    fn as_ref(&self) -> &SigningPrivateKey {
+        self
+    }
+}
+
 impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
     fn from(value: Rc<SigningPrivateKey>) -> Self {
         value.as_ref().clone()

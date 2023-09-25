@@ -90,6 +90,12 @@ impl Default for SymmetricKey {
     }
 }
 
+impl AsRef<SymmetricKey> for SymmetricKey {
+    fn as_ref(&self) -> &SymmetricKey {
+        self
+    }
+}
+
 impl<'a> From<&'a SymmetricKey> for &'a [u8; SymmetricKey::SYMMETRIC_KEY_SIZE] {
     fn from(digest: &'a SymmetricKey) -> Self {
         &digest.0

@@ -60,6 +60,12 @@ impl SealedMessage {
     }
 }
 
+impl AsRef<SealedMessage> for SealedMessage {
+    fn as_ref(&self) -> &SealedMessage {
+        self
+    }
+}
+
 impl CBORTagged for SealedMessage {
     const CBOR_TAG: Tag = tags::SEALED_MESSAGE;
 }

@@ -134,6 +134,12 @@ impl std::fmt::Debug for Compressed {
     }
 }
 
+impl AsRef<Compressed> for Compressed {
+    fn as_ref(&self) -> &Compressed {
+        self
+    }
+}
+
 impl CBORTagged for Compressed {
     const CBOR_TAG: Tag = tags::COMPRESSED;
 }

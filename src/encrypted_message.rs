@@ -74,6 +74,12 @@ impl std::fmt::Debug for EncryptedMessage {
     }
 }
 
+impl AsRef<EncryptedMessage> for EncryptedMessage {
+    fn as_ref(&self) -> &EncryptedMessage {
+        self
+    }
+}
+
 impl DigestProvider for EncryptedMessage {
     fn digest(&self) -> Cow<'_, Digest> {
         let a = self.opt_digest().unwrap();

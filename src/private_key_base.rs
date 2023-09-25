@@ -97,6 +97,18 @@ impl<'a> From<&'a PrivateKeyBase> for &'a [u8] {
     }
 }
 
+impl AsRef<PrivateKeyBase> for PrivateKeyBase {
+    fn as_ref(&self) -> &PrivateKeyBase {
+        self
+    }
+}
+
+impl AsRef<[u8]> for PrivateKeyBase {
+    fn as_ref(&self) -> &[u8] {
+        self.into()
+    }
+}
+
 impl CBORTagged for PrivateKeyBase {
     const CBOR_TAG: Tag = tags::PRIVATE_KEYBASE;
 }

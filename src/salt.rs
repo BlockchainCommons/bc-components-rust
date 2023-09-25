@@ -101,6 +101,18 @@ impl<'a> From<&'a Salt> for &'a [u8] {
     }
 }
 
+impl AsRef<[u8]> for Salt {
+    fn as_ref(&self) -> &[u8] {
+        self.data()
+    }
+}
+
+impl AsRef<Salt> for Salt {
+    fn as_ref(&self) -> &Salt {
+        self
+    }
+}
+
 impl CBORTagged for Salt {
     const CBOR_TAG: Tag = tags::SALT;
 }
@@ -140,13 +152,6 @@ impl URCodable for Salt { }
 impl std::fmt::Debug for Salt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Salt({})", self.hex())
-    }
-}
-
-// Convert from a thing that can be referenced as an array of bytes to a Salt.
-impl<T: AsRef<[u8]>> From<T> for Salt {
-    fn from(data: T) -> Self {
-        Self::from_data_ref(&data)
     }
 }
 

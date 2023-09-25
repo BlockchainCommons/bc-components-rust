@@ -60,6 +60,12 @@ impl<'a> From<&'a AgreementPublicKey> for &'a [u8; AgreementPublicKey::KEY_SIZE]
     }
 }
 
+impl AsRef<AgreementPublicKey> for AgreementPublicKey {
+    fn as_ref(&self) -> &AgreementPublicKey {
+        self
+    }
+}
+
 impl CBORTagged for AgreementPublicKey {
     const CBOR_TAG: Tag = tags::AGREEMENT_PUBLIC_KEY;
 }

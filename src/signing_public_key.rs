@@ -62,6 +62,12 @@ impl SigningPublicKey {
     }
 }
 
+impl AsRef<SigningPublicKey> for SigningPublicKey {
+    fn as_ref(&self) -> &SigningPublicKey {
+        self
+    }
+}
+
 impl CBORTagged for SigningPublicKey {
     const CBOR_TAG: Tag = tags::SIGNING_PUBLIC_KEY;
 }

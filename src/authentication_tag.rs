@@ -32,6 +32,12 @@ impl AuthenticationTag {
     }
 }
 
+impl AsRef<AuthenticationTag> for AuthenticationTag {
+    fn as_ref(&self) -> &AuthenticationTag {
+        self
+    }
+}
+
 impl std::fmt::Debug for AuthenticationTag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("AuthenticationTag")

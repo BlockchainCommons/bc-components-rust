@@ -97,6 +97,12 @@ impl From<Rc<AgreementPrivateKey>> for AgreementPrivateKey {
     }
 }
 
+impl AsRef<AgreementPrivateKey> for AgreementPrivateKey {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
+
 impl CBORTagged for AgreementPrivateKey {
     const CBOR_TAG: Tag = tags::AGREEMENT_PRIVATE_KEY;
 }

@@ -73,6 +73,12 @@ impl std::fmt::Debug for Signature {
     }
 }
 
+impl AsRef<Signature> for Signature {
+    fn as_ref(&self) -> &Signature {
+        self
+    }
+}
+
 impl CBORTagged for Signature {
     const CBOR_TAG: dcbor::Tag = tags::SIGNATURE;
 }

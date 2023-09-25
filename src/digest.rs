@@ -119,6 +119,12 @@ impl AsRef<[u8]> for Digest {
     }
 }
 
+impl AsRef<Digest> for Digest {
+    fn as_ref(&self) -> &Digest {
+        self
+    }
+}
+
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
