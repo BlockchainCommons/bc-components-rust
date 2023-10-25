@@ -16,7 +16,7 @@ impl ARID {
     /// Create a new random ARID.
     pub fn new() -> Self {
         let data = random_data(Self::ARID_SIZE);
-        Self::from_data_ref(&data).unwrap()
+        Self::from_data_ref(data).unwrap()
     }
 
     /// Restore a ARID from a fixed-size array of bytes.
@@ -25,9 +25,7 @@ impl ARID {
     }
 
     /// Create a new ARID from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self>
-    where T: AsRef<[u8]>
-    {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::ARID_SIZE {
             bail!("Invalid ARID size");
@@ -46,8 +44,8 @@ impl ARID {
     ///
     /// # Panics
     /// Panics if the string is not exactly 64 hexadecimal digits.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// The data as a hexadecimal string.

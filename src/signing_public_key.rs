@@ -41,10 +41,7 @@ impl SigningPublicKey {
     /// The type of signature must match the type of this key, and the
     /// signature must be valid for the message, or the verification
     /// will fail.
-    pub fn verify<D>(&self, signature: &Signature, message: D) -> bool
-    where
-        D: AsRef<[u8]>,
-    {
+    pub fn verify(&self, signature: &Signature, message: impl AsRef<[u8]>) -> bool {
         match self {
             SigningPublicKey::Schnorr(key) => {
                 match signature {

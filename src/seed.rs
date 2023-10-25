@@ -1,10 +1,11 @@
 use bc_ur::prelude::*;
+use bytes::Bytes;
 use crate::{tags, PrivateKeysDataProvider};
 use anyhow::bail;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Seed {
-    data: Vec<u8>,
+    data: Bytes,
     name: String,
     note: String,
     creation_date: Option<dcbor::Date>,
@@ -31,10 +32,7 @@ impl Seed {
     /// Create a new random seed with a specified length.
     ///
     /// If the number of bytes is less than 16, this will return `None`.
-    pub fn new_with_len_using<R>(count: usize, rng: &mut R) -> anyhow::Result<Self>
-    where
-        R: bc_rand::RandomNumberGenerator,
-    {
+    pub fn new_with_len_using(count: usize, rng: &mut impl bc_rand::RandomNumberGenerator) -> anyhow::Result<Self> {
         let data = rng.random_data(count);
         Self::new_opt(data, None, None, None)
     }
@@ -42,10 +40,7 @@ impl Seed {
     /// Create a new seed from the data and options.
     ///
     /// If the data is less than 16 bytes, this will return `None`.
-    pub fn new_opt<T>(data: T, name: Option<String>, note: Option<String>, creation_date: Option<dcbor::Date>) -> anyhow::Result<Self>
-    where
-        T: Into<Vec<u8>>,
-    {
+    pub fn new_opt(data: impl Into<Bytes>, name: Option<String>, note: Option<String>, creation_date: Option<dcbor::Date>) -> anyhow::Result<Self> {
         let data = data.into();
         if data.len() < Self::MIN_SEED_LENGTH {
             bail!("Seed data is too short");
@@ -59,7 +54,7 @@ impl Seed {
     }
 
     /// Return the data of the seed.
-    pub fn data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &Bytes {
         &self.data
     }
 
@@ -113,8 +108,8 @@ impl AsRef<Seed> for Seed {
 }
 
 impl PrivateKeysDataProvider for Seed {
-    fn private_keys_data(&self) -> Vec<u8> {
-        self.data().to_vec()
+    fn private_keys_data(&self) -> Bytes {
+        self.data().clone()
     }
 }
 

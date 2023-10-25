@@ -50,11 +50,11 @@ impl Compressed {
     ///
     /// If the compressed data is smaller than the uncompressed data, the compressed data is stored in the `compressed_data` field.
     /// Otherwise, the uncompressed data is stored in the `compressed_data` field.
-    pub fn from_uncompressed_data(uncompressed_data: Bytes, digest: Option<Digest>) -> Self
-    {
-        let compressed_data = Bytes::from(compress_to_vec(uncompressed_data.as_ref(), 6));
-        let checksum = crc32(uncompressed_data.as_ref());
-        let uncompressed_size = uncompressed_data.as_ref().len();
+    pub fn from_uncompressed_data(uncompressed_data: impl Into<Bytes>, digest: Option<Digest>) -> Self {
+        let uncompressed_data = uncompressed_data.into();
+        let compressed_data = Bytes::from(compress_to_vec(&uncompressed_data, 6));
+        let checksum = crc32(&uncompressed_data);
+        let uncompressed_size = uncompressed_data.len();
         let compressed_size = compressed_data.len();
         if compressed_size != 0 && compressed_size < uncompressed_size {
             Self {

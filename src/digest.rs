@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
 use bc_ur::{UREncodable, URDecodable, URCodable};
+use bytes::Bytes;
 use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
 // use bc_ur::prelude::*;
 // use dcbor::prelude::*;
@@ -22,7 +23,7 @@ impl Digest {
     /// Create a new digest from data.
     ///
     /// Returns `None` if the data is not the correct length.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::DIGEST_SIZE {
             bail!("Invalid digest size");
@@ -35,7 +36,7 @@ impl Digest {
     /// Create a new digest from the given image.
     ///
     /// The image is hashed with SHA-256.
-    pub fn from_image<T>(image: &T) -> Self where T: AsRef<[u8]> {
+    pub fn from_image(image: impl AsRef<[u8]>) -> Self {
         Self::from_data(sha256(image.as_ref()))
     }
 
@@ -70,7 +71,7 @@ impl Digest {
     ///
     /// The image is hashed with SHA-256 and compared to the digest.
     /// Returns `true` if the digest matches the image.
-    pub fn validate<T>(&self, image: &T) -> bool where T: AsRef<[u8]> {
+    pub fn validate(&self, image: impl AsRef<[u8]>) -> bool {
         self == &Self::from_image(image)
     }
 
@@ -78,8 +79,8 @@ impl Digest {
     ///
     /// # Panics
     /// Panics if the string is not exactly 64 hexadecimal digits.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// The data as a hexadecimal string.
@@ -214,6 +215,20 @@ impl From<&Digest> for Vec<u8> {
     }
 }
 
+// Convert from a byte vector to an instance.
+impl From<Digest> for Bytes {
+    fn from(digest: Digest) -> Self {
+        Bytes::from(digest.0.to_vec())
+    }
+}
+
+// Convert a reference to an instance to a byte vector.
+impl From<&Digest> for Bytes {
+    fn from(digest: &Digest) -> Self {
+        Bytes::from(digest.0.to_vec())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -222,7 +237,7 @@ mod tests {
     #[test]
     fn test_digest() {
         let data = "hello world";
-        let digest = Digest::from_image(&data.as_bytes());
+        let digest = Digest::from_image(data.as_bytes());
         assert_eq!(digest.data().len(), Digest::DIGEST_SIZE);
         assert_eq!(*digest.data(), sha256(data.as_bytes()));
         assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
@@ -239,7 +254,7 @@ mod tests {
     #[test]
     fn test_ur() {
         let data = "hello world";
-        let digest = Digest::from_image(&data.as_bytes());
+        let digest = Digest::from_image(data.as_bytes());
         let ur_string = digest.ur_string();
         let expected_ur_string = "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
         assert_eq!(ur_string, expected_ur_string);

@@ -12,24 +12,6 @@ pub struct PublicKeyBase {
     agreement_public_key: AgreementPublicKey,
 }
 
-impl AsRef<PublicKeyBase> for PublicKeyBase {
-    fn as_ref(&self) -> &PublicKeyBase {
-        self
-    }
-}
-
-impl AsRef<SigningPublicKey> for PublicKeyBase {
-    fn as_ref(&self) -> &SigningPublicKey {
-        &self.signing_public_key
-    }
-}
-
-impl AsRef<AgreementPublicKey> for PublicKeyBase {
-    fn as_ref(&self) -> &AgreementPublicKey {
-        &self.agreement_public_key
-    }
-}
-
 impl PublicKeyBase {
     /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `AgreementPublicKey`.
     pub fn new(signing_public_key: SigningPublicKey, agreement_public_key: AgreementPublicKey) -> Self {
@@ -46,6 +28,24 @@ impl PublicKeyBase {
 
     /// Returns the `AgreementPublicKey` of this `PublicKeyBase`.
     pub fn agreement_public_key(&self) -> &AgreementPublicKey {
+        &self.agreement_public_key
+    }
+}
+
+impl AsRef<PublicKeyBase> for PublicKeyBase {
+    fn as_ref(&self) -> &PublicKeyBase {
+        self
+    }
+}
+
+impl AsRef<SigningPublicKey> for PublicKeyBase {
+    fn as_ref(&self) -> &SigningPublicKey {
+        &self.signing_public_key
+    }
+}
+
+impl AsRef<AgreementPublicKey> for PublicKeyBase {
+    fn as_ref(&self) -> &AgreementPublicKey {
         &self.agreement_public_key
     }
 }

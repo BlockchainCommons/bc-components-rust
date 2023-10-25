@@ -40,7 +40,7 @@ impl std::fmt::Debug for ECPublicKey {
 impl ECKeyBase for ECPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]>, Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid ECDSA public key size");

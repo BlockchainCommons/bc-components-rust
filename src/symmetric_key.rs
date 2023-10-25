@@ -30,7 +30,7 @@ impl SymmetricKey {
     }
 
     /// Create a new symmetric key from data.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::SYMMETRIC_KEY_SIZE {
             bail!("Invalid symmetric key size");
@@ -49,8 +49,8 @@ impl SymmetricKey {
     ///
     /// # Panics
     /// Panics if the string is not exactly 24 hexadecimal digits.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> anyhow::Result<Self> {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap())
     }
 
     /// The data as a hexadecimal string.
@@ -59,11 +59,7 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given additional authenticated data and nonce.
-    pub fn encrypt<D, A, N>(&self, plaintext: D, aad: Option<A>, nonce: Option<N>) -> EncryptedMessage
-    where
-        D: Into<Bytes>,
-        A: Into<Bytes>,
-        N: AsRef<Nonce>
+    pub fn encrypt(&self, plaintext: impl Into<Bytes>, aad: Option<impl Into<Bytes>>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
     {
         let aad: Bytes = aad.map(|a| a.into()).unwrap_or_default();
         let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
@@ -73,11 +69,9 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given digest of the plaintext, and nonce.
-    pub fn encrypt_with_digest<N>(&self, plaintext: Bytes, digest: &Digest, nonce: Option<N>) -> EncryptedMessage
-    where
-        N: AsRef<Nonce>,
+    pub fn encrypt_with_digest(&self, plaintext: impl Into<Bytes>, digest: impl AsRef<Digest>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
     {
-        self.encrypt(plaintext, Some(Bytes::from(digest.cbor_data())), nonce)
+        self.encrypt(plaintext, Some(Bytes::from(digest.as_ref().cbor_data())), nonce)
     }
 
     /// Decrypt the given encrypted message with this key.

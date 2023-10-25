@@ -26,7 +26,7 @@ impl UUID {
     }
 
     /// Restores a UUID from data.
-    pub fn from_data_ref<T>(data: &T) -> Option<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Option<Self> {
         let data = data.as_ref();
         if data.len() != Self::UUID_SIZE {
             return None;

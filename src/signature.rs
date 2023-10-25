@@ -1,32 +1,25 @@
 use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
+use bytes::Bytes;
 use crate::tags;
 use anyhow::bail;
 
 /// A cryptographic signature. Supports ECDSA and Schnorr.
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub enum Signature {
-    Schnorr{ sig: [u8; SCHNORR_SIGNATURE_SIZE], tag: Vec<u8> },
+    Schnorr{ sig: [u8; SCHNORR_SIGNATURE_SIZE], tag: Bytes },
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
 }
 
 impl Signature {
-    /// Restores a Schnorr signature from a vector of bytes.
-    pub fn schnorr_from_data<D>(data: [u8; SCHNORR_SIGNATURE_SIZE], tag: D) -> Self
-    where
-        D: Into<Vec<u8>>,
-    {
+    /// Restores a Schnorr signature from an array of bytes.
+    pub fn schnorr_from_data(data: [u8; SCHNORR_SIGNATURE_SIZE], tag: impl Into<Bytes>) -> Self {
         Self::Schnorr{ sig: data, tag: tag.into() }
     }
 
     /// Restores a Schnorr signature from a vector of bytes.
-    pub fn schnorr_from_data_ref<D1, D2>(data: D1, tag: D2) -> anyhow::Result<Self>
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>,
-    {
+    pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>, tag: impl Into<Bytes>) -> anyhow::Result<Self> {
         let data = data.as_ref();
-        let tag = tag.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
             bail!("Invalid Schnorr signature size");
         }
@@ -41,10 +34,7 @@ impl Signature {
     }
 
     /// Restores an ECDSA signature from a vector of bytes.
-    pub fn ecdsa_from_data_ref<D>(data: D) -> anyhow::Result<Self>
-    where
-        D: AsRef<[u8]>,
-    {
+    pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
             bail!("Invalid ECDSA signature size");
@@ -124,7 +114,7 @@ impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         match cbor {
             CBOR::ByteString(bytes) => {
-                Self::schnorr_from_data_ref(bytes, [])
+                Self::schnorr_from_data_ref(bytes, Bytes::new())
             },
             CBOR::Array(elements) => {
                 if elements.len() == 2 {
@@ -188,19 +178,19 @@ mod tests {
     #[test]
     fn test_ecdsa_signing() {
         let public_key = SIGNING_PRIVATE_KEY.ecdsa_public_key();
-        let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(&MESSAGE);
+        let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(MESSAGE);
 
         assert!(public_key.verify(&signature, MESSAGE));
         assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
 
-        let another_signature = SIGNING_PRIVATE_KEY.ecdsa_sign(&MESSAGE);
+        let another_signature = SIGNING_PRIVATE_KEY.ecdsa_sign(MESSAGE);
         assert_eq!(signature, another_signature);
         assert!(public_key.verify(&another_signature, MESSAGE));
     }
 
     #[test]
     fn test_ecdsa_cbor() {
-        let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(&MESSAGE);
+        let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(MESSAGE);
         let tagged_cbor_data = signature.cbor_data();
         assert_eq!(CBOR::from_data(&tagged_cbor_data).unwrap().diagnostic(),
         indoc!{r#"

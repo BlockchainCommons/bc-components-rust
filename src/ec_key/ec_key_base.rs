@@ -12,16 +12,16 @@ pub trait ECKeyBase:
 {
     const KEY_SIZE: usize;
 
-    fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]>, Self: Sized;
+    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized;
     fn data(&self) -> &[u8];
 
     fn hex(&self) -> String {
         hex::encode(self.data())
     }
 
-    fn from_hex(hex: &str) -> anyhow::Result<Self> {
-        let data = hex::decode(hex)?;
-        Self::from_data_ref(&data)
+    fn from_hex(hex: impl AsRef<str>) -> anyhow::Result<Self> {
+        let data = hex::decode(hex.as_ref())?;
+        Self::from_data_ref(data)
     }
 }
 

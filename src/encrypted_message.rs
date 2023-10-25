@@ -24,22 +24,22 @@ impl EncryptedMessage {
     /// Restores an EncryptedMessage from its CBOR representation.
     ///
     /// This is a low-level function that is not normally needed.
-    pub fn new(ciphertext: Bytes, aad: Bytes, nonce: Nonce, auth: AuthenticationTag) -> Self {
+    pub fn new(ciphertext: impl Into<Bytes>, aad: impl Into<Bytes>, nonce: Nonce, auth: AuthenticationTag) -> Self {
         Self {
-            ciphertext,
-            aad,
+            ciphertext: ciphertext.into(),
+            aad: aad.into(),
             nonce,
             auth,
         }
     }
 
     /// Returns a reference to the ciphertext data.
-    pub fn ciphertext(&self) -> &[u8] {
+    pub fn ciphertext(&self) -> &Bytes {
         &self.ciphertext
     }
 
     /// Returns a reference to the additional authenticated data (AAD).
-    pub fn aad(&self) -> &[u8] {
+    pub fn aad(&self) -> &Bytes {
         &self.aad
     }
 
@@ -176,8 +176,8 @@ mod test {
     #[test]
     fn test_rfc_test_vector() -> Result<(), Box<dyn std::error::Error>> {
         let encrypted_message = encrypted_message();
-        assert_eq!(encrypted_message.ciphertext(), &CIPHERTEXT);
-        assert_eq!(encrypted_message.aad(), &AAD);
+        assert_eq!(encrypted_message.ciphertext().as_ref(), &CIPHERTEXT);
+        assert_eq!(encrypted_message.aad().as_ref(), &AAD);
         assert_eq!(encrypted_message.nonce(), &NONCE);
         assert_eq!(encrypted_message.authentication_tag(), &AUTH);
 

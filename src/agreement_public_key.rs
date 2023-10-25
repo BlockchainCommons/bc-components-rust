@@ -18,7 +18,7 @@ impl AgreementPublicKey {
     }
 
     /// Restore an `AgreementPublicKey` from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid agreement public key size");
@@ -38,8 +38,8 @@ impl AgreementPublicKey {
     /// # Panics
     ///
     /// Panics if the hex string is invalid or the length is not `AgreementPublicKey::KEY_SIZE * 2`.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// Get the hex string representation of the `AgreementPublicKey`.

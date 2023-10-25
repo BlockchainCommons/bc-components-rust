@@ -1,11 +1,12 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
+use bytes::Bytes;
 
 use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 
 /// Holds unique data from which keys for signing and encryption can be derived.
 #[derive(Clone, Eq, PartialEq)]
-pub struct PrivateKeyBase(Vec<u8>);
+pub struct PrivateKeyBase(Bytes);
 
 impl PrivateKeyBase {
     /// Generate a new random `PrivateKeyBase`.
@@ -14,39 +15,29 @@ impl PrivateKeyBase {
         Self::new_using(&mut rng)
     }
 
-    /// Restores a `PrivateKeyBase` from a vector of bytes.
-    pub const fn from_vec(data: Vec<u8>) -> Self {
-        Self(data)
-    }
-
-    /// Restores a `PrivateKeyBase` from a reference to a vector of bytes.
-    pub fn from_data(data: &[u8]) -> Self {
-        Self(data.to_vec())
-    }
-
-    /// Restores a `PrivateKeyBase` from a reference to a vector of bytes.
-    pub fn from_data_ref<T>(data: &T) -> Self where T: AsRef<[u8]> {
-        Self(data.as_ref().to_vec())
+    /// Restores a `PrivateKeyBase` from bytes.
+    pub fn from_data(data: impl Into<Bytes>) -> Self {
+        Self(data.into())
     }
 
     /// Restores a `PrivateKeyBase` from an optional reference to a vector of bytes.
     ///
     /// If the data is `None`, a new random `PrivateKeyBase` is generated.
-    pub fn from_optional_data<D>(data: Option<D>) -> Self where D: AsRef<[u8]> {
+    pub fn from_optional_data(data: Option<impl Into<Bytes>>) -> Self {
         match data {
-            Some(data) => Self::from_data_ref(&data),
+            Some(data) => Self::from_data(data),
             None => Self::new(),
         }
     }
 
     /// Generate a new random `PrivateKeyBase` using the given random number generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
-        Self::from_vec(rng.random_data(32))
+        Self::from_data(rng.random_data(32))
     }
 
     /// Create a new `PrivateKeyBase` from the given private keys data provider.
-    pub fn new_with_provider<T: PrivateKeysDataProvider>(provider: &T) -> Self {
-        Self::from_vec(provider.private_keys_data())
+    pub fn new_with_provider(provider: impl PrivateKeysDataProvider) -> Self {
+        Self::from_data(provider.private_keys_data())
     }
 
     /// Derive a new `SigningPrivateKey` from this `PrivateKeyBase`.
@@ -136,7 +127,7 @@ impl CBORDecodable for PrivateKeyBase {
 impl CBORTaggedDecodable for PrivateKeyBase {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
-        let instance = Self::from_data_ref(&data);
+        let instance = Self::from_data(data);
         Ok(instance)
     }
 }
@@ -148,6 +139,7 @@ impl URCodable for PrivateKeyBase { }
 #[cfg(test)]
 mod tests {
     use bc_ur::{UREncodable, URDecodable};
+    use bytes::Bytes;
     use hex_literal::hex;
 
     use crate::PrivateKeyBase;
@@ -156,7 +148,7 @@ mod tests {
 
     #[test]
     fn test_private_key_base() {
-        let private_key_base = PrivateKeyBase::from_data(&SEED);
+        let private_key_base = PrivateKeyBase::from_data(Bytes::from_static(&SEED));
         assert_eq!(private_key_base.signing_private_key().data(), &hex!("9505a44aaf385ce633cf0e2bc49e65cc88794213bdfbf8caf04150b9c4905f5a"));
         assert_eq!(private_key_base.signing_private_key().schnorr_public_key().schnorr().unwrap().data(), &hex!("fd4d22f9e8493da52d730aa402ac9e661deca099ef4db5503f519a73c3493e18"));
         assert_eq!(private_key_base.agreement_private_key().data(), &hex!("77ff838285a0403d3618aa8c30491f99f55221be0b944f50bfb371f43b897485"));

@@ -1,26 +1,22 @@
 use std::ops::RangeInclusive;
 use bc_ur::prelude::*;
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use bytes::Bytes;
 use crate::tags;
 use anyhow::bail;
 
 /// Random salt used to decorrelate other information.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Salt(Vec<u8>);
+pub struct Salt(Bytes);
 
 impl Salt {
     /// Create a new salt from data.
-    pub fn from_data(data: &[u8]) -> Self {
-        Self(data.to_vec())
-    }
-
-    /// Create a new salt from data.
-    pub fn from_data_ref<T>(data: &T) -> Self where T: AsRef<[u8]> {
-        Self::from_data(data.as_ref())
+    pub fn from_data(data: impl Into<Bytes>) -> Self {
+        Self(data.into())
     }
 
     /// Return the data of the salt.
-    pub fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &Bytes {
         &self.0
     }
 
@@ -35,13 +31,11 @@ impl Salt {
     /// Create a specific number of bytes of salt.
     ///
     /// If the number of bytes is less than 8, this will return `None`.
-    pub fn new_with_len_using<R>(count: usize, rng: &mut R) -> anyhow::Result<Self>
-    where R: RandomNumberGenerator
-    {
+    pub fn new_with_len_using(count: usize, rng: &mut impl RandomNumberGenerator) -> anyhow::Result<Self> {
         if count < 8 {
             bail!("Salt length is too short");
         }
-        Ok(Self(rng.random_data(count)))
+        Ok(Self::from_data(rng.random_data(count)))
     }
 
     /// Create a number of bytes of salt chosen randomly from the given range.
@@ -58,9 +52,7 @@ impl Salt {
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range_using<R>(range: &RangeInclusive<usize>, rng: &mut R) -> anyhow::Result<Self>
-    where R: RandomNumberGenerator
-    {
+    pub fn new_in_range_using(range: &RangeInclusive<usize>, rng: &mut impl RandomNumberGenerator) -> anyhow::Result<Self> {
         if range.start() < &8 {
             bail!("Salt length is too short");
         }
@@ -75,9 +67,7 @@ impl Salt {
     }
 
     /// Create a number of bytes of salt generally proportionate to the size of the object being salted.
-    pub fn new_for_size_using<R>(size: usize, rng: &mut R) -> Self
-    where R: RandomNumberGenerator
-    {
+    pub fn new_for_size_using(size: usize, rng: &mut impl RandomNumberGenerator) -> Self {
         let count = size as f64;
         let min_size = std::cmp::max(8, (count * 0.05).ceil() as usize);
         let max_size = std::cmp::max(min_size + 8, (count * 0.25).ceil() as usize);
@@ -85,8 +75,8 @@ impl Salt {
     }
 
     /// Create a new salt from the given hexadecimal string.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap())
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data(hex::decode(hex.as_ref()).unwrap())
     }
 
     /// The data as a hexadecimal string.
@@ -138,7 +128,7 @@ impl CBORDecodable for Salt {
 impl CBORTaggedDecodable for Salt {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
-        let instance = Self::from_data_ref(&data);
+        let instance = Self::from_data(data);
         Ok(instance)
     }
 }

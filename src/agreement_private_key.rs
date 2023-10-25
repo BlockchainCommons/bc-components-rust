@@ -51,7 +51,7 @@ impl AgreementPrivateKey {
     /// # Panics
     ///
     /// Panics if the hex string is invalid or the length is not `AgreementPrivateKey::KEY_SIZE * 2`.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
         Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 

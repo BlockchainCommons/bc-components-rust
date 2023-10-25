@@ -13,7 +13,7 @@ pub trait DigestProvider {
 
 impl DigestProvider for &[u8] {
     fn digest(&self) -> Cow<'_, Digest> {
-        Cow::Owned(Digest::from_image(&self))
+        Cow::Owned(Digest::from_image(self))
     }
 }
 

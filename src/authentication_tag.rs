@@ -16,7 +16,7 @@ impl AuthenticationTag {
     }
 
     /// Restore an `AuthenticationTag` from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
             bail!("Invalid authentication tag size");
@@ -60,7 +60,7 @@ impl<'a> From<&'a AuthenticationTag> for &'a [u8; AuthenticationTag::AUTHENTICAT
 
 impl From<&[u8]> for AuthenticationTag {
     fn from(data: &[u8]) -> Self {
-        Self::from_data_ref(&data).unwrap()
+        Self::from_data_ref(data).unwrap()
     }
 }
 
@@ -72,7 +72,7 @@ impl From<[u8; Self::AUTHENTICATION_TAG_SIZE]> for AuthenticationTag {
 
 impl From<Vec<u8>> for AuthenticationTag {
     fn from(data: Vec<u8>) -> Self {
-        Self::from_data_ref(&data).unwrap()
+        Self::from_data_ref(data).unwrap()
     }
 }
 

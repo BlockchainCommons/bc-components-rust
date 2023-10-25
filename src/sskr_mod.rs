@@ -1,30 +1,28 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
+use bytes::Bytes;
 use sskr::SSKRError;
 use crate::tags;
 pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
 
 /// An SSKR share.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct SSKRShare(Vec<u8>);
+pub struct SSKRShare(Bytes);
 
 impl SSKRShare {
     /// Restores an `SSKRShare` from a vector of bytes.
-    pub fn from_data_ref<T>(data: &T) -> Self
-    where
-        T: AsRef<[u8]>,
-    {
-        Self(data.as_ref().to_vec())
+    pub fn from_data(data: impl Into<Bytes>) -> Self {
+        Self(data.into())
     }
 
     /// Returns the data of this `SSKRShare`.
-    pub fn data(&self) -> &[u8] {
+    pub fn data(&self) -> &Bytes {
         &self.0
     }
 
     /// Restores an `SSKRShare` from a hex string.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap())
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data(hex::decode(hex.as_ref()).unwrap())
     }
 
     /// Returns the data of this `SSKRShare` as a hex string.
@@ -99,7 +97,7 @@ impl CBORDecodable for SSKRShare {
 impl CBORTaggedDecodable for SSKRShare {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&data);
+        let instance = Self::from_data(data);
         Ok(instance)
     }
 }
@@ -139,7 +137,7 @@ pub fn sskr_generate_using(
     let shares = sskr::sskr_generate_using(spec, master_secret, rng)?;
     let shares = shares.into_iter().map(|group| {
         group.into_iter().map(|share| {
-            SSKRShare::from_data_ref(&share)
+            SSKRShare::from_data(share)
         }).collect()
     }).collect();
     Ok(shares)

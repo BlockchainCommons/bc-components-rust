@@ -24,7 +24,7 @@ impl Nonce {
     }
 
     /// Restores a nonce from data.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::NONCE_SIZE {
             bail!("Invalid nonce size");
@@ -43,8 +43,8 @@ impl Nonce {
     ///
     /// # Panics
     /// Panics if the string is not exactly 24 hexadecimal digits.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// The data as a hexadecimal string.
@@ -155,7 +155,7 @@ mod test {
     #[test]
     fn test_nonce_size() {
         let raw_data = vec![0u8; Nonce::NONCE_SIZE + 1];
-        let nonce = Nonce::from_data_ref(&raw_data);
+        let nonce = Nonce::from_data_ref(raw_data);
         assert!(nonce.is_err());
     }
 

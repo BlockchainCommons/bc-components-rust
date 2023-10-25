@@ -64,9 +64,7 @@ impl std::fmt::Debug for SchnorrPublicKey {
 impl ECKeyBase for SchnorrPublicKey {
     const KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref<T>(data: &T) -> anyhow::Result<Self>
-    where T: AsRef<[u8]>
-    {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("invalid Schnorr public key size");

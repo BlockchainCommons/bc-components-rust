@@ -31,9 +31,7 @@ impl SigningPrivateKey {
     }
 
     /// Restores a `SigningPrivateKey` from a reference to a vector of bytes.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self>
-    where T: AsRef<[u8]>
-    {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid signing private key size");
@@ -53,8 +51,8 @@ impl SigningPrivateKey {
     /// # Panics
     ///
     /// Panics if the hex string is invalid or the length is not `SigningPrivateKey::KEY_SIZE * 2`.
-    pub fn from_hex<T>(hex: T) -> Self where T: AsRef<str> {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn from_hex(hex: impl AsRef<str>) -> Self {
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// Returns the private key as a hex string.
@@ -73,30 +71,24 @@ impl SigningPrivateKey {
     }
 
     /// Derives a new `SigningPrivateKey` from the given key material.
-    pub fn derive_from_key_material<D>(key_material: D) -> Self
-        where D: AsRef<[u8]>
-    {
+    pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
         Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
     }
 }
 
 impl SigningPrivateKey {
-    pub fn ecdsa_sign<T>(&self, message: &T) -> Signature where T: AsRef<[u8]> {
+    pub fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Signature {
         let private_key = ECPrivateKey::from_data(*self.data());
         let sig = private_key.ecdsa_sign(message);
         Signature::ecdsa_from_data(sig)
     }
 
-    pub fn schnorr_sign_using<D1, D2>(
+    pub fn schnorr_sign_using(
         &self,
-        message: D1,
-        tag: D2,
+        message: impl AsRef<[u8]>,
+        tag: impl AsRef<[u8]>,
         rng: &mut impl RandomNumberGenerator
-    ) -> Signature
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>,
-    {
+    ) -> Signature {
         // let tag = tag.into();
         let private_key = ECPrivateKey::from_data(*self.data());
         let tag_copy = tag.as_ref().to_vec();
@@ -104,15 +96,11 @@ impl SigningPrivateKey {
         Signature::schnorr_from_data(sig, tag_copy)
     }
 
-    pub fn schnorr_sign<D1, D2>(
+    pub fn schnorr_sign(
         &self,
-        message: D1,
-        tag: D2,
-    ) -> Signature
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>,
-    {
+        message: impl AsRef<[u8]>,
+        tag: impl AsRef<[u8]>,
+    ) -> Signature {
         let mut rng = SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, tag, &mut rng)
     }
