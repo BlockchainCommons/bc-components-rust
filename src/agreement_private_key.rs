@@ -31,7 +31,7 @@ impl AgreementPrivateKey {
     }
 
     /// Restore an `AgreementPrivateKey` from a reference to an array of bytes.
-    pub fn from_data_ref<T>(data: &T) -> anyhow::Result<Self> where T: AsRef<[u8]> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid agreement private key size");
@@ -52,7 +52,7 @@ impl AgreementPrivateKey {
     ///
     /// Panics if the hex string is invalid or the length is not `AgreementPrivateKey::KEY_SIZE * 2`.
     pub fn from_hex(hex: impl AsRef<str>) -> Self {
-        Self::from_data_ref(&hex::decode(hex.as_ref()).unwrap()).unwrap()
+        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// Get the hex string representation of the `AgreementPrivateKey`.
@@ -66,9 +66,7 @@ impl AgreementPrivateKey {
     }
 
     /// Derive an `AgreementPrivateKey` from the given key material.
-    pub fn derive_from_key_material<D>(key_material: D) -> Self
-        where D: AsRef<[u8]>
-    {
+    pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
         Self::from_data(bc_crypto::x25519_derive_agreement_private_key(key_material))
     }
 

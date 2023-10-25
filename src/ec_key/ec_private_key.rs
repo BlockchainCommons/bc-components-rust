@@ -34,7 +34,7 @@ impl ECPrivateKey {
     }
 
     /// ECDSA signs the given message using this ECDSA private key.
-    pub fn ecdsa_sign<T>(&self, message: T) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] where T: AsRef<[u8]> {
+    pub fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] {
         bc_crypto::ecdsa_sign(&self.0, message.as_ref())
     }
 

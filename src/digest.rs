@@ -97,7 +97,7 @@ impl Digest {
     ///
     /// Returns `true` if the digest is `None` or if the digest matches the image's digest.
     /// Returns `false` if the digest does not match the image's digest.
-    pub fn validate_opt<T>(image: &T, digest: Option<&Digest>) -> bool where T: AsRef<[u8]> {
+    pub fn validate_opt(image: impl AsRef<[u8]>, digest: Option<&Digest>) -> bool {
         match digest {
             Some(digest) => digest.validate(image),
             None => true,
