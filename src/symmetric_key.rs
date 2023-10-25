@@ -64,7 +64,7 @@ impl SymmetricKey {
         N: AsRef<Nonce>
     {
         let aad = aad.unwrap_or(&[]).into();
-        let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_else(Nonce::new);
+        let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
         let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
     }

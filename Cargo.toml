@@ -12,25 +12,26 @@ categories = ["cryptography"]
 documentation = "https://docs.rs/bc-components"
 
 [dependencies]
-# bc-crypto = { path = "../bc-crypto-rust" }
-bc-crypto = "0.3.0"
+bc-crypto = { path = "../bc-crypto" }
+# bc-crypto = "0.3.0"
 
 bc-rand = "0.1.0"
 
-# dcbor = { path = "../bc-dcbor-rust" }
-dcbor = "0.9.0"
+dcbor = { path = "../dcbor" }
+# dcbor = "0.9.0"
 
-# bc-ur = { path = "../bc-ur-rust" }
-bc-ur = "0.2.0"
+bc-ur = { path = "../bc-ur" }
+# bc-ur = "0.2.0"
 
-# sskr = { path = "../bc-sskr-rust" }
-sskr = "0.3.0"
+sskr = { path = "../sskr" }
+# sskr = "0.3.0"
 
 hex = "0.4.3"
 miniz_oxide = "0.7.1"
 paste = "1.0.12"
 anyhow = "1.0"
 url = "2.4.1"
+bytes = "1.5.0"
 
 [dev-dependencies]
 hex-literal = "0.4.1"

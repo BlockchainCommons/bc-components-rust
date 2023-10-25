@@ -1,6 +1,7 @@
 use std::{fmt::Formatter, borrow::Cow};
 use bc_ur::prelude::*;
 use bc_crypto::hash::crc32;
+use bytes::Bytes;
 use miniz_oxide::{inflate::decompress_to_vec, deflate::compress_to_vec};
 use crate::{digest::Digest, DigestProvider, tags};
 use anyhow::{anyhow, bail};
@@ -21,7 +22,7 @@ use anyhow::{anyhow, bail};
 pub struct Compressed {
     checksum: u32,
     uncompressed_size: usize,
-    compressed_data: Vec<u8>,
+    compressed_data: Bytes,
     digest: Option<Digest>,
 }
 
@@ -31,7 +32,7 @@ impl Compressed {
     /// This is a low-level function that does not check the validity of the compressed data.
     ///
     /// Returns `None` if the compressed data is larger than the uncompressed size.
-    pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Vec<u8>, digest: Option<Digest>) -> anyhow::Result<Self> {
+    pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Bytes, digest: Option<Digest>) -> anyhow::Result<Self> {
         if compressed_data.len() > uncompressed_size {
             bail!("Compressed data is larger than uncompressed size");
         }
@@ -53,7 +54,7 @@ impl Compressed {
     where
         T: AsRef<[u8]>,
     {
-        let compressed_data = compress_to_vec(uncompressed_data.as_ref(), 6);
+        let compressed_data = Bytes::from(compress_to_vec(uncompressed_data.as_ref(), 6));
         let checksum = crc32(uncompressed_data.as_ref());
         let uncompressed_size = uncompressed_data.as_ref().len();
         let compressed_size = compressed_data.len();
@@ -68,7 +69,7 @@ impl Compressed {
             Self {
                 checksum,
                 uncompressed_size,
-                compressed_data: uncompressed_data.as_ref().to_vec(),
+                compressed_data: uncompressed_data.as_ref().to_vec().into(),
                 digest,
             }
         }
@@ -77,13 +78,13 @@ impl Compressed {
     /// Uncompresses the compressed data and returns the uncompressed data.
     ///
     /// Returns an error if the compressed data is corrupt or the checksum does not match the uncompressed data.
-    pub fn uncompress(&self) -> anyhow::Result<Vec<u8>> {
+    pub fn uncompress(&self) -> anyhow::Result<Bytes> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
             return Ok(self.compressed_data.clone());
         }
 
-        let uncompressed_data = decompress_to_vec(&self.compressed_data).map_err(|_| anyhow!("corrupt compressed data"))?;
+        let uncompressed_data = Bytes::from(decompress_to_vec(&self.compressed_data).map_err(|_| anyhow!("corrupt compressed data"))?);
         if crc32(&uncompressed_data) != self.checksum {
             bail!("compressed data checksum mismatch");
         }
@@ -180,7 +181,7 @@ impl CBORTaggedDecodable for Compressed {
         }
         let checksum = u32::from_cbor(&elements[0])?;
         let uncompressed_size = usize::from_cbor(&elements[1])?;
-        let compressed_data = elements[2].expect_byte_string()?.to_vec();
+        let compressed_data = elements[2].expect_byte_string()?;
         let digest = if elements.len() == 4 {
             Some(Digest::from_cbor(&elements[3])?)
         } else {

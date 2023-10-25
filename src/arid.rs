@@ -7,7 +7,7 @@ use anyhow::bail;
 /// An "Apparently Random Identifier" (ARID)
 ///
 /// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-arid.md).
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct ARID ([u8; Self::ARID_SIZE]);
 
 impl ARID {
@@ -105,6 +105,12 @@ impl CBORTaggedDecodable for ARID {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
+    }
+}
+
+impl std::fmt::Debug for ARID {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ARID({})", self.hex())
     }
 }
 

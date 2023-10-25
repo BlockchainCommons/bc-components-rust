@@ -95,7 +95,7 @@ impl CBORTaggedDecodable for UUID {
             bail!("invalid UUID size");
         }
         let mut uuid = [0u8; Self::UUID_SIZE];
-        uuid.copy_from_slice(bytes);
+        uuid.copy_from_slice(&bytes);
         Ok(Self::from_data(uuid))
     }
 }

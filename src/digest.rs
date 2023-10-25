@@ -1,6 +1,9 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use bc_ur::prelude::*;
+use bc_ur::{UREncodable, URDecodable, URCodable};
+use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
+// use bc_ur::prelude::*;
+// use dcbor::prelude::*;
 use crate::{digest_provider::DigestProvider, tags};
 use anyhow::bail;
 
@@ -171,8 +174,6 @@ impl CBORTaggedEncodable for Digest {
     }
 }
 
-impl UREncodable for Digest { }
-
 impl CBORDecodable for Digest {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)
@@ -185,6 +186,8 @@ impl CBORTaggedDecodable for Digest {
         Self::from_data_ref(&data)
     }
 }
+
+impl UREncodable for Digest { }
 
 impl URDecodable for Digest { }
 

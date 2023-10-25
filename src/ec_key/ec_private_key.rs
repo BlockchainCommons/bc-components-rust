@@ -1,6 +1,5 @@
 use anyhow::bail;
-use bc_ur::UREncodable;
-use dcbor::prelude::*;
+use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
 
