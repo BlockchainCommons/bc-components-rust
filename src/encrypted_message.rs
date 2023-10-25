@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use bc_ur::prelude::*;
+use bytes::Bytes;
 use crate::{Nonce, Digest, DigestProvider, tags, AuthenticationTag};
 use anyhow::bail;
 
@@ -13,8 +14,8 @@ use anyhow::bail;
 /// tagged CBOR.
 #[derive(Clone, Eq, PartialEq)]
 pub struct EncryptedMessage {
-    ciphertext: Vec<u8>,
-    aad: Vec<u8>, // Additional authenticated data (AAD) per RFC8439
+    ciphertext: Bytes,
+    aad: Bytes, // Additional authenticated data (AAD) per RFC8439
     nonce: Nonce,
     auth: AuthenticationTag,
 }
@@ -23,7 +24,7 @@ impl EncryptedMessage {
     /// Restores an EncryptedMessage from its CBOR representation.
     ///
     /// This is a low-level function that is not normally needed.
-    pub fn new(ciphertext: Vec<u8>, aad: Vec<u8>, nonce: Nonce, auth: AuthenticationTag) -> Self {
+    pub fn new(ciphertext: Bytes, aad: Bytes, nonce: Nonce, auth: AuthenticationTag) -> Self {
         Self {
             ciphertext,
             aad,
@@ -128,13 +129,13 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 if elements.len() < 3 {
                     bail!("EncryptedMessage must have at least 3 elements");
                 }
-                let ciphertext = CBOR::expect_byte_string(&elements[0])?.to_vec();
+                let ciphertext = CBOR::expect_byte_string(&elements[0])?;
                 let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
                 let auth = AuthenticationTag::from_cbor(&elements[2])?;
                 let aad = if elements.len() > 3 {
-                    CBOR::expect_byte_string(&elements[3])?.to_vec()
+                    CBOR::expect_byte_string(&elements[3])?
                 } else {
-                    Vec::<u8>::new()
+                    Bytes::new()
                 };
                 Ok(Self::new(ciphertext, aad, nonce, auth))
             },
@@ -154,6 +155,7 @@ impl URCodable for EncryptedMessage { }
 #[cfg(test)]
 mod test {
     use bc_ur::{UREncodable, URDecodable};
+    use bytes::Bytes;
     use dcbor::{CBOREncodable, CBORDecodable};
     use hex_literal::hex;
     use indoc::indoc;
@@ -168,7 +170,7 @@ mod test {
     const AUTH: AuthenticationTag = AuthenticationTag::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
 
     fn encrypted_message() -> EncryptedMessage {
-        KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE))
+        KEY.encrypt(PLAINTEXT, Some(Bytes::from_static(&AAD)), Some(NONCE))
     }
 
     #[test]
@@ -188,7 +190,7 @@ mod test {
     fn test_random_key_and_nonce() -> Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
         let nonce = Nonce::new();
-        let encrypted_message = key.encrypt(PLAINTEXT, Some(&AAD), Some(nonce));
+        let encrypted_message = key.encrypt(PLAINTEXT, Some(Bytes::from_static(&AAD)), Some(nonce));
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(PLAINTEXT, decrypted_plaintext.as_slice());
         Ok(())
@@ -197,7 +199,7 @@ mod test {
     #[test]
     fn test_empty_data() -> Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
-        let encrypted_message = key.encrypt([], None, None::<Nonce>);
+        let encrypted_message = key.encrypt(Bytes::new(), None::<Bytes>, None::<Nonce>);
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(&[] as &[u8], decrypted_plaintext.as_slice());
         Ok(())

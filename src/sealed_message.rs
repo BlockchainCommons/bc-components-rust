@@ -1,6 +1,7 @@
 use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags};
 use bc_ur::prelude::*;
 use anyhow::bail;
+use bytes::Bytes;
 
 /// A sealed message can be sent to anyone, but only the intended recipient can
 /// decrypt it.
@@ -14,16 +15,17 @@ impl SealedMessage {
     /// Creates a new `SealedMessage` from the given plaintext and recipient.
     pub fn new<D>(plaintext: D, recipient: &PublicKeyBase) -> Self
     where
-        D: AsRef<[u8]>
+        D: Into<Bytes>
     {
-        Self::new_with_aad(plaintext, recipient, None)
+        Self::new_with_aad(plaintext, recipient, None::<Bytes>)
     }
 
     /// Creates a new `SealedMessage` from the given plaintext, recipient, and
     /// additional authenticated data.
-    pub fn new_with_aad<D>(plaintext: D, recipient: &PublicKeyBase, aad: Option<&[u8]>) -> Self
+    pub fn new_with_aad<D, A>(plaintext: D, recipient: &PublicKeyBase, aad: Option<A>) -> Self
     where
-        D: AsRef<[u8]>
+        D: Into<Bytes>,
+        A: Into<Bytes>,
     {
         Self::new_opt(plaintext, recipient, aad, None, None::<Nonce>)
     }
@@ -31,15 +33,16 @@ impl SealedMessage {
     /// Creates a new `SealedMessage` from the given plaintext, recipient, and
     /// additional authenticated data. Also accepts optional test key material
     /// and test nonce.
-    pub fn new_opt<D, N>(
+    pub fn new_opt<D, A, N>(
         plaintext: D,
         recipient: &PublicKeyBase,
-        aad: Option<&[u8]>,
+        aad: Option<A>,
         test_key_material: Option<&[u8]>,
         test_nonce: Option<N>
     ) -> Self
     where
-        D: AsRef<[u8]>,
+        D: Into<Bytes>,
+        A: Into<Bytes>,
         N: AsRef<Nonce>,
     {
         let ephemeral_sender = PrivateKeyBase::from_optional_data(test_key_material);
