@@ -50,9 +50,7 @@ impl Compressed {
     ///
     /// If the compressed data is smaller than the uncompressed data, the compressed data is stored in the `compressed_data` field.
     /// Otherwise, the uncompressed data is stored in the `compressed_data` field.
-    pub fn from_uncompressed_data<T>(uncompressed_data: T, digest: Option<Digest>) -> Self
-    where
-        T: AsRef<[u8]>,
+    pub fn from_uncompressed_data(uncompressed_data: Bytes, digest: Option<Digest>) -> Self
     {
         let compressed_data = Bytes::from(compress_to_vec(uncompressed_data.as_ref(), 6));
         let checksum = crc32(uncompressed_data.as_ref());
@@ -69,7 +67,7 @@ impl Compressed {
             Self {
                 checksum,
                 uncompressed_size,
-                compressed_data: uncompressed_data.as_ref().to_vec().into(),
+                compressed_data: uncompressed_data,
                 digest,
             }
         }
@@ -197,36 +195,38 @@ impl URCodable for Compressed { }
 
 #[cfg(test)]
 mod tests {
+    use bytes::Bytes;
+
     use crate::Compressed;
 
     #[test]
     fn test_1() {
-        let source = "Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.".as_bytes();
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let source = Bytes::from("Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.");
+        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
         assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_2() {
-        let source = "Lorem ipsum dolor sit amet consectetur adipiscing".as_bytes();
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let source = Bytes::from("Lorem ipsum dolor sit amet consectetur adipiscing");
+        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
         assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_3() {
-        let source = "Lorem".as_bytes();
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let source = Bytes::from("Lorem");
+        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
         assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_4() {
-        let source = "".as_bytes();
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let source = Bytes::from("");
+        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
         assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)");
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
