@@ -88,6 +88,14 @@ impl CBORDecodable for UUID {
     }
 }
 
+impl TryFrom<&CBOR> for UUID {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        UUID::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for UUID {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let bytes = CBOR::expect_byte_string(cbor)?;

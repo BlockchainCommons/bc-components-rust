@@ -99,6 +99,14 @@ impl CBORDecodable for Nonce {
     }
 }
 
+impl TryFrom<&CBOR> for Nonce {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for Nonce {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;

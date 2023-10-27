@@ -124,6 +124,14 @@ impl CBORDecodable for PrivateKeyBase {
     }
 }
 
+impl TryFrom<&CBOR> for PrivateKeyBase {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for PrivateKeyBase {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;

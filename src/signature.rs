@@ -110,6 +110,14 @@ impl CBORDecodable for Signature {
     }
 }
 
+impl TryFrom<&CBOR> for Signature {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         match cbor {

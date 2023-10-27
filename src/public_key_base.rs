@@ -6,7 +6,7 @@ use anyhow::bail;
 ///
 /// Includes the entity's public signing key for verifying signatures, and
 /// the entity's public agreement key used for X25519 key agreement.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
     agreement_public_key: AgreementPublicKey,
@@ -74,6 +74,14 @@ impl UREncodable for PublicKeyBase { }
 impl CBORDecodable for PublicKeyBase {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_untagged_cbor(cbor)
+    }
+}
+
+impl TryFrom<&CBOR> for PublicKeyBase {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
     }
 }
 

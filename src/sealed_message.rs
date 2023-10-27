@@ -73,6 +73,14 @@ impl CBORDecodable for SealedMessage {
     }
 }
 
+impl TryFrom<&CBOR> for SealedMessage {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        SealedMessage::from_cbor(cbor)
+    }
+}
+
 impl CBORCodable for SealedMessage { }
 
 impl CBORTaggedEncodable for SealedMessage {

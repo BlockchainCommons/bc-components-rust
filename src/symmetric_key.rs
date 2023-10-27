@@ -149,6 +149,14 @@ impl CBORDecodable for SymmetricKey {
     }
 }
 
+impl TryFrom<&CBOR> for SymmetricKey {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for SymmetricKey {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let bytes = CBOR::expect_byte_string(cbor)?;

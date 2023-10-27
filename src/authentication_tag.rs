@@ -88,3 +88,11 @@ impl CBORDecodable for AuthenticationTag {
         Self::from_data_ref(&data)
     }
 }
+
+impl TryFrom<&CBOR> for AuthenticationTag {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}

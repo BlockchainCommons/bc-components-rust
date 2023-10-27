@@ -94,6 +94,14 @@ impl CBORDecodable for SSKRShare {
     }
 }
 
+impl TryFrom<&CBOR> for SSKRShare {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        SSKRShare::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for SSKRShare {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;

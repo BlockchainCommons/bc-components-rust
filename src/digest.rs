@@ -181,6 +181,14 @@ impl CBORDecodable for Digest {
     }
 }
 
+impl TryFrom<&CBOR> for Digest {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for Digest {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;

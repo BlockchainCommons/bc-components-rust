@@ -171,6 +171,14 @@ impl CBORDecodable for Compressed {
     }
 }
 
+impl TryFrom<&CBOR> for Compressed {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(cbor)
+    }
+}
+
 impl CBORTaggedDecodable for Compressed {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let elements = cbor.expect_array()?;

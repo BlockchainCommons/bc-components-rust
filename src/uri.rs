@@ -69,6 +69,13 @@ impl CBORDecodable for URI {
     }
 }
 
+impl TryFrom<&CBOR> for URI {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
+        URI::from_cbor(cbor)
+    }
+}
 impl CBORTaggedDecodable for URI {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let uri = String::from_cbor(cbor)?;
