@@ -73,7 +73,7 @@ impl UREncodable for PublicKeyBase { }
 
 impl CBORDecodable for PublicKeyBase {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_untagged_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
@@ -105,3 +105,33 @@ impl CBORTaggedDecodable for PublicKeyBase {
 impl URDecodable for PublicKeyBase { }
 
 impl URCodable for PublicKeyBase { }
+
+#[cfg(test)]
+mod tests {
+    use bc_ur::{UREncodable, URDecodable};
+    use bytes::Bytes;
+    use dcbor::{CBOREncodable, CBORDecodable};
+    use hex_literal::hex;
+
+    use crate::{PrivateKeyBase, PublicKeyBase};
+
+    const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
+
+    #[test]
+    fn test_private_key_base() {
+        let private_key_base = PrivateKeyBase::from_data(Bytes::from_static(&SEED));
+        let public_key_base = private_key_base.public_keys();
+
+        let cbor = public_key_base.cbor();
+
+        let public_key_base_2 = PublicKeyBase::from_cbor(&cbor).unwrap();
+        assert_eq!(public_key_base, public_key_base_2);
+
+        let cbor_2 = public_key_base_2.cbor();
+        assert_eq!(cbor, cbor_2);
+
+        let ur = public_key_base.ur_string();
+        assert_eq!(ur, "ur:crypto-pubkeys/lftanshfhdcxzcgtcpytvsgafsondpjkbkoxaopsnniycawpnbnlwsgtregdfhgynyjksrgafmcstansgrhdcxlnfnwfzstovlrdfeuoghvwwyuesbcltsmetbgeurpfoyswfrzojlwdenjzckvadnrndtgsya");
+        assert_eq!(PublicKeyBase::from_ur_string(&ur).unwrap(), public_key_base);
+    }
+}
