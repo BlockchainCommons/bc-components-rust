@@ -140,11 +140,17 @@ impl CBOREncodable for ECPrivateKey {
     }
 }
 
+impl From<ECPrivateKey> for CBOR {
+    fn from(value: ECPrivateKey) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for ECPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         let mut m = Map::new();
-        m.insert_into(2, true);
-        m.insert_into(3, CBOR::byte_string(self.0));
+        m.insert(2, true);
+        m.insert(3, CBOR::byte_string(self.0));
         m.cbor()
     }
 }

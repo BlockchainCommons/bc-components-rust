@@ -87,6 +87,12 @@ impl CBOREncodable for Nonce {
     }
 }
 
+impl From<Nonce> for CBOR {
+    fn from(value: Nonce) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for Nonce {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.data())

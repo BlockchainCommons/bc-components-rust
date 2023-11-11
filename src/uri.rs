@@ -57,6 +57,12 @@ impl CBOREncodable for URI {
     }
 }
 
+impl From<URI> for CBOR {
+    fn from(value: URI) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for URI {
     fn untagged_cbor(&self) -> CBOR {
         self.0.cbor()

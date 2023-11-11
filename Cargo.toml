@@ -12,16 +12,16 @@ categories = ["cryptography"]
 documentation = "https://docs.rs/bc-components"
 
 [dependencies]
-# bc-crypto = { path = "../bc-crypto" }
-bc-crypto = "0.3.0"
+bc-crypto = { path = "../bc-crypto" }
+# bc-crypto = "0.3.0"
 
 bc-rand = "0.1.0"
 
-# dcbor = { path = "../dcbor" }
-dcbor = "0.10.0"
+dcbor = { path = "../dcbor" }
+# dcbor = "0.10.0"
 
-# bc-ur = { path = "../bc-ur" }
-bc-ur = "0.2.1"
+bc-ur = { path = "../bc-ur" }
+# bc-ur = "0.2.1"
 
 # sskr = { path = "../sskr" }
 sskr = "0.3.0"

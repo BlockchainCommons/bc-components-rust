@@ -76,6 +76,12 @@ impl CBOREncodable for AgreementPublicKey {
     }
 }
 
+impl From<AgreementPublicKey> for CBOR {
+    fn from(value: AgreementPublicKey) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for AgreementPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.data())

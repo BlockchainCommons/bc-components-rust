@@ -87,6 +87,12 @@ impl CBOREncodable for ARID {
     }
 }
 
+impl From<ARID> for CBOR {
+    fn from(value: ARID) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for ARID {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.data())

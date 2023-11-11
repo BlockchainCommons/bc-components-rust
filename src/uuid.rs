@@ -76,6 +76,12 @@ impl CBOREncodable for UUID {
     }
 }
 
+impl From<UUID> for CBOR {
+    fn from(value: UUID) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for UUID {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.0)

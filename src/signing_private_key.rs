@@ -140,6 +140,12 @@ impl CBOREncodable for SigningPrivateKey {
     }
 }
 
+impl From<SigningPrivateKey> for CBOR {
+    fn from(value: SigningPrivateKey) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.data())

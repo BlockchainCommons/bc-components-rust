@@ -98,6 +98,12 @@ impl CBOREncodable for EncryptedMessage {
     }
 }
 
+impl From<EncryptedMessage> for CBOR {
+    fn from(value: EncryptedMessage) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORDecodable for EncryptedMessage {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         Self::from_tagged_cbor(cbor)

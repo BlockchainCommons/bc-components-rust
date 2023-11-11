@@ -169,6 +169,12 @@ impl CBOREncodable for Digest {
     }
 }
 
+impl From<Digest> for CBOR {
+    fn from(value: Digest) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for Digest {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.0)

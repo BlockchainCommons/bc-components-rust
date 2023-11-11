@@ -79,6 +79,12 @@ impl CBOREncodable for Signature {
     }
 }
 
+impl From<Signature> for CBOR {
+    fn from(value: Signature) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for Signature {
     fn untagged_cbor(&self) -> CBOR {
         match self {

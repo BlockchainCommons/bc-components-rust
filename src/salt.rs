@@ -113,6 +113,12 @@ impl CBOREncodable for Salt {
     }
 }
 
+impl From<Salt> for CBOR {
+    fn from(value: Salt) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for Salt {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.data())

@@ -82,6 +82,12 @@ impl CBOREncodable for AuthenticationTag {
     }
 }
 
+impl From<AuthenticationTag> for CBOR {
+    fn from(value: AuthenticationTag) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORDecodable for AuthenticationTag {
     fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(cbor)?;

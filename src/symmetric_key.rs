@@ -135,6 +135,12 @@ impl CBOREncodable for SymmetricKey {
     }
 }
 
+impl From<SymmetricKey> for CBOR {
+    fn from(value: SymmetricKey) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(self.0)

@@ -80,6 +80,12 @@ impl CBOREncodable for SSKRShare {
     }
 }
 
+impl From<SSKRShare> for CBOR {
+    fn from(value: SSKRShare) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for SSKRShare {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(&self.0)

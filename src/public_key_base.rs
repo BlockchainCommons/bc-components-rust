@@ -60,6 +60,12 @@ impl CBOREncodable for PublicKeyBase {
     }
 }
 
+impl From<PublicKeyBase> for CBOR {
+    fn from(value: PublicKeyBase) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for PublicKeyBase {
     fn untagged_cbor(&self) -> CBOR {
         vec![

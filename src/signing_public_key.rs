@@ -75,6 +75,12 @@ impl CBOREncodable for SigningPublicKey {
     }
 }
 
+impl From<SigningPublicKey> for CBOR {
+    fn from(value: SigningPublicKey) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for SigningPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {

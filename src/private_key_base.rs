@@ -110,6 +110,12 @@ impl CBOREncodable for PrivateKeyBase {
     }
 }
 
+impl From<PrivateKeyBase> for CBOR {
+    fn from(value: PrivateKeyBase) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for PrivateKeyBase {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::byte_string(&self.0)

@@ -149,6 +149,12 @@ impl CBOREncodable for Compressed {
     }
 }
 
+impl From<Compressed> for CBOR {
+    fn from(value: Compressed) -> Self {
+        value.cbor()
+    }
+}
+
 impl CBORTaggedEncodable for Compressed {
     fn untagged_cbor(&self) -> CBOR {
         let mut elements = vec![
