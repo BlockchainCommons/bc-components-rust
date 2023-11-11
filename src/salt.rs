@@ -131,6 +131,14 @@ impl CBORDecodable for Salt {
     }
 }
 
+impl TryFrom<CBOR> for Salt {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(&cbor)
+    }
+}
+
 impl TryFrom<&CBOR> for Salt {
     type Error = anyhow::Error;
 

@@ -116,6 +116,14 @@ impl CBORDecodable for Signature {
     }
 }
 
+impl TryFrom<CBOR> for Signature {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(&cbor)
+    }
+}
+
 impl TryFrom<&CBOR> for Signature {
     type Error = anyhow::Error;
 

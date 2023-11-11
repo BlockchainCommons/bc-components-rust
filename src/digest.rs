@@ -187,6 +187,14 @@ impl CBORDecodable for Digest {
     }
 }
 
+impl TryFrom<CBOR> for Digest {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(&cbor)
+    }
+}
+
 impl TryFrom<&CBOR> for Digest {
     type Error = anyhow::Error;
 

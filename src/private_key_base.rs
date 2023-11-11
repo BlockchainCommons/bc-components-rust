@@ -130,6 +130,14 @@ impl CBORDecodable for PrivateKeyBase {
     }
 }
 
+impl TryFrom<CBOR> for PrivateKeyBase {
+    type Error = anyhow::Error;
+
+    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+        Self::from_cbor(&cbor)
+    }
+}
+
 impl TryFrom<&CBOR> for PrivateKeyBase {
     type Error = anyhow::Error;
 
