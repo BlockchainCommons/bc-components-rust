@@ -134,18 +134,18 @@ impl TryFrom<&CBOR> for Signature {
 
 impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor {
-            CBOR::ByteString(bytes) => {
+        match cbor.case() {
+            CBORCase::ByteString(bytes) => {
                 Self::schnorr_from_data_ref(bytes, Bytes::new())
             },
-            CBOR::Array(elements) => {
+            CBORCase::Array(elements) => {
                 if elements.len() == 2 {
                     if let Some(data) = CBOR::as_byte_string(&elements[0]) {
                         if let Some(tag) = CBOR::as_byte_string(&elements[1]) {
                             return Self::schnorr_from_data_ref(data, tag);
                         }
                     }
-                    if let CBOR::Unsigned(1) = &elements[0] {
+                    if let CBORCase::Unsigned(1) = &elements[0].case() {
                         if let Some(data) = CBOR::as_byte_string(&elements[1]) {
                             return Self::ecdsa_from_data_ref(data);
                         }

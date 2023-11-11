@@ -146,8 +146,8 @@ impl CBORTaggedEncodable for EncryptedMessage {
 
 impl CBORTaggedDecodable for EncryptedMessage {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor {
-            CBOR::Array(elements) => {
+        match cbor.case() {
+            CBORCase::Array(elements) => {
                 if elements.len() < 3 {
                     bail!("EncryptedMessage must have at least 3 elements");
                 }

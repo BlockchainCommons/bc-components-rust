@@ -165,7 +165,7 @@ impl CBORTaggedEncodable for Compressed {
         if let Some(digest) = &self.digest {
             elements.push(digest.cbor());
         }
-        CBOR::Array(elements)
+        CBORCase::Array(elements).into()
     }
 }
 

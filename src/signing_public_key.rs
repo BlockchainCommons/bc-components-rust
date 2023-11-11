@@ -123,13 +123,13 @@ impl TryFrom<&CBOR> for SigningPublicKey {
 
 impl CBORTaggedDecodable for SigningPublicKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        match untagged_cbor {
-            CBOR::ByteString(data) => {
+        match untagged_cbor.case() {
+            CBORCase::ByteString(data) => {
                 Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
             },
-            CBOR::Array(elements) => {
+            CBORCase::Array(elements) => {
                 if elements.len() == 2 {
-                    if let CBOR::Unsigned(1) = &elements[0] {
+                    if let CBORCase::Unsigned(1) = &elements[0].case() {
                         if let Some(data) = CBOR::as_byte_string(&elements[1]) {
                             return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data)?));
                         }

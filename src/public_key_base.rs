@@ -101,8 +101,8 @@ impl TryFrom<&CBOR> for PublicKeyBase {
 
 impl CBORTaggedDecodable for PublicKeyBase {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        match untagged_cbor {
-            CBOR::Array(elements) => {
+        match untagged_cbor.case() {
+            CBORCase::Array(elements) => {
                 if elements.len() != 2 {
                     bail!("PublicKeyBase must have two elements");
                 }

@@ -107,8 +107,8 @@ impl CBORTaggedEncodable for SealedMessage {
 
 impl CBORTaggedDecodable for SealedMessage {
     fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor {
-            CBOR::Array(elements) => {
+        match cbor.case() {
+            CBORCase::Array(elements) => {
                 if elements.len() != 2 {
                     bail!("SealedMessage must have two elements");
                 }

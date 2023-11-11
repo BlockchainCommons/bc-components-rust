@@ -102,14 +102,6 @@ impl TryFrom<CBOR> for AgreementPublicKey {
     }
 }
 
-impl TryFrom<&CBOR> for AgreementPublicKey {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
-    }
-}
-
 impl CBORTaggedDecodable for AgreementPublicKey {
     fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
         let data = CBOR::expect_byte_string(untagged_cbor)?;
