@@ -155,6 +155,12 @@ impl From<&Nonce> for Vec<u8> {
     }
 }
 
+impl UREncodable for Nonce { }
+
+impl URDecodable for Nonce { }
+
+impl URCodable for Nonce { }
+
 #[cfg(test)]
 mod test {
     use super::Nonce;
@@ -204,9 +210,3 @@ mod test {
         assert_eq!(nonce, decoded_nonce);
     }
 }
-
-impl UREncodable for Nonce { }
-
-impl URDecodable for Nonce { }
-
-impl URCodable for Nonce { }
