@@ -34,10 +34,20 @@ tag_constant!(UUID, 37, "uuid");
 
 // Core Envelope tags.
 
-// See https://www.rfc-editor.org/rfc/rfc8949.html#name-encoded-cbor-data-item
-tag_constant!(LEAF, 24, "leaf");
+// A previous version of the Envelope spec used tag #6.24 ("Encoded CBOR Item") as
+// the header for the Envelope `leaf` case. Unfortunately, this was not a correct
+// use of the tag, as the contents of #6.24 (RFC8949 §3.4.5.1) MUST always be a
+// byte string, while we were simply using it as a wrapper/header for any dCBOR
+// data item.
+//
+// https://www.rfc-editor.org/rfc/rfc8949.html#name-encoded-cbor-data-item
+//
+// The new leaf tag is #6.201, but we will still recognize #6.24 for backwards
+// compatibility.
+tag_constant!(ENCODED_CBOR, 24, "encoded-cbor");
 
 tag_constant!(ENVELOPE,         200, "envelope");
+tag_constant!(LEAF,             201, "leaf");
 
 // Envelope extension tags
 tag_constant!(KNOWN_VALUE,      40000, "known-value");
@@ -196,7 +206,7 @@ mod tests {
     #[test]
     fn test_1() {
         use crate::*;
-        assert_eq!(tags::LEAF.value(), 24);
+        assert_eq!(tags::LEAF.value(), 201);
         assert_eq!(tags::LEAF.name().as_ref().unwrap(), "leaf");
         with_tags!(|tags: &dyn dcbor::TagsStoreTrait| {
             assert_eq!(tags.name_for_tag(&tags::LEAF), "leaf");

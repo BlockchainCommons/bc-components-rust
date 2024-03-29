@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.7.1")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.8.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.7.1"
+//! bc-components = "0.8.0"
 //! ```
 
 mod digest;
@@ -112,7 +112,7 @@ mod tests {
 
     #[test]
     fn tags() {
-        assert_eq!(tags::LEAF.value(), 24);
+        assert_eq!(tags::LEAF.value(), 201);
         assert_eq!(tags::LEAF.name().as_ref().unwrap(), "leaf");
     }
 
