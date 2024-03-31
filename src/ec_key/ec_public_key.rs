@@ -86,7 +86,7 @@ impl<'a> From<&'a ECPublicKey> for &'a [u8] {
 }
 
 impl CBORTagged for ECPublicKey {
-    const CBOR_TAG: Tag = tags::EC_KEY;
+    const CBOR_TAG: Tag = tags::EC_KEY_V1;
 }
 
 impl CBOREncodable for ECPublicKey {

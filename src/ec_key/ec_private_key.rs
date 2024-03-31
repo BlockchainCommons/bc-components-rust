@@ -131,7 +131,7 @@ impl ECKey for ECPrivateKey {
 }
 
 impl CBORTagged for ECPrivateKey {
-    const CBOR_TAG: Tag = tags::EC_KEY;
+    const CBOR_TAG: Tag = tags::EC_KEY_V1;
 }
 
 impl CBOREncodable for ECPrivateKey {

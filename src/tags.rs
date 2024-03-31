@@ -66,18 +66,21 @@ tag_constant!(REPLACEMENT,  40009, "replacement");
 // These are the utility structures we've identified and speced related to other
 // various applications that aren't specifically Bitcoin-related.
 
-tag_constant!(SEED,                     300, "crypto-seed"); // Fixed
-tag_constant!(EC_KEY,                   306, "crypto-eckey"); // Fixed
-tag_constant!(SSKR_SHARE,               309, "crypto-sskr"); // Fixed
+tag_constant!(SEED_V1,                  300, "crypto-seed"); // Fixed
+tag_constant!(EC_KEY_V1,                306, "crypto-eckey"); // Fixed
+tag_constant!(SSKR_SHARE_V1,            309, "crypto-sskr"); // Fixed
+
+tag_constant!(SEED,                     40300, "seed");
+tag_constant!(EC_KEY,                   40306, "eckey");
+tag_constant!(SSKR_SHARE,               40309, "sskr");
 
 tag_constant!(AGREEMENT_PRIVATE_KEY,    40010, "agreement-private-key");
 tag_constant!(AGREEMENT_PUBLIC_KEY,     40011, "agreement-public-key");
 tag_constant!(ARID,                     40012, "arid");
-tag_constant!(SEED_DIGEST,              40013, "seed-digest");
 tag_constant!(NONCE,                    40014, "nonce");
 tag_constant!(PASSWORD,                 40015, "password");
-tag_constant!(PRIVATE_KEYBASE,          40016, "crypto-prvkeys");
-tag_constant!(PUBLIC_KEYBASE,           40017, "crypto-pubkeys");
+tag_constant!(PRIVATE_KEY_BASE,         40016, "crypto-prvkeys");
+tag_constant!(PUBLIC_KEY_BASE,          40017, "crypto-pubkeys");
 tag_constant!(SALT,                     40018, "salt");
 tag_constant!(SEALED_MESSAGE,           40019, "crypto-sealed");
 tag_constant!(SIGNATURE,                40020, "signature");
@@ -87,16 +90,23 @@ tag_constant!(SYMMETRIC_KEY,            40023, "crypto-key");
 
 // Bitcoin-related
 
-tag_constant!(HDKEY,            303, "crypto-hdkey"); // Fixed
-tag_constant!(DERIVATION_PATH,  304, "crypto-keypath"); // Fixed
-tag_constant!(USE_INFO,         305, "crypto-coin-info"); // Fixed
-tag_constant!(ADDRESS,          307, "crypto-address"); // Fixed
-tag_constant!(PSBT,             310, "crypto-psbt"); // Fixed
-tag_constant!(ACCOUNT,          311, "crypto-account"); // Fixed
+tag_constant!(HDKEY_V1,             303, "crypto-hdkey"); // Fixed
+tag_constant!(DERIVATION_PATH_V1,   304, "crypto-keypath"); // Fixed
+tag_constant!(USE_INFO_V1,          305, "crypto-coin-info"); // Fixed
+tag_constant!(ADDRESS_V1,           307, "crypto-address"); // Fixed
+tag_constant!(OUTPUT_DESCRIPTOR_V1, 307, "crypto-output"); // Fixed
+tag_constant!(PSBT_V1,              310, "crypto-psbt"); // Fixed
+tag_constant!(ACCOUNT_V1,           311, "crypto-account"); // Fixed
+
+tag_constant!(HDKEY,                40303, "hdkey");
+tag_constant!(DERIVATION_PATH,      40304, "keypath");
+tag_constant!(USE_INFO,             40305, "coin-info");
+tag_constant!(ADDRESS,              40307, "address");
+tag_constant!(OUTPUT_DESCRIPTOR,    40308, "output-descriptor");
+tag_constant!(PSBT,                 40310, "psbt");
+tag_constant!(ACCOUNT_DESCRIPTOR,   40311, "account-descriptor");
 
 // Tags for subtypes specific to AccountBundle (crypto-output).
-
-tag_constant!(OUTPUT, 308, "crypto-output"); // Fixed
 
 tag_constant!(OUTPUT_SCRIPT_HASH,               400, "output-script-hash"); // Fixed
 tag_constant!(OUTPUT_WITNESS_SCRIPT_HASH,       401, "output-witness-script-hash"); // Fixed
@@ -110,8 +120,6 @@ tag_constant!(OUTPUT_RAW_SCRIPT,                408, "output-raw-script"); // Fi
 tag_constant!(OUTPUT_TAPROOT,                   409, "output-taproot"); // Fixed
 tag_constant!(OUTPUT_COSIGNER,                  410, "output-cosigner"); // Fixed
 
-tag_constant!(OUTPUT_DESCRIPTOR_RESPONSE, 500, "output-descriptor-response"); // Fixed
-
 pub struct LazyTagsStore {
     init: Once,
     data: Mutex<Option<TagsStore>>,
@@ -121,61 +129,62 @@ impl LazyTagsStore {
     pub fn get(&self) -> std::sync::MutexGuard<'_, Option<TagsStore>> {
         self.init.call_once(|| {
             let m = TagsStore::new([
-                LEAF,
-
-                ENVELOPE,
-                KNOWN_VALUE,
-                DIGEST,
-                ENCRYPTED,
-                COMPRESSED,
-
-                REQUEST,
-                RESPONSE,
-                FUNCTION,
-                PARAMETER,
-                PLACEHOLDER,
-                REPLACEMENT,
-
-                SEED,
+                ACCOUNT_DESCRIPTOR,
+                ACCOUNT_V1,
+                ADDRESS,
+                ADDRESS_V1,
                 AGREEMENT_PRIVATE_KEY,
                 AGREEMENT_PUBLIC_KEY,
-                EC_KEY,
-                SSKR_SHARE,
                 ARID,
-                SEED_DIGEST,
+                COMPRESSED,
+                DERIVATION_PATH,
+                DERIVATION_PATH_V1,
+                DIGEST,
+                EC_KEY,
+                EC_KEY_V1,
+                ENCRYPTED,
+                ENVELOPE,
+                FUNCTION,
+                HDKEY,
+                HDKEY_V1,
+                KNOWN_VALUE,
+                LEAF,
                 NONCE,
+                OUTPUT_COMBO,
+                OUTPUT_COSIGNER,
+                OUTPUT_DESCRIPTOR,
+                OUTPUT_DESCRIPTOR_V1,
+                OUTPUT_MULTISIG,
+                OUTPUT_PUBLIC_KEY,
+                OUTPUT_PUBLIC_KEY_HASH,
+                OUTPUT_RAW_SCRIPT,
+                OUTPUT_SCRIPT_HASH,
+                OUTPUT_SORTED_MULTISIG,
+                OUTPUT_TAPROOT,
+                OUTPUT_WITNESS_PUBLIC_KEY_HASH,
+                OUTPUT_WITNESS_SCRIPT_HASH,
+                PARAMETER,
                 PASSWORD,
-                PRIVATE_KEYBASE,
-                PUBLIC_KEYBASE,
+                PLACEHOLDER,
+                PRIVATE_KEY_BASE,
+                PSBT,
+                PSBT_V1,
+                PUBLIC_KEY_BASE,
+                REPLACEMENT,
+                REQUEST,
+                RESPONSE,
                 SALT,
                 SEALED_MESSAGE,
+                SEED,
+                SEED_V1,
                 SIGNATURE,
                 SIGNING_PRIVATE_KEY,
                 SIGNING_PUBLIC_KEY,
+                SSKR_SHARE,
+                SSKR_SHARE_V1,
                 SYMMETRIC_KEY,
-
-                HDKEY,
-                DERIVATION_PATH,
                 USE_INFO,
-                ADDRESS,
-                PSBT,
-                ACCOUNT,
-
-                OUTPUT,
-
-                OUTPUT_SCRIPT_HASH,
-                OUTPUT_WITNESS_SCRIPT_HASH,
-                OUTPUT_PUBLIC_KEY,
-                OUTPUT_PUBLIC_KEY_HASH,
-                OUTPUT_WITNESS_PUBLIC_KEY_HASH,
-                OUTPUT_COMBO,
-                OUTPUT_MULTISIG,
-                OUTPUT_SORTED_MULTISIG,
-                OUTPUT_RAW_SCRIPT,
-                OUTPUT_TAPROOT,
-                OUTPUT_COSIGNER,
-
-                OUTPUT_DESCRIPTOR_RESPONSE,
+                USE_INFO_V1,
             ]);
             *self.data.lock().unwrap() = Some(m);
         });

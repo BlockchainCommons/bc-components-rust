@@ -51,7 +51,7 @@ impl AsRef<AgreementPublicKey> for PublicKeyBase {
 }
 
 impl CBORTagged for PublicKeyBase {
-    const CBOR_TAG: Tag = tags::PUBLIC_KEYBASE;
+    const CBOR_TAG: Tag = tags::PUBLIC_KEY_BASE;
 }
 
 impl CBOREncodable for PublicKeyBase {

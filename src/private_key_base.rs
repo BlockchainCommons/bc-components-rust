@@ -101,7 +101,7 @@ impl AsRef<[u8]> for PrivateKeyBase {
 }
 
 impl CBORTagged for PrivateKeyBase {
-    const CBOR_TAG: Tag = tags::PRIVATE_KEYBASE;
+    const CBOR_TAG: Tag = tags::PRIVATE_KEY_BASE;
 }
 
 impl CBOREncodable for PrivateKeyBase {
