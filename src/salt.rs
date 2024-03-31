@@ -104,7 +104,9 @@ impl AsRef<Salt> for Salt {
 }
 
 impl CBORTagged for Salt {
-    const CBOR_TAG: Tag = tags::SALT;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SALT]
+    }
 }
 
 impl CBOREncodable for Salt {

@@ -58,7 +58,9 @@ impl AsRef<SealedMessage> for SealedMessage {
 }
 
 impl CBORTagged for SealedMessage {
-    const CBOR_TAG: Tag = tags::SEALED_MESSAGE;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SEALED_MESSAGE]
+    }
 }
 
 impl CBOREncodable for SealedMessage {

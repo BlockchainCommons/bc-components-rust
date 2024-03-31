@@ -78,7 +78,9 @@ impl AsRef<ARID> for ARID {
 }
 
 impl CBORTagged for ARID {
-    const CBOR_TAG: Tag = tags::ARID;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::ARID]
+    }
 }
 
 impl CBOREncodable for ARID {

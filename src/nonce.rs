@@ -78,7 +78,9 @@ impl AsRef<Nonce> for Nonce {
 }
 
 impl CBORTagged for Nonce {
-    const CBOR_TAG: Tag = tags::NONCE;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::NONCE]
+    }
 }
 
 impl CBOREncodable for Nonce {

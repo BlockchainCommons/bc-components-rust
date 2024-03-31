@@ -70,7 +70,9 @@ impl AsRef<Signature> for Signature {
 }
 
 impl CBORTagged for Signature {
-    const CBOR_TAG: dcbor::Tag = tags::SIGNATURE;
+    fn cbor_tags() -> Vec<dcbor::Tag> {
+        vec![tags::SIGNATURE]
+    }
 }
 
 impl CBOREncodable for Signature {

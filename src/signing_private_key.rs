@@ -131,7 +131,9 @@ impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
 }
 
 impl CBORTagged for SigningPrivateKey {
-    const CBOR_TAG: Tag = tags::SIGNING_PRIVATE_KEY;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SIGNING_PRIVATE_KEY]
+    }
 }
 
 impl CBOREncodable for SigningPrivateKey {

@@ -89,7 +89,9 @@ impl DigestProvider for EncryptedMessage {
 }
 
 impl CBORTagged for EncryptedMessage {
-    const CBOR_TAG: Tag = tags::ENCRYPTED;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::ENCRYPTED]
+    }
 }
 
 impl CBOREncodable for EncryptedMessage {

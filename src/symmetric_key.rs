@@ -126,7 +126,9 @@ impl std::fmt::Debug for SymmetricKey {
 }
 
 impl CBORTagged for SymmetricKey {
-    const CBOR_TAG: Tag = tags::SYMMETRIC_KEY;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SYMMETRIC_KEY]
+    }
 }
 
 impl CBOREncodable for SymmetricKey {

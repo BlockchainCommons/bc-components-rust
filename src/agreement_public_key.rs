@@ -67,7 +67,9 @@ impl AsRef<AgreementPublicKey> for AgreementPublicKey {
 }
 
 impl CBORTagged for AgreementPublicKey {
-    const CBOR_TAG: Tag = tags::AGREEMENT_PUBLIC_KEY;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::AGREEMENT_PUBLIC_KEY]
+    }
 }
 
 impl CBOREncodable for AgreementPublicKey {

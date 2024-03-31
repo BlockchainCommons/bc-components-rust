@@ -67,7 +67,9 @@ impl AsRef<UUID> for UUID {
 }
 
 impl CBORTagged for UUID {
-    const CBOR_TAG: Tag = tags::UUID;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::UUID]
+    }
 }
 
 impl CBOREncodable for UUID {

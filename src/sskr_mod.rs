@@ -71,7 +71,9 @@ impl SSKRShare {
 }
 
 impl CBORTagged for SSKRShare {
-    const CBOR_TAG: Tag = tags::SSKR_SHARE_V1;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SSKR_SHARE, tags::SSKR_SHARE_V1]
+    }
 }
 
 impl CBOREncodable for SSKRShare {

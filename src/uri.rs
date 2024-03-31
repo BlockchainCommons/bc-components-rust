@@ -48,7 +48,9 @@ impl AsRef<URI> for URI {
 }
 
 impl CBORTagged for URI {
-    const CBOR_TAG: Tag = tags::URI;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::URI]
+    }
 }
 
 impl CBOREncodable for URI {

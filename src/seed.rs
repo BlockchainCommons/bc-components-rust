@@ -114,7 +114,9 @@ impl PrivateKeysDataProvider for Seed {
 }
 
 impl CBORTagged for Seed {
-    const CBOR_TAG: Tag = tags::SEED_V1;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SEED, tags::SEED_V1]
+    }
 }
 
 impl CBOREncodable for Seed {

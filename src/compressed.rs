@@ -140,7 +140,9 @@ impl AsRef<Compressed> for Compressed {
 }
 
 impl CBORTagged for Compressed {
-    const CBOR_TAG: Tag = tags::COMPRESSED;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::COMPRESSED]
+    }
 }
 
 impl CBOREncodable for Compressed {

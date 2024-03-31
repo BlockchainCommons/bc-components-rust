@@ -70,7 +70,9 @@ impl AsRef<[u8]> for ECUncompressedPublicKey {
 }
 
 impl CBORTagged for ECUncompressedPublicKey {
-    const CBOR_TAG: Tag = tags::EC_KEY_V1;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::EC_KEY, tags::EC_KEY_V1]
+    }
 }
 
 impl CBOREncodable for ECUncompressedPublicKey {

@@ -18,10 +18,10 @@ bc-crypto = "0.3"
 bc-rand = "0.1"
 
 # dcbor = { path = "../dcbor" }
-dcbor = "0.11"
+dcbor = "0.13"
 
 # bc-ur = { path = "../bc-ur" }
-bc-ur = "0.2"
+bc-ur = "0.3"
 
 # sskr = { path = "../sskr" }
 sskr = "0.3"

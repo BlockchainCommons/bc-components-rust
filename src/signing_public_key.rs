@@ -66,7 +66,9 @@ impl AsRef<SigningPublicKey> for SigningPublicKey {
 }
 
 impl CBORTagged for SigningPublicKey {
-    const CBOR_TAG: Tag = tags::SIGNING_PUBLIC_KEY;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::SIGNING_PUBLIC_KEY]
+    }
 }
 
 impl CBOREncodable for SigningPublicKey {

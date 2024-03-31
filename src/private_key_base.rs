@@ -101,7 +101,9 @@ impl AsRef<[u8]> for PrivateKeyBase {
 }
 
 impl CBORTagged for PrivateKeyBase {
-    const CBOR_TAG: Tag = tags::PRIVATE_KEY_BASE;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::PRIVATE_KEY_BASE]
+    }
 }
 
 impl CBOREncodable for PrivateKeyBase {

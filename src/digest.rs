@@ -160,7 +160,9 @@ impl std::fmt::Display for Digest {
 }
 
 impl CBORTagged for Digest {
-    const CBOR_TAG: Tag = tags::DIGEST;
+    fn cbor_tags() -> Vec<Tag> {
+        vec![tags::DIGEST]
+    }
 }
 
 impl CBOREncodable for Digest {
