@@ -106,6 +106,11 @@ tag_constant!(OUTPUT_DESCRIPTOR,    40308, "output-descriptor");
 tag_constant!(PSBT,                 40310, "psbt");
 tag_constant!(ACCOUNT_DESCRIPTOR,   40311, "account-descriptor");
 
+tag_constant!(SSH_TEXT_PRIVATE_KEY, 40800, "ssh-private");
+tag_constant!(SSH_TEXT_PUBLIC_KEY,  40801, "ssh-public");
+tag_constant!(SSH_TEXT_SIGNATURE,   40802, "ssh-signature");
+tag_constant!(SSH_TEXT_CERTIFICATE, 40803, "ssh-certificate");
+
 // Tags for subtypes specific to AccountBundle (crypto-output).
 
 tag_constant!(OUTPUT_SCRIPT_HASH,               400, "output-script-hash"); // Fixed
@@ -119,6 +124,7 @@ tag_constant!(OUTPUT_SORTED_MULTISIG,           407, "output-sorted-multisig"); 
 tag_constant!(OUTPUT_RAW_SCRIPT,                408, "output-raw-script"); // Fixed
 tag_constant!(OUTPUT_TAPROOT,                   409, "output-taproot"); // Fixed
 tag_constant!(OUTPUT_COSIGNER,                  410, "output-cosigner"); // Fixed
+
 
 pub struct LazyTagsStore {
     init: Once,
@@ -180,6 +186,10 @@ impl LazyTagsStore {
                 SIGNATURE,
                 SIGNING_PRIVATE_KEY,
                 SIGNING_PUBLIC_KEY,
+                SSH_TEXT_PRIVATE_KEY,
+                SSH_TEXT_PUBLIC_KEY,
+                SSH_TEXT_SIGNATURE,
+                SSH_TEXT_CERTIFICATE,
                 SSKR_SHARE,
                 SSKR_SHARE_V1,
                 SYMMETRIC_KEY,
