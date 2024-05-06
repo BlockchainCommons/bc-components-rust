@@ -71,15 +71,9 @@ impl CBORTagged for SigningPublicKey {
     }
 }
 
-impl CBOREncodable for SigningPublicKey {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<SigningPublicKey> for CBOR {
     fn from(value: SigningPublicKey) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
@@ -87,23 +81,15 @@ impl CBORTaggedEncodable for SigningPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {
             SigningPublicKey::Schnorr(key) => {
-                CBOR::byte_string(key.data())
+                CBOR::to_byte_string(key.data())
             },
             SigningPublicKey::ECDSA(key) => {
                 vec![
-                    1.cbor(),
-                    CBOR::byte_string(key.data()),
-                ].cbor()
+                    1.into(),
+                    CBOR::to_byte_string(key.data()),
+                ].into()
             },
         }
-    }
-}
-
-impl UREncodable for SigningPublicKey { }
-
-impl CBORDecodable for SigningPublicKey {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
     }
 }
 
@@ -111,29 +97,24 @@ impl TryFrom<CBOR> for SigningPublicKey {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for SigningPublicKey {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SigningPublicKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        match untagged_cbor.case() {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        match untagged_cbor.into_case() {
             CBORCase::ByteString(data) => {
                 Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
             },
-            CBORCase::Array(elements) => {
+            CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
-                    if let CBORCase::Unsigned(1) = &elements[0].case() {
-                        if let Some(data) = CBOR::as_byte_string(&elements[1]) {
-                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(&data)?));
+                    let mut drain = elements.drain(0..);
+                    let ele_0 = drain.next().unwrap().into_case();
+                    let ele_1 = drain.next().unwrap().into_case();
+                    if let CBORCase::Unsigned(1) = ele_0 {
+                        if let CBORCase::ByteString(data) = ele_1 {
+                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(data)?));
                         }
                     }
                 }
@@ -143,7 +124,3 @@ impl CBORTaggedDecodable for SigningPublicKey {
         }
     }
 }
-
-impl URDecodable for SigningPublicKey { }
-
-impl URCodable for SigningPublicKey { }

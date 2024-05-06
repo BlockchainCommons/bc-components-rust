@@ -2,7 +2,7 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use bytes::Bytes;
 
-use crate::{PrivateKeysDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
+use crate::{PrivateKeyDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 
 /// Holds unique data from which keys for signing and encryption can be derived.
 #[derive(Clone, Eq, PartialEq)]
@@ -36,8 +36,8 @@ impl PrivateKeyBase {
     }
 
     /// Create a new `PrivateKeyBase` from the given private keys data provider.
-    pub fn new_with_provider(provider: impl PrivateKeysDataProvider) -> Self {
-        Self::from_data(provider.private_keys_data())
+    pub fn new_with_provider(provider: impl PrivateKeyDataProvider) -> Self {
+        Self::from_data(provider.private_key_data())
     }
 
     /// Derive a new `SigningPrivateKey` from this `PrivateKeyBase`.
@@ -53,14 +53,14 @@ impl PrivateKeyBase {
     /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
     ///
     /// This is a Schnorr public key for signing.
-    pub fn public_keys(&self) -> PublicKeyBase {
+    pub fn public_key(&self) -> PublicKeyBase {
         PublicKeyBase::new(self.signing_private_key().schnorr_public_key(), self.agreement_private_key().public_key())
     }
 
     /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
     ///
     /// This is an ECDSA public key for signing.
-    pub fn ecdsa_public_keys(&self) -> PublicKeyBase {
+    pub fn ecdsa_public_key(&self) -> PublicKeyBase {
         PublicKeyBase::new(self.signing_private_key().ecdsa_public_key(), self.agreement_private_key().public_key())
     }
 
@@ -106,29 +106,15 @@ impl CBORTagged for PrivateKeyBase {
     }
 }
 
-impl CBOREncodable for PrivateKeyBase {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<PrivateKeyBase> for CBOR {
     fn from(value: PrivateKeyBase) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for PrivateKeyBase {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(&self.0)
-    }
-}
-
-impl UREncodable for PrivateKeyBase { }
-
-impl CBORDecodable for PrivateKeyBase {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(&self.0)
     }
 }
 
@@ -136,29 +122,17 @@ impl TryFrom<CBOR> for PrivateKeyBase {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for PrivateKeyBase {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PrivateKeyBase {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(untagged_cbor)?;
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)
     }
 }
-
-impl URDecodable for PrivateKeyBase { }
-
-impl URCodable for PrivateKeyBase { }
 
 #[cfg(test)]
 mod tests {

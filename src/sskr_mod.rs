@@ -76,29 +76,15 @@ impl CBORTagged for SSKRShare {
     }
 }
 
-impl CBOREncodable for SSKRShare {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<SSKRShare> for CBOR {
     fn from(value: SSKRShare) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for SSKRShare {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(&self.0)
-    }
-}
-
-impl UREncodable for SSKRShare { }
-
-impl CBORDecodable for SSKRShare {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(&self.0)
     }
 }
 
@@ -106,29 +92,17 @@ impl TryFrom<CBOR> for SSKRShare {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for SSKRShare {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        SSKRShare::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SSKRShare {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(cbor)?;
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)
     }
 }
-
-impl URDecodable for SSKRShare { }
-
-impl URCodable for SSKRShare { }
 
 /// Generates SSKR shares for the given `Spec` and `Secret`.
 ///

@@ -145,37 +145,23 @@ impl CBORTagged for Compressed {
     }
 }
 
-impl CBOREncodable for Compressed {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<Compressed> for CBOR {
     fn from(value: Compressed) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for Compressed {
     fn untagged_cbor(&self) -> CBOR {
         let mut elements = vec![
-            self.checksum.cbor(),
-            self.uncompressed_size.cbor(),
-            CBOR::byte_string(&self.compressed_data),
+            self.checksum.into(),
+            self.uncompressed_size.into(),
+            CBOR::to_byte_string(&self.compressed_data),
         ];
-        if let Some(digest) = &self.digest {
-            elements.push(digest.cbor());
+        if let Some(digest) = self.digest.clone() {
+            elements.push(digest.into());
         }
         CBORCase::Array(elements).into()
-    }
-}
-
-impl UREncodable for Compressed { }
-
-impl CBORDecodable for Compressed {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
     }
 }
 
@@ -183,39 +169,27 @@ impl TryFrom<CBOR> for Compressed {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for Compressed {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Compressed {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let elements = cbor.expect_array()?;
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let elements = cbor.try_into_array()?;
         if elements.len() < 3 || elements.len() > 4 {
             bail!("invalid number of elements in compressed");
         }
-        let checksum = u32::from_cbor(&elements[0])?;
-        let uncompressed_size = usize::from_cbor(&elements[1])?;
-        let compressed_data = elements[2].expect_byte_string()?;
+        let checksum = elements[0].clone().try_into()?;
+        let uncompressed_size = elements[1].clone().try_into()?;
+        let compressed_data = elements[2].clone().try_into_byte_string()?;
         let digest = if elements.len() == 4 {
-            Some(Digest::from_cbor(&elements[3])?)
+            Some(elements[3].clone().try_into()?)
         } else {
             None
         };
         Self::new(checksum, uncompressed_size, compressed_data, digest)
     }
 }
-
-impl URDecodable for Compressed { }
-
-impl URCodable for Compressed { }
 
 #[cfg(test)]
 mod tests {

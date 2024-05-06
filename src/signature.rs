@@ -75,15 +75,9 @@ impl CBORTagged for Signature {
     }
 }
 
-impl CBOREncodable for Signature {
-    fn cbor(&self) -> dcbor::CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<Signature> for CBOR {
     fn from(value: Signature) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
@@ -92,29 +86,21 @@ impl CBORTaggedEncodable for Signature {
         match self {
             Signature::Schnorr{ sig: data, tag } => {
                 if tag.is_empty() {
-                    CBOR::byte_string(data)
+                    CBOR::to_byte_string(data)
                 } else {
                     vec![
-                        CBOR::byte_string(data),
-                        CBOR::byte_string(tag),
-                    ].cbor()
+                        CBOR::to_byte_string(data),
+                        CBOR::to_byte_string(tag),
+                    ].into()
                 }
             },
             Signature::ECDSA(data) => {
                 vec![
-                    1.cbor(),
-                    CBOR::byte_string(data),
-                ].cbor()
+                    1.into(),
+                    CBOR::to_byte_string(data),
+                ].into()
             },
         }
-    }
-}
-
-impl UREncodable for Signature { }
-
-impl CBORDecodable for Signature {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
     }
 }
 
@@ -122,35 +108,33 @@ impl TryFrom<CBOR> for Signature {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for Signature {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Signature {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor.case() {
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        match cbor.into_case() {
             CBORCase::ByteString(bytes) => {
                 Self::schnorr_from_data_ref(bytes, Bytes::new())
             },
-            CBORCase::Array(elements) => {
+            CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
-                    if let Some(data) = CBOR::as_byte_string(&elements[0]) {
-                        if let Some(tag) = CBOR::as_byte_string(&elements[1]) {
-                            return Self::schnorr_from_data_ref(data, tag);
-                        }
-                    }
-                    if let CBORCase::Unsigned(1) = &elements[0].case() {
-                        if let Some(data) = CBOR::as_byte_string(&elements[1]) {
-                            return Self::ecdsa_from_data_ref(data);
-                        }
+                    let mut drain = elements.drain(0..);
+                    let ele_0 = drain.next().unwrap().into_case();
+                    let ele_1 = drain.next().unwrap().into_case();
+                    match ele_0 {
+                        CBORCase::ByteString(data) => {
+                            if let CBORCase::ByteString(tag) = ele_1 {
+                                return Self::schnorr_from_data_ref(data, tag);
+                            }
+                        },
+                        CBORCase::Unsigned(1) => {
+                            if let CBORCase::ByteString(data) = ele_1 {
+                                return Self::ecdsa_from_data_ref(data);
+                            }
+                        },
+                        _ => (),
                     }
                 }
                 bail!("Invalid signature format");
@@ -164,7 +148,7 @@ impl CBORTaggedDecodable for Signature {
 mod tests {
     use crate::{SigningPrivateKey, Signature};
     use bc_rand::make_fake_random_number_generator;
-    use dcbor::{CBOREncodable, CBOR, CBORTaggedDecodable};
+    use dcbor::prelude::*;
     use hex_literal::hex;
     use indoc::indoc;
 
@@ -188,7 +172,8 @@ mod tests {
     fn test_schnorr_cbor() {
         let mut rng = make_fake_random_number_generator();
         let signature = SIGNING_PRIVATE_KEY.schnorr_sign_using(MESSAGE, vec![], &mut rng);
-        let tagged_cbor_data = signature.cbor_data();
+        let signature_cbor: CBOR = signature.clone().into();
+        let tagged_cbor_data = signature_cbor.cbor_data();
         assert_eq!(CBOR::from_data(&tagged_cbor_data).unwrap().diagnostic(),
         indoc!{r#"
         40020(
@@ -215,7 +200,8 @@ mod tests {
     #[test]
     fn test_ecdsa_cbor() {
         let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(MESSAGE);
-        let tagged_cbor_data = signature.cbor_data();
+        let signature_cbor: CBOR = signature.clone().into();
+        let tagged_cbor_data = signature_cbor.cbor_data();
         assert_eq!(CBOR::from_data(&tagged_cbor_data).unwrap().diagnostic(),
         indoc!{r#"
         40020(

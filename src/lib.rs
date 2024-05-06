@@ -77,8 +77,8 @@ pub use ec_key::*;
 pub mod tags;
 pub use tags::GLOBAL_TAGS;
 
-mod private_keys_data_provider;
-pub use private_keys_data_provider::PrivateKeysDataProvider;
+mod private_key_data_provider;
+pub use private_key_data_provider::PrivateKeyDataProvider;
 
 mod private_key_base;
 pub use private_key_base::PrivateKeyBase;

@@ -83,27 +83,15 @@ impl CBORTagged for Nonce {
     }
 }
 
-impl CBOREncodable for Nonce {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<Nonce> for CBOR {
     fn from(value: Nonce) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for Nonce {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
-impl CBORDecodable for Nonce {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.data())
     }
 }
 
@@ -111,21 +99,13 @@ impl TryFrom<CBOR> for Nonce {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for Nonce {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(untagged_cbor)?;
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }
 }
@@ -157,16 +137,10 @@ impl From<&Nonce> for Vec<u8> {
     }
 }
 
-impl UREncodable for Nonce { }
-
-impl URDecodable for Nonce { }
-
-impl URCodable for Nonce { }
-
 #[cfg(test)]
 mod test {
     use super::Nonce;
-    use dcbor::{CBOREncodable, CBORDecodable};
+    use dcbor::prelude::*;
 
     #[test]
     fn test_nonce_raw() {
@@ -207,8 +181,8 @@ mod test {
     #[test]
     fn test_nonce_cbor_roundtrip() {
         let nonce = Nonce::new();
-        let cbor = nonce.cbor();
-        let decoded_nonce = Nonce::from_cbor(&cbor).unwrap();
+        let cbor: CBOR = nonce.clone().into();
+        let decoded_nonce = Nonce::try_from(cbor).unwrap();
         assert_eq!(nonce, decoded_nonce);
     }
 }

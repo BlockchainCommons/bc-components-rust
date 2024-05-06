@@ -72,27 +72,15 @@ impl CBORTagged for AgreementPublicKey {
     }
 }
 
-impl CBOREncodable for AgreementPublicKey {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<AgreementPublicKey> for CBOR {
     fn from(value: AgreementPublicKey) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for AgreementPublicKey {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
-impl CBORDecodable for AgreementPublicKey {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.data())
     }
 }
 
@@ -100,22 +88,16 @@ impl TryFrom<CBOR> for AgreementPublicKey {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for AgreementPublicKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(untagged_cbor)?;
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }
 }
-
-impl UREncodable for AgreementPublicKey { }
-
-impl URDecodable for AgreementPublicKey { }
-
-impl URCodable for AgreementPublicKey { }
 
 impl std::fmt::Debug for AgreementPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

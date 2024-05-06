@@ -83,27 +83,15 @@ impl CBORTagged for ARID {
     }
 }
 
-impl CBOREncodable for ARID {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<ARID> for CBOR {
     fn from(value: ARID) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for ARID {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
-impl CBORDecodable for ARID {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.data())
     }
 }
 
@@ -111,21 +99,13 @@ impl TryFrom<CBOR> for ARID {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for ARID {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for ARID {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(untagged_cbor)?;
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }
 }
@@ -147,9 +127,3 @@ impl PartialOrd for ARID {
         Some(self.0.cmp(&other.0))
     }
 }
-
-impl UREncodable for ARID { }
-
-impl URDecodable for ARID { }
-
-impl URCodable for ARID { }

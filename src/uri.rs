@@ -53,27 +53,15 @@ impl CBORTagged for URI {
     }
 }
 
-impl CBOREncodable for URI {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<URI> for CBOR {
     fn from(value: URI) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for URI {
     fn untagged_cbor(&self) -> CBOR {
-        self.0.cbor()
-    }
-}
-
-impl CBORDecodable for URI {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        self.0.clone().into()
     }
 }
 
@@ -81,21 +69,13 @@ impl TryFrom<CBOR> for URI {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for URI {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        URI::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for URI {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let uri = String::from_cbor(cbor)?;
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let uri: String = cbor.try_into()?;
         Self::new(uri)
     }
 }

@@ -76,22 +76,9 @@ impl From<Vec<u8>> for AuthenticationTag {
     }
 }
 
-impl CBOREncodable for AuthenticationTag {
-    fn cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
 impl From<AuthenticationTag> for CBOR {
     fn from(value: AuthenticationTag) -> Self {
-        value.cbor()
-    }
-}
-
-impl CBORDecodable for AuthenticationTag {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(cbor)?;
-        Self::from_data_ref(&data)
+        CBOR::to_byte_string(value.data())
     }
 }
 
@@ -99,14 +86,7 @@ impl TryFrom<CBOR> for AuthenticationTag {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for AuthenticationTag {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        let data = CBOR::try_into_byte_string(cbor)?;
+        Self::from_data_ref(&data)
     }
 }

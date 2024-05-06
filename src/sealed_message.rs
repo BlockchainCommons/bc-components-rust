@@ -45,8 +45,8 @@ impl SealedMessage {
     }
 
     /// Decrypts the message using the recipient's private key.
-    pub fn decrypt(&self, private_keys: &PrivateKeyBase) -> Result<Vec<u8>, bc_crypto::Error> {
-        let shared_key = private_keys.agreement_private_key().shared_key_with(&self.ephemeral_public_key);
+    pub fn decrypt(&self, private_key: &PrivateKeyBase) -> Result<Vec<u8>, bc_crypto::Error> {
+        let shared_key = private_key.agreement_private_key().shared_key_with(&self.ephemeral_public_key);
         shared_key.decrypt(&self.message)
     }
 }
@@ -63,21 +63,9 @@ impl CBORTagged for SealedMessage {
     }
 }
 
-impl CBOREncodable for SealedMessage {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<SealedMessage> for CBOR {
     fn from(value: SealedMessage) -> Self {
-        value.cbor()
-    }
-}
-
-impl CBORDecodable for SealedMessage {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        value.tagged_cbor()
     }
 }
 
@@ -85,37 +73,27 @@ impl TryFrom<CBOR> for SealedMessage {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
-
-impl TryFrom<&CBOR> for SealedMessage {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        SealedMessage::from_cbor(cbor)
-    }
-}
-
-impl CBORCodable for SealedMessage { }
 
 impl CBORTaggedEncodable for SealedMessage {
     fn untagged_cbor(&self) -> CBOR {
-        let message = self.message.cbor();
-        let ephemeral_public_key = self.ephemeral_public_key.cbor();
-        [message, ephemeral_public_key].cbor()
+        let message: CBOR = self.message.clone().into();
+        let ephemeral_public_key: CBOR = self.ephemeral_public_key.clone().into();
+        [message, ephemeral_public_key].into()
     }
 }
 
 impl CBORTaggedDecodable for SealedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor.case() {
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
                     bail!("SealedMessage must have two elements");
                 }
-                let message = EncryptedMessage::from_cbor(&elements[0])?;
-                let ephemeral_public_key = AgreementPublicKey::from_cbor(&elements[1])?;
+                let message = elements[0].clone().try_into()?;
+                let ephemeral_public_key = elements[1].clone().try_into()?;
                 Ok(Self {
                     message,
                     ephemeral_public_key,
@@ -125,14 +103,6 @@ impl CBORTaggedDecodable for SealedMessage {
         }
     }
 }
-
-impl CBORTaggedCodable for SealedMessage { }
-
-impl UREncodable for SealedMessage { }
-
-impl URDecodable for SealedMessage { }
-
-impl URCodable for SealedMessage { }
 
 #[cfg(test)]
 mod tests {
@@ -145,25 +115,25 @@ mod tests {
         let plaintext = b"Some mysteries aren't meant to be solved.";
 
         let alice_seed = Bytes::from_static(&hex!("82f32c855d3d542256180810797e0073"));
-        let alice_private_keys = PrivateKeyBase::from_data(alice_seed);
-        // let alice_public_keys = alice_private_keys.public_keys();
+        let alice_private_key = PrivateKeyBase::from_data(alice_seed);
+        // let alice_public_key = alice_private_key.public_key();
 
         let bob_seed = Bytes::from_static(&hex!("187a5973c64d359c836eba466a44db7b"));
-        let bob_private_keys = PrivateKeyBase::from_data(bob_seed);
-        let bob_public_keys = bob_private_keys.public_keys();
+        let bob_private_key = PrivateKeyBase::from_data(bob_seed);
+        let bob_public_key = bob_private_key.public_key();
 
         let carol_seed = Bytes::from_static(&hex!("8574afab18e229651c1be8f76ffee523"));
-        let carol_private_keys = PrivateKeyBase::from_data(carol_seed);
-        // let carol_public_keys = carol_private_keys.public_keys();
+        let carol_private_key = PrivateKeyBase::from_data(carol_seed);
+        // let carol_public_key = carol_private_key.public_key();
 
         // Alice constructs a message for Bob's eyes only.
-        let sealed_message = SealedMessage::new(Bytes::from_static(plaintext), &bob_public_keys);
+        let sealed_message = SealedMessage::new(Bytes::from_static(plaintext), &bob_public_key);
 
         // Bob decrypts and reads the message.
-        assert_eq!(sealed_message.decrypt(&bob_private_keys).unwrap(), plaintext);
+        assert_eq!(sealed_message.decrypt(&bob_private_key).unwrap(), plaintext);
 
         // No one else can decrypt the message, not even the sender.
-        assert!(sealed_message.decrypt(&alice_private_keys).is_err());
-        assert!(sealed_message.decrypt(&carol_private_keys).is_err());
+        assert!(sealed_message.decrypt(&alice_private_key).is_err());
+        assert!(sealed_message.decrypt(&carol_private_key).is_err());
     }
 }

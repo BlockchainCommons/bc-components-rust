@@ -71,7 +71,9 @@ impl SymmetricKey {
     /// Encrypt the given plaintext with this key, and the given digest of the plaintext, and nonce.
     pub fn encrypt_with_digest(&self, plaintext: impl Into<Bytes>, digest: impl AsRef<Digest>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
     {
-        self.encrypt(plaintext, Some(Bytes::from(digest.as_ref().cbor_data())), nonce)
+        let cbor: CBOR = digest.as_ref().clone().into();
+        let data = cbor.cbor_data();
+        self.encrypt(plaintext, Some(Bytes::from(data)), nonce)
     }
 
     /// Decrypt the given encrypted message with this key.
@@ -131,29 +133,15 @@ impl CBORTagged for SymmetricKey {
     }
 }
 
-impl CBOREncodable for SymmetricKey {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<SymmetricKey> for CBOR {
     fn from(value: SymmetricKey) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.0)
-    }
-}
-
-impl UREncodable for SymmetricKey { }
-
-impl CBORDecodable for SymmetricKey {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_untagged_cbor(cbor)
+        CBOR::to_byte_string(self.0)
     }
 }
 
@@ -161,26 +149,14 @@ impl TryFrom<CBOR> for SymmetricKey {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for SymmetricKey {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_untagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let bytes = CBOR::expect_byte_string(cbor)?;
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let bytes = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data_ref(&bytes)?;
         Ok(instance)
     }
 }
-
-impl URDecodable for SymmetricKey { }
-
-impl URCodable for SymmetricKey { }

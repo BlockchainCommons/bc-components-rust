@@ -72,27 +72,15 @@ impl CBORTagged for UUID {
     }
 }
 
-impl CBOREncodable for UUID {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<UUID> for CBOR {
     fn from(value: UUID) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for UUID {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.0)
-    }
-}
-
-impl CBORDecodable for UUID {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.0)
     }
 }
 
@@ -100,21 +88,13 @@ impl TryFrom<CBOR> for UUID {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for UUID {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        UUID::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for UUID {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let bytes = CBOR::expect_byte_string(cbor)?;
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let bytes = CBOR::try_into_byte_string(cbor)?;
         if bytes.len() != Self::UUID_SIZE {
             bail!("invalid UUID size");
         }

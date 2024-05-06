@@ -1,6 +1,6 @@
 use bc_ur::prelude::*;
 use bytes::Bytes;
-use crate::{tags, PrivateKeysDataProvider};
+use crate::{tags, PrivateKeyDataProvider};
 use anyhow::bail;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -107,8 +107,8 @@ impl AsRef<Seed> for Seed {
     }
 }
 
-impl PrivateKeysDataProvider for Seed {
-    fn private_keys_data(&self) -> Bytes {
+impl PrivateKeyDataProvider for Seed {
+    fn private_key_data(&self) -> Bytes {
         self.data().clone()
     }
 }
@@ -119,23 +119,17 @@ impl CBORTagged for Seed {
     }
 }
 
-impl CBOREncodable for Seed {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<Seed> for CBOR {
     fn from(value: Seed) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for Seed {
     fn untagged_cbor(&self) -> CBOR {
         let mut map = dcbor::Map::new();
-        map.insert(1, CBOR::byte_string(self.data()));
-        if let Some(creation_date) = self.creation_date() {
+        map.insert(1, CBOR::to_byte_string(self.data()));
+        if let Some(creation_date) = self.creation_date().clone() {
             map.insert(2, creation_date);
         }
         if !self.name().is_empty() {
@@ -144,13 +138,7 @@ impl CBORTaggedEncodable for Seed {
         if !self.note().is_empty() {
             map.insert(4, self.note());
         }
-        map.cbor()
-    }
-}
-
-impl CBORDecodable for Seed {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        map.into()
     }
 }
 
@@ -158,22 +146,14 @@ impl TryFrom<CBOR> for Seed {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for Seed {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Seed::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Seed {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let map = cbor.expect_map()?;
-        let data = map.extract::<i32, CBOR>(1)?.expect_byte_string()?.to_vec();
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let map = cbor.try_into_map()?;
+        let data = map.extract::<i32, CBOR>(1)?.try_into_byte_string()?.to_vec();
         if data.is_empty() {
             bail!("Seed data is empty");
         }
@@ -183,9 +163,3 @@ impl CBORTaggedDecodable for Seed {
         Self::new_opt(data, name, note, creation_date)
     }
 }
-
-impl UREncodable for Seed { }
-
-impl URDecodable for Seed { }
-
-impl URCodable for Seed { }

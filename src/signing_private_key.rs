@@ -136,27 +136,15 @@ impl CBORTagged for SigningPrivateKey {
     }
 }
 
-impl CBOREncodable for SigningPrivateKey {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<SigningPrivateKey> for CBOR {
     fn from(value: SigningPrivateKey) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.data())
-    }
-}
-
-impl CBORDecodable for SigningPrivateKey {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.data())
     }
 }
 
@@ -164,30 +152,16 @@ impl TryFrom<CBOR> for SigningPrivateKey {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for SigningPrivateKey {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for SigningPrivateKey {
-    fn from_untagged_cbor(untagged_cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(untagged_cbor)?;
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }
 }
-
-impl UREncodable for SigningPrivateKey { }
-
-impl URDecodable for SigningPrivateKey { }
-
-impl URCodable for SigningPrivateKey { }
 
 impl std::fmt::Debug for SigningPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

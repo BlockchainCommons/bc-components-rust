@@ -55,7 +55,8 @@ impl EncryptedMessage {
 
     /// Returns an optional `Digest` instance if the AAD data can be parsed as CBOR.
     pub fn opt_digest(&self) -> Option<Digest> {
-        Digest::from_cbor_data(self.aad()).ok()
+        CBOR::from_data(self.aad()).ok()
+            .and_then(|data| Digest::try_from(data).ok())
     }
 
     /// Returns `true` if the AAD data can be parsed as CBOR.
@@ -94,21 +95,9 @@ impl CBORTagged for EncryptedMessage {
     }
 }
 
-impl CBOREncodable for EncryptedMessage {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<EncryptedMessage> for CBOR {
     fn from(value: EncryptedMessage) -> Self {
-        value.cbor()
-    }
-}
-
-impl CBORDecodable for EncryptedMessage {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        value.tagged_cbor()
     }
 }
 
@@ -116,48 +105,40 @@ impl TryFrom<CBOR> for EncryptedMessage {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
-
-impl TryFrom<&CBOR> for EncryptedMessage {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
-    }
-}
-
-impl CBORCodable for EncryptedMessage { }
 
 impl CBORTaggedEncodable for EncryptedMessage {
     fn untagged_cbor(&self) -> CBOR {
         let mut a = vec![
-            CBOR::byte_string(&self.ciphertext),
-            CBOR::byte_string(self.nonce.data()),
-            CBOR::byte_string(self.auth.data())
+            CBOR::to_byte_string(&self.ciphertext),
+            CBOR::to_byte_string(self.nonce.data()),
+            CBOR::to_byte_string(self.auth.data())
         ];
 
         if !self.aad.is_empty() {
-            a.push(CBOR::byte_string(&self.aad));
+            a.push(CBOR::to_byte_string(&self.aad));
         }
 
-        a.cbor()
+        a.into()
     }
 }
 
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        match cbor.case() {
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() < 3 {
                     bail!("EncryptedMessage must have at least 3 elements");
                 }
-                let ciphertext = CBOR::expect_byte_string(&elements[0])?;
-                let nonce: Nonce = Nonce::from_untagged_cbor(&elements[1])?;
-                let auth = AuthenticationTag::from_cbor(&elements[2])?;
+                let ciphertext = CBOR::try_into_byte_string(elements[0].clone())?;
+                let nonce_data = CBOR::try_into_byte_string(elements[1].clone())?;
+                let nonce = Nonce::from_data_ref(nonce_data)?;
+                let auth_data = CBOR::try_into_byte_string(elements[2].clone())?;
+                let auth = AuthenticationTag::from_data_ref(auth_data)?;
                 let aad = if elements.len() > 3 {
-                    CBOR::expect_byte_string(&elements[3])?
+                    CBOR::try_into_byte_string(elements[3].clone())?
                 } else {
                     Bytes::new()
                 };
@@ -168,19 +149,11 @@ impl CBORTaggedDecodable for EncryptedMessage {
     }
 }
 
-impl CBORTaggedCodable for EncryptedMessage { }
-
-impl UREncodable for EncryptedMessage { }
-
-impl URDecodable for EncryptedMessage { }
-
-impl URCodable for EncryptedMessage { }
-
 #[cfg(test)]
 mod test {
     use bc_ur::{UREncodable, URDecodable};
     use bytes::Bytes;
-    use dcbor::{CBOREncodable, CBORDecodable};
+    use dcbor::prelude::*;
     use hex_literal::hex;
     use indoc::indoc;
 
@@ -231,8 +204,9 @@ mod test {
 
     #[test]
     fn test_cbor_data() {
+        let cbor: CBOR = encrypted_message().into();
         with_tags!(|tags| {
-            assert_eq!(encrypted_message().cbor().diagnostic_opt(true, Some(tags)),
+            assert_eq!(cbor.diagnostic_opt(true, Some(tags)),
             indoc!(r#"
             40002(   / encrypted /
                [
@@ -244,7 +218,7 @@ mod test {
             )
             "#).trim());
 
-            assert_eq!(encrypted_message().cbor().hex_opt(true, Some(tags)),
+            assert_eq!(cbor.hex_opt(true, Some(tags)),
             indoc!(r#"
             d9 9c42                                  # tag(40002) encrypted
                84                                    # array(4)
@@ -259,7 +233,7 @@ mod test {
             "#).trim());
         });
 
-        let data = encrypted_message().cbor_data();
+        let data = cbor.cbor_data();
         let expected = hex!("d99c42845872d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b61164c070000004041424344454647501ae10b594f09e26a7e902ecbd06006914c50515253c0c1c2c3c4c5c6c7");
         assert_eq!(data, expected);
     }
@@ -267,8 +241,8 @@ mod test {
     #[test]
     fn test_cbor() -> Result<(), Box<dyn std::error::Error>> {
         let encrypted_message = encrypted_message();
-        let cbor = encrypted_message.cbor();
-        let decoded = EncryptedMessage::from_cbor(&cbor)?;
+        let cbor = encrypted_message.clone().into_cbor();
+        let decoded = cbor.try_into()?;
         assert_eq!(encrypted_message, decoded);
         Ok(())
     }
@@ -279,7 +253,7 @@ mod test {
         let ur = encrypted_message.ur();
         let expected_ur = "ur:encrypted/lrhdjptecylgeeiemnhnuykglnperfguwskbsaoxpmwegydtjtayzeptvoreosenwyidtbfsrnoxhylkptiobglfzszointnmojplucyjsuebknnambddtahtbonrpkbsnfrenmoutrylbdpktlulkmkaxplvldeascwhdzsqddkvezstbkpmwgolplalufdehtsrffhwkuewtmngrknntvwkotdihlntoswgrhscmgsataeaeaefzfpfwfxfyfefgflgdcyvybdhkgwasvoimkbmhdmsbtihnammegsgdgygmgurtsesasrssskswstcfnbpdct";
         assert_eq!(ur.to_string(), expected_ur);
-        let decoded = EncryptedMessage::from_ur(&ur).unwrap();
+        let decoded = EncryptedMessage::from_ur(ur).unwrap();
         assert_eq!(encrypted_message, decoded);
         Ok(())
     }

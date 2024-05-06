@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use bc_ur::{UREncodable, URDecodable, URCodable};
 use bytes::Bytes;
-use dcbor::{CBORTagged, Tag, CBOREncodable, CBOR, CBORTaggedEncodable, CBORDecodable, CBORTaggedDecodable};
+use dcbor::{CBORTagged, Tag, CBOR, CBORTaggedEncodable, CBORTaggedDecodable};
 // use bc_ur::prelude::*;
 // use dcbor::prelude::*;
 use crate::{digest_provider::DigestProvider, tags};
@@ -165,27 +164,15 @@ impl CBORTagged for Digest {
     }
 }
 
-impl CBOREncodable for Digest {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<Digest> for CBOR {
     fn from(value: Digest) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for Digest {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::byte_string(self.0)
-    }
-}
-
-impl CBORDecodable for Digest {
-    fn from_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        Self::from_tagged_cbor(cbor)
+        CBOR::to_byte_string(self.0)
     }
 }
 
@@ -193,30 +180,16 @@ impl TryFrom<CBOR> for Digest {
     type Error = anyhow::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(&cbor)
-    }
-}
-
-impl TryFrom<&CBOR> for Digest {
-    type Error = anyhow::Error;
-
-    fn try_from(cbor: &CBOR) -> Result<Self, Self::Error> {
-        Self::from_cbor(cbor)
+        Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: &CBOR) -> anyhow::Result<Self> {
-        let data = CBOR::expect_byte_string(cbor)?;
-        Self::from_data_ref(&data)
+    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+        let data = CBOR::try_into_byte_string(cbor)?;
+        Self::from_data_ref(data)
     }
 }
-
-impl UREncodable for Digest { }
-
-impl URDecodable for Digest { }
-
-impl URCodable for Digest { }
 
 // Convert from a reference to a byte vector to an instance.
 impl From<&Digest> for Digest {
@@ -256,6 +229,7 @@ impl From<&Digest> for Bytes {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bc_ur::prelude::*;
     use hex_literal::hex;
 
     #[test]

@@ -75,24 +75,16 @@ impl CBORTagged for ECUncompressedPublicKey {
     }
 }
 
-impl CBOREncodable for ECUncompressedPublicKey {
-    fn cbor(&self) -> CBOR {
-        self.tagged_cbor()
-    }
-}
-
 impl From<ECUncompressedPublicKey> for CBOR {
     fn from(value: ECUncompressedPublicKey) -> Self {
-        value.cbor()
+        value.tagged_cbor()
     }
 }
 
 impl CBORTaggedEncodable for ECUncompressedPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         let mut m = Map::new();
-        m.insert(3, CBOR::byte_string(self.0));
-        m.cbor()
+        m.insert(3, CBOR::to_byte_string(self.0));
+        m.into()
     }
 }
-
-impl UREncodable for ECUncompressedPublicKey { }
