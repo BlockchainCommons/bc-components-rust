@@ -241,7 +241,7 @@ mod test {
     #[test]
     fn test_cbor() -> Result<(), Box<dyn std::error::Error>> {
         let encrypted_message = encrypted_message();
-        let cbor = encrypted_message.clone().into_cbor();
+        let cbor = encrypted_message.to_cbor();
         let decoded = cbor.try_into()?;
         assert_eq!(encrypted_message, decoded);
         Ok(())
