@@ -19,8 +19,7 @@ bc-rand = "^0.1.0"
 
 dcbor = "^0.14.0"
 
-bc-ur = { path = "../bc-ur" }
-# bc-ur = "^0.3.0"
+bc-ur = "^0.4.0"
 
 # sskr = { path = "../sskr" }
 sskr = "^0.3.0"
