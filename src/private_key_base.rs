@@ -1,6 +1,7 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use bytes::Bytes;
+use anyhow::{Result, Error};
 
 use crate::{PrivateKeyDataProvider, SigningPrivateKey, AgreementPrivateKey, PublicKeyBase, tags};
 
@@ -119,7 +120,7 @@ impl CBORTaggedEncodable for PrivateKeyBase {
 }
 
 impl TryFrom<CBOR> for PrivateKeyBase {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -127,7 +128,7 @@ impl TryFrom<CBOR> for PrivateKeyBase {
 }
 
 impl CBORTaggedDecodable for PrivateKeyBase {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)

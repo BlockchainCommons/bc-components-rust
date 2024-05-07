@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{bail, Result};
 use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
@@ -30,7 +30,7 @@ impl std::fmt::Debug for ECUncompressedPublicKey {
 impl ECKeyBase for ECUncompressedPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid ECDSA uncompressed public key size");

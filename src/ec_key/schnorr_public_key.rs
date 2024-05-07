@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{bail, Result};
 use bc_crypto::SCHNORR_SIGNATURE_SIZE;
 
 use crate::ECKeyBase;
@@ -64,7 +64,7 @@ impl std::fmt::Debug for SchnorrPublicKey {
 impl ECKeyBase for SchnorrPublicKey {
     const KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 
-    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("invalid Schnorr public key size");

@@ -2,10 +2,8 @@ use std::borrow::Cow;
 use bc_crypto::hash::sha256;
 use bytes::Bytes;
 use dcbor::{CBORTagged, Tag, CBOR, CBORTaggedEncodable, CBORTaggedDecodable};
-// use bc_ur::prelude::*;
-// use dcbor::prelude::*;
 use crate::{digest_provider::DigestProvider, tags};
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 
 /// A cryptographically secure digest, implemented with SHA-256.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -22,7 +20,7 @@ impl Digest {
     /// Create a new digest from data.
     ///
     /// Returns `None` if the data is not the correct length.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::DIGEST_SIZE {
             bail!("Invalid digest size");
@@ -177,7 +175,7 @@ impl CBORTaggedEncodable for Digest {
 }
 
 impl TryFrom<CBOR> for Digest {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -185,7 +183,7 @@ impl TryFrom<CBOR> for Digest {
 }
 
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
         Self::from_data_ref(data)
     }

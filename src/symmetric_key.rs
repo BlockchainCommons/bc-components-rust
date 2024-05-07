@@ -1,7 +1,7 @@
 use crate::{EncryptedMessage, Nonce, tags, Digest};
 use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad};
 use bc_ur::prelude::*;
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 use bytes::Bytes;
 
 /// A symmetric encryption key.
@@ -30,7 +30,7 @@ impl SymmetricKey {
     }
 
     /// Create a new symmetric key from data.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::SYMMETRIC_KEY_SIZE {
             bail!("Invalid symmetric key size");
@@ -49,7 +49,7 @@ impl SymmetricKey {
     ///
     /// # Panics
     /// Panics if the string is not exactly 24 hexadecimal digits.
-    pub fn from_hex(hex: impl AsRef<str>) -> anyhow::Result<Self> {
+    pub fn from_hex(hex: impl AsRef<str>) -> Result<Self> {
         Self::from_data_ref(hex::decode(hex.as_ref()).unwrap())
     }
 
@@ -72,7 +72,7 @@ impl SymmetricKey {
     pub fn encrypt_with_digest(&self, plaintext: impl Into<Bytes>, digest: impl AsRef<Digest>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
     {
         let cbor: CBOR = digest.as_ref().clone().into();
-        let data = cbor.cbor_data();
+        let data = cbor.to_cbor_data();
         self.encrypt(plaintext, Some(Bytes::from(data)), nonce)
     }
 
@@ -146,7 +146,7 @@ impl CBORTaggedEncodable for SymmetricKey {
 }
 
 impl TryFrom<CBOR> for SymmetricKey {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_untagged_cbor(cbor)
@@ -154,7 +154,7 @@ impl TryFrom<CBOR> for SymmetricKey {
 }
 
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data_ref(&bytes)?;
         Ok(instance)

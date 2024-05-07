@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use anyhow::bail;
+use anyhow::{bail, Error, Result};
 use dcbor::prelude::*;
 
 /// The HMAC authentication tag produced by the encryption process.
@@ -16,7 +16,7 @@ impl AuthenticationTag {
     }
 
     /// Restore an `AuthenticationTag` from a reference to an array of bytes.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
             bail!("Invalid authentication tag size");
@@ -83,7 +83,7 @@ impl From<AuthenticationTag> for CBOR {
 }
 
 impl TryFrom<CBOR> for AuthenticationTag {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         let data = CBOR::try_into_byte_string(cbor)?;

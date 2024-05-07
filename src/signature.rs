@@ -2,7 +2,7 @@ use bc_crypto::{SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
 use bytes::Bytes;
 use crate::tags;
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 
 /// A cryptographic signature. Supports ECDSA and Schnorr.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -18,7 +18,7 @@ impl Signature {
     }
 
     /// Restores a Schnorr signature from a vector of bytes.
-    pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>, tag: impl Into<Bytes>) -> anyhow::Result<Self> {
+    pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>, tag: impl Into<Bytes>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
             bail!("Invalid Schnorr signature size");
@@ -34,7 +34,7 @@ impl Signature {
     }
 
     /// Restores an ECDSA signature from a vector of bytes.
-    pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
             bail!("Invalid ECDSA signature size");
@@ -105,7 +105,7 @@ impl CBORTaggedEncodable for Signature {
 }
 
 impl TryFrom<CBOR> for Signature {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -113,7 +113,7 @@ impl TryFrom<CBOR> for Signature {
 }
 
 impl CBORTaggedDecodable for Signature {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         match cbor.into_case() {
             CBORCase::ByteString(bytes) => {
                 Self::schnorr_from_data_ref(bytes, Bytes::new())
@@ -173,8 +173,8 @@ mod tests {
         let mut rng = make_fake_random_number_generator();
         let signature = SIGNING_PRIVATE_KEY.schnorr_sign_using(MESSAGE, vec![], &mut rng);
         let signature_cbor: CBOR = signature.clone().into();
-        let tagged_cbor_data = signature_cbor.cbor_data();
-        assert_eq!(CBOR::from_data(&tagged_cbor_data).unwrap().diagnostic(),
+        let tagged_cbor_data = signature_cbor.to_cbor_data();
+        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
         indoc!{r#"
         40020(
            h'c67bb76d5d85327a771819bb6d417ffc319737a4be8248b2814ba4fd1474494200a522fd9d2a7beccc3a05cdd527a84a8c731a43669b618d831a08104f77d82f'
@@ -201,8 +201,8 @@ mod tests {
     fn test_ecdsa_cbor() {
         let signature = SIGNING_PRIVATE_KEY.ecdsa_sign(MESSAGE);
         let signature_cbor: CBOR = signature.clone().into();
-        let tagged_cbor_data = signature_cbor.cbor_data();
-        assert_eq!(CBOR::from_data(&tagged_cbor_data).unwrap().diagnostic(),
+        let tagged_cbor_data = signature_cbor.to_cbor_data();
+        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
         indoc!{r#"
         40020(
            [

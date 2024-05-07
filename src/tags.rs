@@ -126,6 +126,7 @@ tag_constant!(OUTPUT_TAPROOT,                   409, "output-taproot"); // Fixed
 tag_constant!(OUTPUT_COSIGNER,                  410, "output-cosigner"); // Fixed
 
 
+#[derive(Debug)]
 pub struct LazyTagsStore {
     init: Once,
     data: Mutex<Option<TagsStore>>,

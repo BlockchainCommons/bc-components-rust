@@ -1,6 +1,6 @@
 use crate::{EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags};
 use bc_ur::prelude::*;
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 use bytes::Bytes;
 
 /// A sealed message can be sent to anyone, but only the intended recipient can
@@ -70,7 +70,7 @@ impl From<SealedMessage> for CBOR {
 }
 
 impl TryFrom<CBOR> for SealedMessage {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -86,7 +86,7 @@ impl CBORTaggedEncodable for SealedMessage {
 }
 
 impl CBORTaggedDecodable for SealedMessage {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {

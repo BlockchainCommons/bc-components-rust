@@ -1,7 +1,7 @@
 use bc_ur::prelude::*;
 use bytes::Bytes;
 use crate::{tags, PrivateKeyDataProvider};
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Seed {
@@ -24,7 +24,7 @@ impl Seed {
     /// Create a new random seed with a specified length.
     ///
     /// If the number of bytes is less than 16, this will return `None`.
-    pub fn new_with_len(count: usize) -> anyhow::Result<Self> {
+    pub fn new_with_len(count: usize) -> Result<Self> {
         let mut rng = bc_rand::SecureRandomNumberGenerator;
         Self::new_with_len_using(count, &mut rng)
     }
@@ -32,7 +32,7 @@ impl Seed {
     /// Create a new random seed with a specified length.
     ///
     /// If the number of bytes is less than 16, this will return `None`.
-    pub fn new_with_len_using(count: usize, rng: &mut impl bc_rand::RandomNumberGenerator) -> anyhow::Result<Self> {
+    pub fn new_with_len_using(count: usize, rng: &mut impl bc_rand::RandomNumberGenerator) -> Result<Self> {
         let data = rng.random_data(count);
         Self::new_opt(data, None, None, None)
     }
@@ -40,7 +40,7 @@ impl Seed {
     /// Create a new seed from the data and options.
     ///
     /// If the data is less than 16 bytes, this will return `None`.
-    pub fn new_opt(data: impl Into<Bytes>, name: Option<String>, note: Option<String>, creation_date: Option<dcbor::Date>) -> anyhow::Result<Self> {
+    pub fn new_opt(data: impl Into<Bytes>, name: Option<String>, note: Option<String>, creation_date: Option<dcbor::Date>) -> Result<Self> {
         let data = data.into();
         if data.len() < Self::MIN_SEED_LENGTH {
             bail!("Seed data is too short");
@@ -143,7 +143,7 @@ impl CBORTaggedEncodable for Seed {
 }
 
 impl TryFrom<CBOR> for Seed {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -151,7 +151,7 @@ impl TryFrom<CBOR> for Seed {
 }
 
 impl CBORTaggedDecodable for Seed {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let map = cbor.try_into_map()?;
         let data = map.extract::<i32, CBOR>(1)?.try_into_byte_string()?.to_vec();
         if data.is_empty() {

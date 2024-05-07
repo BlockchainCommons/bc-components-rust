@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 use dcbor::prelude::*;
 use crate::tags;
 
@@ -85,7 +85,7 @@ impl CBORTaggedEncodable for UUID {
 }
 
 impl TryFrom<CBOR> for UUID {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -93,7 +93,7 @@ impl TryFrom<CBOR> for UUID {
 }
 
 impl CBORTaggedDecodable for UUID {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
         if bytes.len() != Self::UUID_SIZE {
             bail!("invalid UUID size");
@@ -133,7 +133,7 @@ impl From<&UUID> for String {
 }
 
 impl FromStr for UUID {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();

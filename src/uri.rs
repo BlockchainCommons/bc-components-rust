@@ -1,6 +1,8 @@
 use std::str::FromStr;
 use dcbor::prelude::*;
 use url::Url;
+use anyhow::{bail, Result, Error};
+
 use crate::tags;
 
 /// A URI.
@@ -11,18 +13,18 @@ impl URI {
     /// Creates a new `URI` from a string.
     ///
     /// No validation is performed on the string.
-    pub fn new(uri: impl Into<String>) -> anyhow::Result<Self> {
+    pub fn new(uri: impl Into<String>) -> Result<Self> {
         let uri = uri.into();
         if Url::parse(&uri).is_ok() {
             Ok(Self(uri))
         } else {
-            Err(anyhow::anyhow!("Invalid URI"))
+            bail!("Invalid URI")
         }
     }
 }
 
 impl FromStr for URI {
-    type Err = anyhow::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::new(s)
@@ -66,7 +68,7 @@ impl CBORTaggedEncodable for URI {
 }
 
 impl TryFrom<CBOR> for URI {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -74,7 +76,7 @@ impl TryFrom<CBOR> for URI {
 }
 
 impl CBORTaggedDecodable for URI {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let uri: String = cbor.try_into()?;
         Self::new(uri)
     }

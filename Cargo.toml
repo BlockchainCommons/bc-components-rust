@@ -1,6 +1,6 @@
 [package]
 name = "bc-components"
-version = "0.10.1"
+version = "0.11.0"
 edition = "2021"
 description = "Secure Components for Rust."
 authors = ["Blockchain Commons"]
@@ -17,8 +17,7 @@ bc-crypto = "^0.3.0"
 
 bc-rand = "^0.1.0"
 
-dcbor = { path = "../dcbor" }
-# dcbor = "^0.13.0"
+dcbor = "^0.14.0"
 
 bc-ur = { path = "../bc-ur" }
 # bc-ur = "^0.3.0"

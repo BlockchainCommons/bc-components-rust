@@ -2,8 +2,11 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use bytes::Bytes;
 use sskr::SSKRError;
+use anyhow::{Result, Error};
 use crate::tags;
+
 pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
+
 
 /// An SSKR share.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -89,7 +92,7 @@ impl CBORTaggedEncodable for SSKRShare {
 }
 
 impl TryFrom<CBOR> for SSKRShare {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -97,7 +100,7 @@ impl TryFrom<CBOR> for SSKRShare {
 }
 
 impl CBORTaggedDecodable for SSKRShare {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)

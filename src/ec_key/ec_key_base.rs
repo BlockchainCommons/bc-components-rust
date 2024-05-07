@@ -1,4 +1,5 @@
 use bc_ur::UREncodable;
+use anyhow::Result;
 
 use crate::ECPublicKey;
 
@@ -12,14 +13,14 @@ pub trait ECKeyBase:
 {
     const KEY_SIZE: usize;
 
-    fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> where Self: Sized;
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized;
     fn data(&self) -> &[u8];
 
     fn hex(&self) -> String {
         hex::encode(self.data())
     }
 
-    fn from_hex(hex: impl AsRef<str>) -> anyhow::Result<Self> {
+    fn from_hex(hex: impl AsRef<str>) -> Result<Self> {
         let data = hex::decode(hex.as_ref())?;
         Self::from_data_ref(data)
     }

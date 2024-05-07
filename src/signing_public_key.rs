@@ -1,5 +1,5 @@
 use crate::{SchnorrPublicKey, ECPublicKey, tags, ECKeyBase, Signature};
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 use bc_ur::prelude::*;
 
 /// A public key that can be used for signing. Supports both ECDSA and Schnorr.
@@ -94,7 +94,7 @@ impl CBORTaggedEncodable for SigningPublicKey {
 }
 
 impl TryFrom<CBOR> for SigningPublicKey {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -102,7 +102,7 @@ impl TryFrom<CBOR> for SigningPublicKey {
 }
 
 impl CBORTaggedDecodable for SigningPublicKey {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.into_case() {
             CBORCase::ByteString(data) => {
                 Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))

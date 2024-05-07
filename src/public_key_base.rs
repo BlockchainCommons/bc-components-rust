@@ -1,6 +1,6 @@
 use bc_ur::prelude::*;
 use crate::{SigningPublicKey, AgreementPublicKey, tags};
-use anyhow::bail;
+use anyhow::{bail, Error, Result};
 
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
@@ -74,7 +74,7 @@ impl CBORTaggedEncodable for PublicKeyBase {
 }
 
 impl TryFrom<CBOR> for PublicKeyBase {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -82,7 +82,7 @@ impl TryFrom<CBOR> for PublicKeyBase {
 }
 
 impl CBORTaggedDecodable for PublicKeyBase {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {

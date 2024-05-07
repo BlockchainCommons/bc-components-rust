@@ -3,7 +3,7 @@ use bc_crypto::ecdsa_new_private_key_using;
 use bc_ur::prelude::*;
 use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 
 /// A private ECDSA key for signing.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -31,7 +31,7 @@ impl SigningPrivateKey {
     }
 
     /// Restores a `SigningPrivateKey` from a reference to a vector of bytes.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid signing private key size");
@@ -149,7 +149,7 @@ impl CBORTaggedEncodable for SigningPrivateKey {
 }
 
 impl TryFrom<CBOR> for SigningPrivateKey {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -157,7 +157,7 @@ impl TryFrom<CBOR> for SigningPrivateKey {
 }
 
 impl CBORTaggedDecodable for SigningPrivateKey {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }

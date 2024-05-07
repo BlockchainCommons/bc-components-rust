@@ -4,7 +4,7 @@ use bc_crypto::hash::crc32;
 use bytes::Bytes;
 use miniz_oxide::{inflate::decompress_to_vec, deflate::compress_to_vec};
 use crate::{digest::Digest, DigestProvider, tags};
-use anyhow::{anyhow, bail};
+use anyhow::{anyhow, bail, Error, Result};
 
 /// A compressed binary object.
 ///
@@ -32,7 +32,7 @@ impl Compressed {
     /// This is a low-level function that does not check the validity of the compressed data.
     ///
     /// Returns `None` if the compressed data is larger than the uncompressed size.
-    pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Bytes, digest: Option<Digest>) -> anyhow::Result<Self> {
+    pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Bytes, digest: Option<Digest>) -> Result<Self> {
         if compressed_data.len() > uncompressed_size {
             bail!("Compressed data is larger than uncompressed size");
         }
@@ -76,7 +76,7 @@ impl Compressed {
     /// Uncompresses the compressed data and returns the uncompressed data.
     ///
     /// Returns an error if the compressed data is corrupt or the checksum does not match the uncompressed data.
-    pub fn uncompress(&self) -> anyhow::Result<Bytes> {
+    pub fn uncompress(&self) -> Result<Bytes> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
             return Ok(self.compressed_data.clone());
@@ -166,7 +166,7 @@ impl CBORTaggedEncodable for Compressed {
 }
 
 impl TryFrom<CBOR> for Compressed {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -174,7 +174,7 @@ impl TryFrom<CBOR> for Compressed {
 }
 
 impl CBORTaggedDecodable for Compressed {
-    fn from_untagged_cbor(cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let elements = cbor.try_into_array()?;
         if elements.len() < 3 || elements.len() > 4 {
             bail!("invalid number of elements in compressed");

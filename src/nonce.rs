@@ -2,7 +2,7 @@ use std::rc::Rc;
 use bc_rand::fill_random_data;
 use bc_ur::prelude::*;
 use crate::tags;
-use anyhow::bail;
+use anyhow::{bail, Error, Result};
 
 /// A random nonce ("number used once").
 #[derive(Clone, Eq, PartialEq)]
@@ -24,7 +24,7 @@ impl Nonce {
     }
 
     /// Restores a nonce from data.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::NONCE_SIZE {
             bail!("Invalid nonce size");
@@ -96,7 +96,7 @@ impl CBORTaggedEncodable for Nonce {
 }
 
 impl TryFrom<CBOR> for Nonce {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -104,7 +104,7 @@ impl TryFrom<CBOR> for Nonce {
 }
 
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }

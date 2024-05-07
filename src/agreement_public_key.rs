@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_ur::prelude::*;
 use crate::tags;
-use anyhow::bail;
+use anyhow::{bail, Error, Result};
 
 /// A Curve25519 public key used for X25519 key agreement.
 ///
@@ -18,7 +18,7 @@ impl AgreementPublicKey {
     }
 
     /// Restore an `AgreementPublicKey` from a reference to an array of bytes.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
             bail!("Invalid agreement public key size");
@@ -85,7 +85,7 @@ impl CBORTaggedEncodable for AgreementPublicKey {
 }
 
 impl TryFrom<CBOR> for AgreementPublicKey {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -93,7 +93,7 @@ impl TryFrom<CBOR> for AgreementPublicKey {
 }
 
 impl CBORTaggedDecodable for AgreementPublicKey {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(&data)
     }

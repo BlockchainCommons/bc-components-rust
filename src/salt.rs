@@ -3,7 +3,7 @@ use bc_ur::prelude::*;
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bytes::Bytes;
 use crate::tags;
-use anyhow::bail;
+use anyhow::{bail, Result, Error};
 
 /// Random salt used to decorrelate other information.
 #[derive(Clone, Eq, PartialEq)]
@@ -23,7 +23,7 @@ impl Salt {
     /// Create a specific number of bytes of salt.
     ///
     /// If the number of bytes is less than 8, this will return `None`.
-    pub fn new_with_len(count: usize) -> anyhow::Result<Self> {
+    pub fn new_with_len(count: usize) -> Result<Self> {
         let mut rng = SecureRandomNumberGenerator;
         Self::new_with_len_using(count, &mut rng)
     }
@@ -31,7 +31,7 @@ impl Salt {
     /// Create a specific number of bytes of salt.
     ///
     /// If the number of bytes is less than 8, this will return `None`.
-    pub fn new_with_len_using(count: usize, rng: &mut impl RandomNumberGenerator) -> anyhow::Result<Self> {
+    pub fn new_with_len_using(count: usize, rng: &mut impl RandomNumberGenerator) -> Result<Self> {
         if count < 8 {
             bail!("Salt length is too short");
         }
@@ -41,7 +41,7 @@ impl Salt {
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range(range: RangeInclusive<usize>) -> anyhow::Result<Self> {
+    pub fn new_in_range(range: RangeInclusive<usize>) -> Result<Self> {
         if range.start() < &8 {
             bail!("Salt length is too short");
         }
@@ -52,7 +52,7 @@ impl Salt {
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range_using(range: &RangeInclusive<usize>, rng: &mut impl RandomNumberGenerator) -> anyhow::Result<Self> {
+    pub fn new_in_range_using(range: &RangeInclusive<usize>, rng: &mut impl RandomNumberGenerator) -> Result<Self> {
         if range.start() < &8 {
             bail!("Salt length is too short");
         }
@@ -122,7 +122,7 @@ impl CBORTaggedEncodable for Salt {
 }
 
 impl TryFrom<CBOR> for Salt {
-    type Error = anyhow::Error;
+    type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -130,7 +130,7 @@ impl TryFrom<CBOR> for Salt {
 }
 
 impl CBORTaggedDecodable for Salt {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> anyhow::Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)
