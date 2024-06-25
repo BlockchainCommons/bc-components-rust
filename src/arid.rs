@@ -2,13 +2,13 @@ use bc_rand::random_data;
 use bc_ur::prelude::*;
 
 use crate::tags;
-use anyhow::{bail, Error, Result};
+use anyhow::{ bail, Error, Result };
 
 /// An "Apparently Random Identifier" (ARID)
 ///
 /// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-arid.md).
 #[derive(Clone, Eq, PartialEq, Hash)]
-pub struct ARID ([u8; Self::ARID_SIZE]);
+pub struct ARID([u8; Self::ARID_SIZE]);
 
 impl ARID {
     pub const ARID_SIZE: usize = 32;
@@ -106,7 +106,7 @@ impl TryFrom<CBOR> for ARID {
 impl CBORTaggedDecodable for ARID {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(&data)
+        Self::from_data_ref(data)
     }
 }
 

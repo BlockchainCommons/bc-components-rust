@@ -1,9 +1,8 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use bytes::Bytes;
-use dcbor::{CBORTagged, Tag, CBOR, CBORTaggedEncodable, CBORTaggedDecodable};
-use crate::{digest_provider::DigestProvider, tags};
-use anyhow::{bail, Result, Error};
+use dcbor::{ CBORTagged, Tag, CBOR, CBORTaggedEncodable, CBORTaggedDecodable };
+use crate::{ digest_provider::DigestProvider, tags };
+use anyhow::{ bail, Result, Error };
 
 /// A cryptographically secure digest, implemented with SHA-256.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -210,20 +209,6 @@ impl From<&Digest> for Vec<u8> {
     }
 }
 
-// Convert from a byte vector to an instance.
-impl From<Digest> for Bytes {
-    fn from(digest: Digest) -> Self {
-        Bytes::from(digest.0.to_vec())
-    }
-}
-
-// Convert a reference to an instance to a byte vector.
-impl From<&Digest> for Bytes {
-    fn from(digest: &Digest) -> Self {
-        Bytes::from(digest.0.to_vec())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -236,15 +221,23 @@ mod tests {
         let digest = Digest::from_image(data.as_bytes());
         assert_eq!(digest.data().len(), Digest::DIGEST_SIZE);
         assert_eq!(*digest.data(), sha256(data.as_bytes()));
-        assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
+        assert_eq!(
+            *digest.data(),
+            hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9")
+        );
     }
 
     #[test]
     fn test_digest_from_hex() {
-        let digest = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
+        let digest = Digest::from_hex(
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
         assert_eq!(digest.data().len(), Digest::DIGEST_SIZE);
         assert_eq!(*digest.data(), sha256("hello world".as_bytes()));
-        assert_eq!(*digest.data(), hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"));
+        assert_eq!(
+            *digest.data(),
+            hex!("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9")
+        );
     }
 
     #[test]
@@ -252,7 +245,8 @@ mod tests {
         let data = "hello world";
         let digest = Digest::from_image(data.as_bytes());
         let ur_string = digest.ur_string();
-        let expected_ur_string = "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
+        let expected_ur_string =
+            "ur:digest/hdcxrhgtdirhmugtfmayondmgmtstnkipyzssslrwsvlkngulawymhloylpsvowssnwlamnlatrs";
         assert_eq!(ur_string, expected_ur_string);
         let digest2 = Digest::from_ur_string(&ur_string).unwrap();
         assert_eq!(digest, digest2);
@@ -260,15 +254,23 @@ mod tests {
 
     #[test]
     fn test_digest_equality() {
-        let digest1 = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
-        let digest2 = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
+        let digest1 = Digest::from_hex(
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
+        let digest2 = Digest::from_hex(
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
         assert_eq!(digest1, digest2);
     }
 
     #[test]
     fn test_digest_inequality() {
-        let digest1 = Digest::from_hex("b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
-        let digest2 = Digest::from_hex("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
+        let digest1 = Digest::from_hex(
+            "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+        );
+        let digest2 = Digest::from_hex(
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        );
         assert_ne!(digest1, digest2);
     }
 

@@ -1,15 +1,15 @@
 use std::rc::Rc;
 use bc_crypto::x25519_new_agreement_private_key_using;
 use bc_ur::prelude::*;
-use crate::{tags, AgreementPublicKey, SymmetricKey};
-use bc_rand::{SecureRandomNumberGenerator, RandomNumberGenerator};
-use anyhow::{bail, Error, Result};
+use crate::{ tags, AgreementPublicKey, SymmetricKey };
+use bc_rand::{ SecureRandomNumberGenerator, RandomNumberGenerator };
+use anyhow::{ bail, Error, Result };
 
 /// A Curve25519 private key used for X25519 key agreement.
 ///
 /// <https://datatracker.ietf.org/doc/html/rfc7748>
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPrivateKey ([u8; Self::KEY_SIZE]);
+pub struct AgreementPrivateKey([u8; Self::KEY_SIZE]);
 
 impl AgreementPrivateKey {
     pub const KEY_SIZE: usize = 32;
@@ -62,7 +62,9 @@ impl AgreementPrivateKey {
 
     /// Get the `AgreementPublicKey` corresponding to this `AgreementPrivateKey`.
     pub fn public_key(&self) -> AgreementPublicKey {
-        AgreementPublicKey::from_data(bc_crypto::x25519_agreement_public_key_from_private_key(self.into()))
+        AgreementPublicKey::from_data(
+            bc_crypto::x25519_agreement_public_key_from_private_key(self.into())
+        )
     }
 
     /// Derive an `AgreementPrivateKey` from the given key material.
@@ -130,7 +132,7 @@ impl TryFrom<CBOR> for AgreementPrivateKey {
 impl CBORTaggedDecodable for AgreementPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(&data)
+        Self::from_data_ref(data)
     }
 }
 

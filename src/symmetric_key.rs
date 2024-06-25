@@ -1,8 +1,7 @@
-use crate::{EncryptedMessage, Nonce, tags, Digest};
-use bc_crypto::{aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad};
+use crate::{ EncryptedMessage, Nonce, tags, Digest };
+use bc_crypto::{ aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305_decrypt_with_aad };
 use bc_ur::prelude::*;
-use anyhow::{bail, Result, Error};
-use bytes::Bytes;
+use anyhow::{ bail, Result, Error };
 
 /// A symmetric encryption key.
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -59,26 +58,45 @@ impl SymmetricKey {
     }
 
     /// Encrypt the given plaintext with this key, and the given additional authenticated data and nonce.
-    pub fn encrypt(&self, plaintext: impl Into<Bytes>, aad: Option<impl Into<Bytes>>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
-    {
-        let aad: Bytes = aad.map(|a| a.into()).unwrap_or_default();
+    pub fn encrypt(
+        &self,
+        plaintext: impl Into<Vec<u8>>,
+        aad: Option<impl Into<Vec<u8>>>,
+        nonce: Option<impl AsRef<Nonce>>
+    ) -> EncryptedMessage {
+        let aad: Vec<u8> = aad.map(|a| a.into()).unwrap_or_default();
         let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
         let plaintext = plaintext.into();
-        let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
-        EncryptedMessage::new(Bytes::from(ciphertext), aad, nonce, auth.into())
+        let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(
+            plaintext,
+            self.into(),
+            (&nonce).into(),
+            &aad
+        );
+        EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
     }
 
     /// Encrypt the given plaintext with this key, and the given digest of the plaintext, and nonce.
-    pub fn encrypt_with_digest(&self, plaintext: impl Into<Bytes>, digest: impl AsRef<Digest>, nonce: Option<impl AsRef<Nonce>>) -> EncryptedMessage
-    {
+    pub fn encrypt_with_digest(
+        &self,
+        plaintext: impl Into<Vec<u8>>,
+        digest: impl AsRef<Digest>,
+        nonce: Option<impl AsRef<Nonce>>
+    ) -> EncryptedMessage {
         let cbor: CBOR = digest.as_ref().clone().into();
         let data = cbor.to_cbor_data();
-        self.encrypt(plaintext, Some(Bytes::from(data)), nonce)
+        self.encrypt(plaintext, Some(data), nonce)
     }
 
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>, bc_crypto::Error> {
-        aead_chacha20_poly1305_decrypt_with_aad(message.ciphertext(), self.into(), message.nonce().into(), message.aad(), message.authentication_tag().into())
+        aead_chacha20_poly1305_decrypt_with_aad(
+            message.ciphertext(),
+            self.into(),
+            message.nonce().into(),
+            message.aad(),
+            message.authentication_tag().into()
+        )
     }
 }
 
@@ -156,7 +174,7 @@ impl TryFrom<CBOR> for SymmetricKey {
 impl CBORTaggedDecodable for SymmetricKey {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
-        let instance = Self::from_data_ref(&bytes)?;
+        let instance = Self::from_data_ref(bytes)?;
         Ok(instance)
     }
 }

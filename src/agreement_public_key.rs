@@ -1,13 +1,13 @@
 use std::rc::Rc;
 use bc_ur::prelude::*;
 use crate::tags;
-use anyhow::{bail, Error, Result};
+use anyhow::{ bail, Error, Result };
 
 /// A Curve25519 public key used for X25519 key agreement.
 ///
 /// <https://datatracker.ietf.org/doc/html/rfc7748>
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPublicKey ([u8; Self::KEY_SIZE]);
+pub struct AgreementPublicKey([u8; Self::KEY_SIZE]);
 
 impl AgreementPublicKey {
     pub const KEY_SIZE: usize = 32;
@@ -95,7 +95,7 @@ impl TryFrom<CBOR> for AgreementPublicKey {
 impl CBORTaggedDecodable for AgreementPublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(&data)
+        Self::from_data_ref(data)
     }
 }
 

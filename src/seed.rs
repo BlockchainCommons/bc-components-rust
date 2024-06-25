@@ -1,18 +1,18 @@
+use bc_rand::{rng_random_data, RandomNumberGenerator};
 use bc_ur::prelude::*;
-use bytes::Bytes;
-use crate::{tags, PrivateKeyDataProvider};
-use anyhow::{bail, Result, Error};
+use crate::{ tags, PrivateKeyDataProvider };
+use anyhow::{ bail, Result, Error };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Seed {
-    data: Bytes,
+    data: Vec<u8>,
     name: String,
     note: String,
     creation_date: Option<dcbor::Date>,
 }
 
 impl Seed {
-    pub const MIN_SEED_LENGTH : usize = 16;
+    pub const MIN_SEED_LENGTH: usize = 16;
 
     /// Create a new random seed.
     ///
@@ -32,15 +32,23 @@ impl Seed {
     /// Create a new random seed with a specified length.
     ///
     /// If the number of bytes is less than 16, this will return `None`.
-    pub fn new_with_len_using(count: usize, rng: &mut impl bc_rand::RandomNumberGenerator) -> Result<Self> {
-        let data = rng.random_data(count);
+    pub fn new_with_len_using(
+        count: usize,
+        rng: &mut impl RandomNumberGenerator
+    ) -> Result<Self> {
+        let data = rng_random_data(rng, count);
         Self::new_opt(data, None, None, None)
     }
 
     /// Create a new seed from the data and options.
     ///
     /// If the data is less than 16 bytes, this will return `None`.
-    pub fn new_opt(data: impl Into<Bytes>, name: Option<String>, note: Option<String>, creation_date: Option<dcbor::Date>) -> Result<Self> {
+    pub fn new_opt(
+        data: impl Into<Vec<u8>>,
+        name: Option<String>,
+        note: Option<String>,
+        creation_date: Option<dcbor::Date>
+    ) -> Result<Self> {
         let data = data.into();
         if data.len() < Self::MIN_SEED_LENGTH {
             bail!("Seed data is too short");
@@ -54,7 +62,7 @@ impl Seed {
     }
 
     /// Return the data of the seed.
-    pub fn data(&self) -> &Bytes {
+    pub fn data(&self) -> &Vec<u8> {
         &self.data
     }
 
@@ -108,7 +116,7 @@ impl AsRef<Seed> for Seed {
 }
 
 impl PrivateKeyDataProvider for Seed {
-    fn private_key_data(&self) -> Bytes {
+    fn private_key_data(&self) -> Vec<u8> {
         self.data().clone()
     }
 }

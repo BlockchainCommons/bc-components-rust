@@ -2,11 +2,11 @@ use std::rc::Rc;
 use bc_rand::fill_random_data;
 use bc_ur::prelude::*;
 use crate::tags;
-use anyhow::{bail, Error, Result};
+use anyhow::{ bail, Error, Result };
 
 /// A random nonce ("number used once").
 #[derive(Clone, Eq, PartialEq)]
-pub struct Nonce ([u8; Self::NONCE_SIZE]);
+pub struct Nonce([u8; Self::NONCE_SIZE]);
 
 impl Nonce {
     pub const NONCE_SIZE: usize = 12;
@@ -106,7 +106,7 @@ impl TryFrom<CBOR> for Nonce {
 impl CBORTaggedDecodable for Nonce {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(&data)
+        Self::from_data_ref(data)
     }
 }
 

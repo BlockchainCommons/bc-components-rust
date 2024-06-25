@@ -1,132 +1,149 @@
-use std::rc::Rc;
-use bc_crypto::ecdsa_new_private_key_using;
-use bc_ur::prelude::*;
-use crate::{tags, ECPrivateKey, Signature, ECKey, SigningPublicKey};
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use anyhow::{bail, Result, Error};
+use std::{ cell::RefCell, rc::Rc };
 
-/// A private ECDSA key for signing.
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct SigningPrivateKey ([u8; Self::KEY_SIZE]);
+use bc_ur::prelude::*;
+use crate::{ tags, ECKey, ECKeyBase, ECPrivateKey, Signature, Signer, SigningPublicKey };
+use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
+use anyhow::{ bail, Result, Error };
+use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
+
+/// Options for signing a message.
+///
+/// - ECDSA signing requires no options.
+/// - Schnorr signing may take `None` for options, or a tag and RNG.
+/// - SSH signing requires a namespace and hash algorithm.
+#[derive(Clone)]
+pub enum SigningOptions {
+    Schnorr {
+        tag: Vec<u8>,
+        rng: Rc<RefCell<dyn RandomNumberGenerator>>,
+    },
+    Ssh {
+        namespace: String,
+        hash_alg: HashAlg,
+    },
+}
+
+/// A private ECDSA, Schnorr or SSH key for signing.
+///
+/// - Both ECDSA and Schnorr keys are based on `ECPrivateKey`.
+/// - SSH keys are based on `SSHPrivateKey`, an alias for (`ssh_key::PrivateKey`).
+#[derive(Clone, PartialEq, Eq)]
+pub enum SigningPrivateKey {
+    Schnorr(ECPrivateKey),
+    ECDSA(ECPrivateKey),
+    SSH(Box<SSHPrivateKey>),
+}
 
 impl SigningPrivateKey {
-    pub const KEY_SIZE: usize = 32;
-
-    /// Generate a new random `SigningPrivateKey`.
-    pub fn new() -> Self {
-        let mut rng = SecureRandomNumberGenerator;
-        Self::new_using(&mut rng)
+    pub const fn new_schnorr(key: ECPrivateKey) -> Self {
+        Self::Schnorr(key)
     }
 
-    /// Generate a new random `SigningPrivateKey` using the given random number generator.
-    ///
-    /// For testing purposes only.
-    pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
-        Self(ecdsa_new_private_key_using(rng))
+    pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
+        Self::ECDSA(key)
     }
 
-    /// Restores a `SigningPrivateKey` from a vector of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
-        Self(data)
+    pub fn new_ssh(key: SSHPrivateKey) -> Self {
+        Self::SSH(Box::new(key))
     }
 
-    /// Restores a `SigningPrivateKey` from a reference to a vector of bytes.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
-        let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
-            bail!("Invalid signing private key size");
+    pub fn to_schnorr(&self) -> Option<&ECPrivateKey> {
+        match self {
+            Self::Schnorr(key) => Some(key),
+            _ => None,
         }
-        let mut arr = [0u8; Self::KEY_SIZE];
-        arr.copy_from_slice(data);
-        Ok(Self::from_data(arr))
     }
 
-    /// Returns a reference to the vector of private key data.
-    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
-        self.into()
+    pub fn to_ecdsa(&self) -> Option<&ECPrivateKey> {
+        match self {
+            Self::ECDSA(key) => Some(key),
+            _ => None,
+        }
     }
 
-    /// Restores a `SigningPrivateKey` from a hex string.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the hex string is invalid or the length is not `SigningPrivateKey::KEY_SIZE * 2`.
-    pub fn from_hex(hex: impl AsRef<str>) -> Self {
-        Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
+    pub fn to_ssh(&self) -> Option<&SSHPrivateKey> {
+        match self {
+            Self::SSH(key) => Some(key),
+            _ => None,
+        }
     }
 
-    /// Returns the private key as a hex string.
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
-
-    /// Derives the ECDSA signing public key from this private key.
-    pub fn ecdsa_public_key(&self) -> SigningPublicKey {
-        SigningPublicKey::from_ecdsa(ECPrivateKey::from_data(*self.data()).public_key())
-    }
-
-    /// Derives the Schnorr signing public key from this private key.
-    pub fn schnorr_public_key(&self) -> SigningPublicKey {
-        SigningPublicKey::from_schnorr(ECPrivateKey::from_data(*self.data()).schnorr_public_key())
-    }
-
-    /// Derives a new `SigningPrivateKey` from the given key material.
-    pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
-        Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
+    pub fn public_key(&self) -> SigningPublicKey {
+        match self {
+            Self::Schnorr(key) => { SigningPublicKey::from_schnorr(key.schnorr_public_key()) }
+            Self::ECDSA(key) => { SigningPublicKey::from_ecdsa(key.public_key()) }
+            Self::SSH(key) => { SigningPublicKey::from_ssh(key.public_key().clone()) }
+        }
     }
 }
 
 impl SigningPrivateKey {
-    pub fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Signature {
-        let private_key = ECPrivateKey::from_data(*self.data());
-        let sig = private_key.ecdsa_sign(message);
-        Signature::ecdsa_from_data(sig)
-    }
-
-    pub fn schnorr_sign_using(
-        &self,
-        message: impl AsRef<[u8]>,
-        tag: impl AsRef<[u8]>,
-        rng: &mut impl RandomNumberGenerator
-    ) -> Signature {
-        // let tag = tag.into();
-        let private_key = ECPrivateKey::from_data(*self.data());
-        let tag_copy = tag.as_ref().to_vec();
-        let sig = private_key.schnorr_sign_using(message, tag, rng);
-        Signature::schnorr_from_data(sig, tag_copy)
+    fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
+        if let Some(private_key) = self.to_ecdsa() {
+            let sig = private_key.ecdsa_sign(message);
+            Ok(Signature::ecdsa_from_data(sig))
+        } else {
+            bail!("Invalid key type for ECDSA signing");
+        }
     }
 
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
         tag: impl AsRef<[u8]>,
-    ) -> Signature {
-        let mut rng = SecureRandomNumberGenerator;
-        self.schnorr_sign_using(message, tag, &mut rng)
+        rng: Rc<RefCell<dyn RandomNumberGenerator>>
+    ) -> Result<Signature> {
+        if let Some(private_key) = self.to_schnorr() {
+            let tag_copy = tag.as_ref().to_vec();
+            let sig = private_key.schnorr_sign_using(message, tag, &mut *rng.borrow_mut());
+            Ok(Signature::schnorr_from_data(sig, tag_copy))
+        } else {
+            bail!("Invalid key type for Schnorr signing");
+        }
+    }
+
+    fn ssh_sign(
+        &self,
+        message: impl AsRef<[u8]>,
+        namespace: impl AsRef<str>,
+        hash_alg: HashAlg
+    ) -> Result<Signature> {
+        if let Some(private) = self.to_ssh() {
+            let sig = private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
+            Ok(Signature::from_ssh(sig))
+        } else {
+            bail!("Invalid key type for SSH signing");
+        }
     }
 }
 
-impl<'a> From<&'a SigningPrivateKey> for &'a [u8; SigningPrivateKey::KEY_SIZE] {
-    fn from(value: &'a SigningPrivateKey) -> Self {
-        &value.0
-    }
-}
-
-impl Default for SigningPrivateKey {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AsRef<SigningPrivateKey> for SigningPrivateKey {
-    fn as_ref(&self) -> &SigningPrivateKey {
-        self
-    }
-}
-
-impl From<Rc<SigningPrivateKey>> for SigningPrivateKey {
-    fn from(value: Rc<SigningPrivateKey>) -> Self {
-        value.as_ref().clone()
+impl Signer for SigningPrivateKey {
+    fn sign_with_options(
+        &self,
+        message: &dyn AsRef<[u8]>,
+        options: Option<SigningOptions>
+    ) -> Result<Signature> {
+        match self {
+            Self::Schnorr(_) => {
+                if let Some(SigningOptions::Schnorr { tag, rng }) = options {
+                    self.schnorr_sign(message, tag, rng)
+                } else {
+                    self.schnorr_sign(
+                        message,
+                        [],
+                        Rc::new(RefCell::new(SecureRandomNumberGenerator))
+                    )
+                }
+            }
+            Self::ECDSA(_) => { self.ecdsa_sign(message) }
+            Self::SSH(_) => {
+                if let Some(SigningOptions::Ssh { namespace, hash_alg }) = options {
+                    self.ssh_sign(message, namespace, hash_alg)
+                } else {
+                    bail!("Missing namespace and hash algorithm for SSH signing");
+                }
+            }
+        }
     }
 }
 
@@ -144,7 +161,16 @@ impl From<SigningPrivateKey> for CBOR {
 
 impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.data())
+        match self {
+            SigningPrivateKey::Schnorr(key) => { CBOR::to_byte_string(key.data()) }
+            SigningPrivateKey::ECDSA(key) => {
+                vec![(1).into(), CBOR::to_byte_string(key.data())].into()
+            }
+            SigningPrivateKey::SSH(key) => {
+                let string = key.to_openssh(LineEnding::LF).unwrap();
+                CBOR::to_tagged_value(tags::SSH_TEXT_PRIVATE_KEY, (*string).clone())
+            }
+        }
     }
 }
 
@@ -158,8 +184,29 @@ impl TryFrom<CBOR> for SigningPrivateKey {
 
 impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
-        let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(&data)
+        // let data = CBOR::try_into_byte_string(untagged_cbor)?;
+        // Self::from_data_ref(&data)
+        match untagged_cbor.into_case() {
+            CBORCase::ByteString(data) => { Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)) }
+            CBORCase::Array(mut elements) => {
+                let tag = usize::try_from(elements.remove(0))?;
+                if tag == 1 {
+                    let data = elements.remove(0).try_into_byte_string()?;
+                    let key = ECPrivateKey::from_data_ref(data)?;
+                    return Ok(Self::ECDSA(key));
+                }
+                bail!("Invalid tag for SigningPrivateKey");
+            }
+            CBORCase::Tagged(tag, item) => {
+                if tag == tags::SSH_TEXT_PRIVATE_KEY {
+                    let string = item.try_into_text()?;
+                    let key = SSHPrivateKey::from_openssh(string)?;
+                    return Ok(Self::SSH(Box::new(key)));
+                }
+                bail!("Invalid CBOR tag for SigningPrivateKey");
+            }
+            _ => bail!("Invalid CBOR case for SigningPrivateKey"),
+        }
     }
 }
 
@@ -173,19 +220,5 @@ impl std::fmt::Debug for SigningPrivateKey {
 impl From<&SigningPrivateKey> for SigningPrivateKey {
     fn from(key: &SigningPrivateKey) -> Self {
         key.clone()
-    }
-}
-
-// Convert from a byte vector to a SigningPrivateKey.
-impl From<SigningPrivateKey> for Vec<u8> {
-    fn from(key: SigningPrivateKey) -> Self {
-        key.0.to_vec()
-    }
-}
-
-// Convert from a reference to a byte vector to a SigningPrivateKey.
-impl From<&SigningPrivateKey> for Vec<u8> {
-    fn from(key: &SigningPrivateKey) -> Self {
-        key.0.to_vec()
     }
 }

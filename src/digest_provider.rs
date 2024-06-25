@@ -1,4 +1,4 @@
-use std::{rc::Rc, borrow::Cow};
+use std::{ rc::Rc, borrow::Cow };
 
 use crate::digest::Digest;
 

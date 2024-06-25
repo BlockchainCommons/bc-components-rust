@@ -1,10 +1,9 @@
-use std::{fmt::Formatter, borrow::Cow};
+use std::{ fmt::Formatter, borrow::Cow };
 use bc_ur::prelude::*;
 use bc_crypto::hash::crc32;
-use bytes::Bytes;
-use miniz_oxide::{inflate::decompress_to_vec, deflate::compress_to_vec};
-use crate::{digest::Digest, DigestProvider, tags};
-use anyhow::{anyhow, bail, Error, Result};
+use miniz_oxide::{ inflate::decompress_to_vec, deflate::compress_to_vec };
+use crate::{ digest::Digest, DigestProvider, tags };
+use anyhow::{ anyhow, bail, Error, Result };
 
 /// A compressed binary object.
 ///
@@ -22,7 +21,7 @@ use anyhow::{anyhow, bail, Error, Result};
 pub struct Compressed {
     checksum: u32,
     uncompressed_size: usize,
-    compressed_data: Bytes,
+    compressed_data: Vec<u8>,
     digest: Option<Digest>,
 }
 
@@ -32,7 +31,12 @@ impl Compressed {
     /// This is a low-level function that does not check the validity of the compressed data.
     ///
     /// Returns `None` if the compressed data is larger than the uncompressed size.
-    pub fn new(checksum: u32, uncompressed_size: usize, compressed_data: Bytes, digest: Option<Digest>) -> Result<Self> {
+    pub fn new(
+        checksum: u32,
+        uncompressed_size: usize,
+        compressed_data: Vec<u8>,
+        digest: Option<Digest>
+    ) -> Result<Self> {
         if compressed_data.len() > uncompressed_size {
             bail!("Compressed data is larger than uncompressed size");
         }
@@ -50,9 +54,12 @@ impl Compressed {
     ///
     /// If the compressed data is smaller than the uncompressed data, the compressed data is stored in the `compressed_data` field.
     /// Otherwise, the uncompressed data is stored in the `compressed_data` field.
-    pub fn from_uncompressed_data(uncompressed_data: impl Into<Bytes>, digest: Option<Digest>) -> Self {
+    pub fn from_uncompressed_data(
+        uncompressed_data: impl Into<Vec<u8>>,
+        digest: Option<Digest>
+    ) -> Self {
         let uncompressed_data = uncompressed_data.into();
-        let compressed_data = Bytes::from(compress_to_vec(&uncompressed_data, 6));
+        let compressed_data = compress_to_vec(&uncompressed_data, 6);
         let checksum = crc32(&uncompressed_data);
         let uncompressed_size = uncompressed_data.len();
         let compressed_size = compressed_data.len();
@@ -76,13 +83,15 @@ impl Compressed {
     /// Uncompresses the compressed data and returns the uncompressed data.
     ///
     /// Returns an error if the compressed data is corrupt or the checksum does not match the uncompressed data.
-    pub fn uncompress(&self) -> Result<Bytes> {
+    pub fn uncompress(&self) -> Result<Vec<u8>> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
             return Ok(self.compressed_data.clone());
         }
 
-        let uncompressed_data = Bytes::from(decompress_to_vec(&self.compressed_data).map_err(|_| anyhow!("corrupt compressed data"))?);
+        let uncompressed_data = decompress_to_vec(&self.compressed_data).map_err(|_|
+            anyhow!("corrupt compressed data")
+        )?;
         if crc32(&uncompressed_data) != self.checksum {
             bail!("compressed data checksum mismatch");
         }
@@ -97,7 +106,7 @@ impl Compressed {
 
     /// Returns the compression ratio of the compressed data.
     pub fn compression_ratio(&self) -> f64 {
-        self.compressed_size() as f64 / self.uncompressed_size as f64
+        (self.compressed_size() as f64) / (self.uncompressed_size as f64)
     }
 
     /// Returns a reference to the digest of the compressed data, if it exists.
@@ -126,7 +135,8 @@ impl std::fmt::Debug for Compressed {
             self.compressed_size(),
             self.uncompressed_size,
             self.compression_ratio(),
-            self.digest_ref_opt()
+            self
+                .digest_ref_opt()
                 .map(|d| d.short_description())
                 .unwrap_or_else(|| "None".to_string())
         )
@@ -156,7 +166,7 @@ impl CBORTaggedEncodable for Compressed {
         let mut elements = vec![
             self.checksum.into(),
             self.uncompressed_size.into(),
-            CBOR::to_byte_string(&self.compressed_data),
+            CBOR::to_byte_string(&self.compressed_data)
         ];
         if let Some(digest) = self.digest.clone() {
             elements.push(digest.into());
@@ -182,50 +192,57 @@ impl CBORTaggedDecodable for Compressed {
         let checksum = elements[0].clone().try_into()?;
         let uncompressed_size = elements[1].clone().try_into()?;
         let compressed_data = elements[2].clone().try_into_byte_string()?;
-        let digest = if elements.len() == 4 {
-            Some(elements[3].clone().try_into()?)
-        } else {
-            None
-        };
+        let digest = if elements.len() == 4 { Some(elements[3].clone().try_into()?) } else { None };
         Self::new(checksum, uncompressed_size, compressed_data, digest)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bytes::Bytes;
-
     use crate::Compressed;
 
     #[test]
     fn test_1() {
-        let source = Bytes::from("Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.");
-        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
-        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)");
+        let source =
+            b"Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.";
+        let compressed = Compressed::from_uncompressed_data(source, None);
+        assert_eq!(
+            format!("{:?}", compressed),
+            "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)"
+        );
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_2() {
-        let source = Bytes::from("Lorem ipsum dolor sit amet consectetur adipiscing");
-        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
-        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)");
+        let source = b"Lorem ipsum dolor sit amet consectetur adipiscing";
+        let compressed = Compressed::from_uncompressed_data(source, None);
+        assert_eq!(
+            format!("{:?}", compressed),
+            "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)"
+        );
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_3() {
-        let source = Bytes::from("Lorem");
-        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
-        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)");
+        let source = b"Lorem";
+        let compressed = Compressed::from_uncompressed_data(source, None);
+        assert_eq!(
+            format!("{:?}", compressed),
+            "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)"
+        );
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 
     #[test]
     fn test_4() {
-        let source = Bytes::from("");
-        let compressed = Compressed::from_uncompressed_data(source.clone(), None);
-        assert_eq!(format!("{:?}", compressed), "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)");
+        let source = b"";
+        let compressed = Compressed::from_uncompressed_data(source, None);
+        assert_eq!(
+            format!("{:?}", compressed),
+            "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)"
+        );
         assert_eq!(compressed.uncompress().unwrap(), source);
     }
 }

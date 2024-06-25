@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use anyhow::{bail, Error, Result};
+use anyhow::{ bail, Error, Result };
 use dcbor::prelude::*;
 
 /// The HMAC authentication tag produced by the encryption process.
@@ -40,9 +40,7 @@ impl AsRef<AuthenticationTag> for AuthenticationTag {
 
 impl std::fmt::Debug for AuthenticationTag {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("AuthenticationTag")
-            .field(&hex::encode(self.data()))
-            .finish()
+        f.debug_tuple("AuthenticationTag").field(&hex::encode(self.data())).finish()
     }
 }
 
@@ -87,6 +85,6 @@ impl TryFrom<CBOR> for AuthenticationTag {
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         let data = CBOR::try_into_byte_string(cbor)?;
-        Self::from_data_ref(&data)
+        Self::from_data_ref(data)
     }
 }

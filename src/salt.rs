@@ -1,22 +1,21 @@
 use std::ops::RangeInclusive;
 use bc_ur::prelude::*;
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
-use bytes::Bytes;
+use bc_rand::{ rng_next_in_closed_range, rng_random_data, RandomNumberGenerator, SecureRandomNumberGenerator };
 use crate::tags;
-use anyhow::{bail, Result, Error};
+use anyhow::{ bail, Result, Error };
 
 /// Random salt used to decorrelate other information.
 #[derive(Clone, Eq, PartialEq)]
-pub struct Salt(Bytes);
+pub struct Salt(Vec<u8>);
 
 impl Salt {
     /// Create a new salt from data.
-    pub fn from_data(data: impl Into<Bytes>) -> Self {
+    pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
         Self(data.into())
     }
 
     /// Return the data of the salt.
-    pub fn data(&self) -> &Bytes {
+    pub fn data(&self) -> &Vec<u8> {
         &self.0
     }
 
@@ -35,7 +34,7 @@ impl Salt {
         if count < 8 {
             bail!("Salt length is too short");
         }
-        Ok(Self::from_data(rng.random_data(count)))
+        Ok(Self::from_data(rng_random_data(rng, count)))
     }
 
     /// Create a number of bytes of salt chosen randomly from the given range.
@@ -52,11 +51,14 @@ impl Salt {
     /// Create a number of bytes of salt chosen randomly from the given range.
     ///
     /// If the minimum number of bytes is less than 8, this will return `None`.
-    pub fn new_in_range_using(range: &RangeInclusive<usize>, rng: &mut impl RandomNumberGenerator) -> Result<Self> {
+    pub fn new_in_range_using(
+        range: &RangeInclusive<usize>,
+        rng: &mut impl RandomNumberGenerator
+    ) -> Result<Self> {
         if range.start() < &8 {
             bail!("Salt length is too short");
         }
-        let count = rng.next_in_closed_range(range);
+        let count = rng_next_in_closed_range(rng, range);
         Self::new_with_len_using(count, rng)
     }
 

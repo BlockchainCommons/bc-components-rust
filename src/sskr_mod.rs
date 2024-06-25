@@ -1,25 +1,23 @@
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use bc_ur::prelude::*;
-use bytes::Bytes;
 use sskr::SSKRError;
-use anyhow::{Result, Error};
+use anyhow::{ Result, Error };
 use crate::tags;
 
-pub use sskr::{Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
-
+pub use sskr::{ Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
 
 /// An SSKR share.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-pub struct SSKRShare(Bytes);
+pub struct SSKRShare(Vec<u8>);
 
 impl SSKRShare {
     /// Restores an `SSKRShare` from a vector of bytes.
-    pub fn from_data(data: impl Into<Bytes>) -> Self {
+    pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
         Self(data.into())
     }
 
     /// Returns the data of this `SSKRShare`.
-    pub fn data(&self) -> &Bytes {
+    pub fn data(&self) -> &Vec<u8> {
         &self.0
     }
 
@@ -115,7 +113,7 @@ impl CBORTaggedDecodable for SSKRShare {
 /// * `master_secret` - The `Secret` instance to be split into shares.
 pub fn sskr_generate(
     spec: &SSKRSpec,
-    master_secret: &SSKRSecret,
+    master_secret: &SSKRSecret
 ) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let mut rng = SecureRandomNumberGenerator;
     sskr_generate_using(spec, master_secret, &mut rng)
@@ -133,14 +131,18 @@ pub fn sskr_generate(
 pub fn sskr_generate_using(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
-    rng: &mut impl RandomNumberGenerator,
+    rng: &mut impl RandomNumberGenerator
 ) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let shares = sskr::sskr_generate_using(spec, master_secret, rng)?;
-    let shares = shares.into_iter().map(|group| {
-        group.into_iter().map(|share| {
-            SSKRShare::from_data(share)
-        }).collect()
-    }).collect();
+    let shares = shares
+        .into_iter()
+        .map(|group| {
+            group
+                .into_iter()
+                .map(|share| { SSKRShare::from_data(share) })
+                .collect()
+        })
+        .collect();
     Ok(shares)
 }
 
@@ -154,8 +156,10 @@ pub fn sskr_generate_using(
 ///
 /// Returns an error if the shares do not meet the necessary quorum of groups
 /// and member shares within each group.
-pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError>
-{
-    let shares: Vec<Vec<u8>> = shares.iter().map(|share| share.data().to_vec()).collect();
+pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError> {
+    let shares: Vec<Vec<u8>> = shares
+        .iter()
+        .map(|share| share.data().to_vec())
+        .collect();
     sskr::sskr_combine(&shares)
 }

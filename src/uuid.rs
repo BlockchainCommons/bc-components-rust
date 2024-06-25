@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{bail, Result, Error};
+use anyhow::{ bail, Result, Error };
 use dcbor::prelude::*;
 use crate::tags;
 
@@ -15,8 +15,8 @@ impl UUID {
     pub fn new() -> Self {
         let mut uuid = [0u8; Self::UUID_SIZE];
         bc_rand::fill_random_data(&mut uuid);
-        uuid[6] = (uuid[6] & 0x0F) | 0x40; // set version to 4
-        uuid[8] = (uuid[8] & 0x3F) | 0x80; // set variant to 2
+        uuid[6] = (uuid[6] & 0x0f) | 0x40; // set version to 4
+        uuid[8] = (uuid[8] & 0x3f) | 0x80; // set variant to 2
         Self(uuid)
     }
 
@@ -121,14 +121,7 @@ impl From<UUID> for String {
 impl From<&UUID> for String {
     fn from(uuid: &UUID) -> Self {
         let hex = hex::encode(uuid.0);
-        format!(
-            "{}-{}-{}-{}-{}",
-            &hex[0..8],
-            &hex[8..12],
-            &hex[12..16],
-            &hex[16..20],
-            &hex[20..32]
-        )
+        format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32])
     }
 }
 

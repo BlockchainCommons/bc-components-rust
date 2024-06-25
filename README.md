@@ -50,7 +50,7 @@ bc-components = "0.11.0"
 | SealedMessage | A sealed message can be sent to anyone, but only the intended recipient can decrypt it. |
 | Signature | A cryptographic signature. Supports ECDSA and Schnorr. |
 | SigningPublicKey | A public key that can be used for signing. Supports both ECDSA and |Schnorr. |
-| SigningPrivateKey | A private ECDSA key for signing. |
+| SigningPrivateKey | A private ECDSA or SSH key for signing. |
 | SymmetricKey | A symmetric encryption key. |
 | URI | A URI. |
 | UUID | A UUID. |

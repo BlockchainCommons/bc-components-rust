@@ -1,6 +1,6 @@
 use bc_ur::prelude::*;
-use crate::{SigningPublicKey, AgreementPublicKey, tags};
-use anyhow::{bail, Error, Result};
+use crate::{ tags, AgreementPublicKey, Signature, SigningPublicKey, Verifier };
+use anyhow::{ bail, Error, Result };
 
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
@@ -14,7 +14,10 @@ pub struct PublicKeyBase {
 
 impl PublicKeyBase {
     /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `AgreementPublicKey`.
-    pub fn new(signing_public_key: SigningPublicKey, agreement_public_key: AgreementPublicKey) -> Self {
+    pub fn new(
+        signing_public_key: SigningPublicKey,
+        agreement_public_key: AgreementPublicKey
+    ) -> Self {
         Self {
             signing_public_key,
             agreement_public_key,
@@ -29,6 +32,12 @@ impl PublicKeyBase {
     /// Returns the `AgreementPublicKey` of this `PublicKeyBase`.
     pub fn agreement_public_key(&self) -> &AgreementPublicKey {
         &self.agreement_public_key
+    }
+}
+
+impl Verifier for PublicKeyBase {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        self.signing_public_key.verify(signature, message)
     }
 }
 
@@ -66,10 +75,7 @@ impl CBORTaggedEncodable for PublicKeyBase {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_public_key.clone().into();
         let agreement_key_cbor: CBOR = self.agreement_public_key.clone().into();
-        vec![
-            signing_key_cbor,
-            agreement_key_cbor,
-        ].into()
+        vec![signing_key_cbor, agreement_key_cbor].into()
     }
 }
 
@@ -92,7 +98,7 @@ impl CBORTaggedDecodable for PublicKeyBase {
                 let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
                 let agreement_public_key = AgreementPublicKey::try_from(elements[1].clone())?;
                 Ok(Self::new(signing_public_key, agreement_public_key))
-            },
+            }
             _ => bail!("PublicKeyBase must be an array"),
         }
     }
@@ -100,30 +106,32 @@ impl CBORTaggedDecodable for PublicKeyBase {
 
 #[cfg(test)]
 mod tests {
-    use bc_ur::{UREncodable, URDecodable};
-    use bytes::Bytes;
+    use bc_ur::{ UREncodable, URDecodable };
     use hex_literal::hex;
     use dcbor::prelude::*;
 
-    use crate::{PrivateKeyBase, PublicKeyBase};
+    use crate::{ PrivateKeyBase, PublicKeyBase };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
     #[test]
     fn test_private_key_base() {
-        let private_key_base = PrivateKeyBase::from_data(Bytes::from_static(&SEED));
-        let public_key_base = private_key_base.public_key();
+        let private_key_base = PrivateKeyBase::from_data(SEED);
+        let public_key_base = private_key_base.schnorr_public_key_base();
 
-        let cbor: CBOR = public_key_base.clone().into();
+        let cbor = CBOR::from(public_key_base.clone());
 
         let public_key_base_2 = PublicKeyBase::try_from(cbor.clone()).unwrap();
         assert_eq!(public_key_base, public_key_base_2);
 
-        let cbor_2: CBOR = public_key_base_2.into();
+        let cbor_2 = CBOR::from(public_key_base_2);
         assert_eq!(cbor, cbor_2);
 
         let ur = public_key_base.ur_string();
-        assert_eq!(ur, "ur:crypto-pubkeys/lftanshfhdcxzcgtcpytvsgafsondpjkbkoxaopsnniycawpnbnlwsgtregdfhgynyjksrgafmcstansgrhdcxlnfnwfzstovlrdfeuoghvwwyuesbcltsmetbgeurpfoyswfrzojlwdenjzckvadnrndtgsya");
+        assert_eq!(
+            ur,
+            "ur:crypto-pubkeys/lftanshfhdcxzcgtcpytvsgafsondpjkbkoxaopsnniycawpnbnlwsgtregdfhgynyjksrgafmcstansgrhdcxlnfnwfzstovlrdfeuoghvwwyuesbcltsmetbgeurpfoyswfrzojlwdenjzckvadnrndtgsya"
+        );
         assert_eq!(PublicKeyBase::from_ur_string(&ur).unwrap(), public_key_base);
     }
 }

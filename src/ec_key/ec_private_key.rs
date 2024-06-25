@@ -1,4 +1,5 @@
 use anyhow::{bail, Result};
+use bc_rand::RandomNumberGenerator;
 use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
@@ -21,9 +22,25 @@ impl ECPrivateKey {
         Self::from_data(key)
     }
 
-    /// Restores an ECDSA private key from a vector of bytes.
+    /// Restores an ECDSA private key from an array of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
+    }
+
+    /// Restores an ECDSA private key from a reference to an array of bytes.
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
+        let data = data.as_ref();
+        if data.len() != Self::KEY_SIZE {
+            bail!("Invalid EC private key size");
+        }
+        let mut arr = [0u8; Self::KEY_SIZE];
+        arr.copy_from_slice(data);
+        Ok(Self::from_data(arr))
+    }
+
+    /// Derives a new `SigningPrivateKey` from the given key material.
+    pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
+        Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
     }
 }
 
@@ -40,25 +57,21 @@ impl ECPrivateKey {
 
     /// Schnorr signs the given message using this ECDSA private key, the given
     /// tag, and the given random number generator.
-    pub fn schnorr_sign_using<D1, D2>(
+    pub fn schnorr_sign_using(
         &self,
-        message: D1,
-        tag: D2,
-        rng: &mut impl bc_rand::RandomNumberGenerator
-    ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>
-    {
+        message: impl AsRef<[u8]>,
+        tag: impl AsRef<[u8]>,
+        rng: &mut dyn RandomNumberGenerator,
+    ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         bc_crypto::schnorr_sign_using(&self.0, message, tag, rng)
     }
 
     /// Schnorr signs the given message using this ECDSA private key and the given tag.
-    pub fn schnorr_sign<D1, D2>(&self, message: D1, tag: D2) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE]
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>
-    {
+    pub fn schnorr_sign(
+        &self,
+        message: impl AsRef<[u8]>,
+        tag: impl AsRef<[u8]>,
+    ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         let mut rng = bc_rand::SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, tag, &mut rng)
     }
@@ -120,7 +133,7 @@ impl ECKeyBase for ECPrivateKey {
     }
 
     fn data(&self) -> &[u8] {
-        self.into()
+        self.0.as_ref()
     }
 }
 

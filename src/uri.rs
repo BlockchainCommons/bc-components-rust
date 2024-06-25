@@ -1,7 +1,7 @@
 use std::str::FromStr;
 use dcbor::prelude::*;
 use url::Url;
-use anyhow::{bail, Result, Error};
+use anyhow::{ bail, Result, Error };
 
 use crate::tags;
 
