@@ -1,6 +1,6 @@
 [package]
 name = "bc-components"
-version = "0.11.0"
+version = "0.12.0"
 edition = "2021"
 description = "Secure Components for Rust."
 authors = ["Blockchain Commons"]
@@ -12,11 +12,11 @@ categories = ["cryptography"]
 documentation = "https://docs.rs/bc-components"
 
 [dependencies]
-bc-crypto = "^0.3.0"
-bc-rand = "^0.1.0"
-dcbor = "^0.14.0"
-bc-ur = "^0.4.0"
-sskr = "^0.3.0"
+bc-crypto = "^0.4.0"
+bc-rand = "^0.2.0"
+dcbor = "^0.15.0"
+bc-ur = "^0.5.0"
+sskr = "^0.4.0"
 
 hex = "^0.4.3"
 miniz_oxide = "^0.7.1"

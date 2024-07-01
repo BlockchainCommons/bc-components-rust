@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.11.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.12.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.11.0"
+//! bc-components = "0.12.0"
 //! ```
 
 mod digest;
