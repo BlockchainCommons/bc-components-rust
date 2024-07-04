@@ -54,6 +54,10 @@ impl SigningPrivateKey {
         }
     }
 
+    pub fn is_schnorr(&self) -> bool {
+        self.to_schnorr().is_some()
+    }
+
     pub fn to_ecdsa(&self) -> Option<&ECPrivateKey> {
         match self {
             Self::ECDSA(key) => Some(key),
@@ -61,11 +65,19 @@ impl SigningPrivateKey {
         }
     }
 
+    pub fn is_ecdsa(&self) -> bool {
+        self.to_ecdsa().is_some()
+    }
+
     pub fn to_ssh(&self) -> Option<&SSHPrivateKey> {
         match self {
             Self::SSH(key) => Some(key),
             _ => None,
         }
+    }
+
+    pub fn is_ssh(&self) -> bool {
+        self.to_ssh().is_some()
     }
 
     pub fn public_key(&self) -> SigningPublicKey {
