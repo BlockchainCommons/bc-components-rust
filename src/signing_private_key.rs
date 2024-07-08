@@ -1,7 +1,7 @@
 use std::{ cell::RefCell, rc::Rc };
 
 use bc_ur::prelude::*;
-use crate::{ tags, ECKey, ECKeyBase, ECPrivateKey, Signature, Signer, SigningPublicKey };
+use crate::{ tags, ECKey, ECKeyBase, ECPrivateKey, Signature, Signer, SigningPublicKey, Verifier };
 use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use anyhow::{ bail, Result, Error };
 use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
@@ -156,6 +156,13 @@ impl Signer for SigningPrivateKey {
                 }
             }
         }
+    }
+}
+
+impl Verifier for SigningPrivateKey {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        let public_key = self.public_key();
+        public_key.verify(signature, message)
     }
 }
 

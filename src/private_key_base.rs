@@ -22,7 +22,7 @@ use crate::{
     Signature,
     Signer,
     SigningOptions,
-    SigningPrivateKey,
+    SigningPrivateKey, Verifier,
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
@@ -37,6 +37,13 @@ impl Signer for PrivateKeyBase {
     ) -> Result<Signature> {
         let schnorr_key = self.schnorr_signing_private_key();
         schnorr_key.sign_with_options(message, options)
+    }
+}
+
+impl Verifier for PrivateKeyBase {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        let schnorr_key = self.schnorr_signing_private_key();
+        schnorr_key.verify(signature, message)
     }
 }
 
