@@ -60,20 +60,18 @@ impl ECPrivateKey {
     pub fn schnorr_sign_using(
         &self,
         message: impl AsRef<[u8]>,
-        tag: impl AsRef<[u8]>,
         rng: &mut dyn RandomNumberGenerator,
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
-        bc_crypto::schnorr_sign_using(&self.0, message, tag, rng)
+        bc_crypto::schnorr_sign_using(&self.0, message, rng)
     }
 
     /// Schnorr signs the given message using this ECDSA private key and the given tag.
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
-        tag: impl AsRef<[u8]>,
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         let mut rng = bc_rand::SecureRandomNumberGenerator;
-        self.schnorr_sign_using(message, tag, &mut rng)
+        self.schnorr_sign_using(message, &mut rng)
     }
 }
 

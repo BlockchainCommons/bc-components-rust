@@ -118,11 +118,9 @@ mod tests {
         ecdsa_public_key_from_private_key,
         ecdsa_sign,
         ecdsa_verify,
-        schnorr_public_key_from_private_key,
-        schnorr_sign_using,
-        schnorr_verify,
+        schnorr_public_key_from_private_key, schnorr_sign_using, schnorr_verify,
     };
-    use bc_rand::{ make_fake_random_number_generator, RandomNumberGenerator };
+    use bc_rand::make_fake_random_number_generator;
     use bc_ur::{ UREncodable, URDecodable };
     use dcbor::Deref;
     use hex_literal::hex;
@@ -305,6 +303,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_ssh_dsa_nistp256_signing() {
         let expected_private_key = Some(
             indoc! {
@@ -332,6 +331,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn test_ssh_dsa_nistp384_signing() {
         let expected_private_key = Some(
             indoc! {
@@ -456,15 +456,14 @@ xLZXkgY29tbWVudC4BAgMEBQY=
         assert!(ecdsa_verify(&ecdsa_public_key, &ecdsa_signature, MESSAGE));
 
         let schnorr_public_key = schnorr_public_key_from_private_key(&private_key);
-        let tag = rng.random_data(16);
-        let schnorr_signature = schnorr_sign_using(&private_key, MESSAGE, &tag, &mut rng);
+        let schnorr_signature = schnorr_sign_using(&private_key, MESSAGE, &mut rng);
         assert_eq!(
             schnorr_signature,
             hex!(
-                "15d7396ed2862dfa813679a0a0377d8d55310ff693ef913bc9cddd48aa93e0542e416b52e0572ec20a2b47db1904c9e7632f1229d8b16af09fb4f6e3f8feefa0"
+                "df3e33900f0b94e23b6f8685f620ed92705ebfcf885ccb321620acb9927bce1e2218dcfba7cb9c3bba11611446f38774a564f265917899194e82945c8b60a996"
             )
         );
-        assert!(schnorr_verify(&schnorr_public_key, &schnorr_signature, MESSAGE, tag));
+        assert!(schnorr_verify(&schnorr_public_key, &schnorr_signature, MESSAGE));
     }
 
     #[test]

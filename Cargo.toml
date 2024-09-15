@@ -12,7 +12,7 @@ categories = ["cryptography"]
 documentation = "https://docs.rs/bc-components"
 
 [dependencies]
-bc-crypto = "^0.4.0"
+bc-crypto = "^0.5.0"
 bc-rand = "^0.2.0"
 dcbor = "^0.15.0"
 bc-ur = "^0.5.0"
@@ -26,6 +26,7 @@ url = "^2.4.1"
 ssh-key = { version = "=0.6.6", default-features = false, features = ["dsa", "ecdsa", "rand_core", "std", "crypto"] }
 zeroize = { version = "1.8.1", default-features = false, features = ["alloc", "zeroize_derive"] }
 rand_core = "0.6.4"
+frost-secp256k1-tr = { git = "https://github.com/zebra-lucky/frost", rev = "d580241e8561ed145a464e6671a511d5a8c218f8" }
 
 [dev-dependencies]
 hex-literal = "^0.4.1"

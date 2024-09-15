@@ -48,12 +48,16 @@ bc-components = "0.12.2"
 | Salt | Random salt used to decorrelate other information. |
 | SchnorrPublicKey | A Schnorr (x-only) elliptic curve public key. |
 | SealedMessage | A sealed message can be sent to anyone, but only the intended recipient can decrypt it. |
-| Signature | A cryptographic signature. Supports ECDSA and Schnorr. |
-| SigningPublicKey | A public key that can be used for signing. Supports both ECDSA and |Schnorr. |
-| SigningPrivateKey | A private ECDSA or SSH key for signing. |
+| Signature | A cryptographic signature. Supports Schnorr (BIP-340), ECDSA, and SSH. |
+| SigningPublicKey | A public key that can be used for signing. Supports Schnorr, ECDSA, and SSH. |
+| SigningPrivateKey | A private Schnorr, ECDSA, or SSH key for signing. |
 | SymmetricKey | A symmetric encryption key. |
 | URI | A URI. |
 | UUID | A UUID. |
+
+## Version History
+
+- **0.5.0, September 14, 2024** - BREAKING CHANGE: Removed pre-hashing (tagged hash) support for Schnorr signatures, making them BIP-340 compliant. Schnorr signatures produced by previous versions of this crate will now only verify if you pre-hash the image yourself using the BIP-340 method and the tag you previously used, if any.
 
 ## Status - Community Review
 

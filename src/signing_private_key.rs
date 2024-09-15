@@ -14,7 +14,6 @@ use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
 #[derive(Clone)]
 pub enum SigningOptions {
     Schnorr {
-        tag: Vec<u8>,
         rng: Rc<RefCell<dyn RandomNumberGenerator>>,
     },
     Ssh {
@@ -102,13 +101,11 @@ impl SigningPrivateKey {
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
-        tag: impl AsRef<[u8]>,
         rng: Rc<RefCell<dyn RandomNumberGenerator>>
     ) -> Result<Signature> {
         if let Some(private_key) = self.to_schnorr() {
-            let tag_copy = tag.as_ref().to_vec();
-            let sig = private_key.schnorr_sign_using(message, tag, &mut *rng.borrow_mut());
-            Ok(Signature::schnorr_from_data(sig, tag_copy))
+            let sig = private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
+            Ok(Signature::schnorr_from_data(sig))
         } else {
             bail!("Invalid key type for Schnorr signing");
         }
@@ -137,12 +134,11 @@ impl Signer for SigningPrivateKey {
     ) -> Result<Signature> {
         match self {
             Self::Schnorr(_) => {
-                if let Some(SigningOptions::Schnorr { tag, rng }) = options {
-                    self.schnorr_sign(message, tag, rng)
+                if let Some(SigningOptions::Schnorr { rng }) = options {
+                    self.schnorr_sign(message, rng)
                 } else {
                     self.schnorr_sign(
                         message,
-                        [],
                         Rc::new(RefCell::new(SecureRandomNumberGenerator))
                     )
                 }
