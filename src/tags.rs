@@ -22,6 +22,7 @@ use dcbor::prelude::*;
 macro_rules! tag_constant {
     ($const_name:ident, $value:expr, $name:expr) => {
         paste! {
+            #[allow(unused)]
             pub const [<$const_name _VALUE>]: u64 = $value;
         }
         pub const $const_name: Tag = Tag::new_with_static_name($value, $name);
