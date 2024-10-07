@@ -13,16 +13,7 @@ use ssh_key::Algorithm as SSHAlgorithm;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags,
-    AgreementPrivateKey,
-    ECPrivateKey,
-    HKDFRng,
-    PrivateKeyDataProvider,
-    PublicKeyBase,
-    Signature,
-    Signer,
-    SigningOptions,
-    SigningPrivateKey, Verifier,
+    tags, AgreementPrivateKey, ECPrivateKey, Ed25519PrivateKey, HKDFRng, PrivateKeyDataProvider, PublicKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
@@ -87,6 +78,11 @@ impl PrivateKeyBase {
     /// Derive a new Schnorr `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn schnorr_signing_private_key(&self) -> SigningPrivateKey {
         SigningPrivateKey::new_schnorr(ECPrivateKey::derive_from_key_material(&self.0))
+    }
+
+    /// Derive a new Ed25519 `SigningPrivateKey` from this `PrivateKeyBase`.
+    pub fn ed25519_signing_private_key(&self) -> SigningPrivateKey {
+        SigningPrivateKey::new_ed25519(Ed25519PrivateKey::derive_from_key_material(&self.0))
     }
 
     /// Derive a new SSH `SigningPrivateKey` from this `PrivateKeyBase`.
