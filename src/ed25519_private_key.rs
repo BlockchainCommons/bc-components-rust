@@ -64,6 +64,10 @@ impl Ed25519PrivateKey {
     pub fn public_key(&self) -> Ed25519PublicKey {
         bc_crypto::ed25519_public_key_from_private_key(self.into()).into()
     }
+
+    pub fn sign(&self, message: impl AsRef<[u8]>) -> [u8; bc_crypto::ED25519_SIGNATURE_SIZE] {
+        bc_crypto::ed25519_sign(&self.0, message.as_ref())
+    }
 }
 
 impl From<[u8; ED25519_PRIVATE_KEY_SIZE]> for Ed25519PrivateKey {

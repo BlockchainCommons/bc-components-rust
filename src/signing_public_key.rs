@@ -1,4 +1,4 @@
-use crate::{ tags, ECKeyBase, ECPublicKey, SchnorrPublicKey, Signature, Verifier };
+use crate::{ tags, ECKeyBase, ECPublicKey, Ed25519PublicKey, SchnorrPublicKey, Signature, Verifier };
 use anyhow::{ bail, Result, Error };
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
@@ -8,6 +8,7 @@ use ssh_key::public::PublicKey as SSHPublicKey;
 pub enum SigningPublicKey {
     Schnorr(SchnorrPublicKey),
     ECDSA(ECPublicKey),
+    Ed25519(Ed25519PublicKey),
     SSH(SSHPublicKey),
 }
 
@@ -20,6 +21,11 @@ impl SigningPublicKey {
     /// Restores a `SigningPublicKey` from an `ECPublicKey`.
     pub fn from_ecdsa(key: ECPublicKey) -> Self {
         Self::ECDSA(key)
+    }
+
+    /// Restores a `SigningPublicKey` from an `Ed25519PublicKey`.
+    pub fn from_ed25519(key: Ed25519PublicKey) -> Self {
+        Self::Ed25519(key)
     }
 
     /// Restores a `SigningPublicKey` from an SSH public key.
@@ -73,6 +79,12 @@ impl Verifier for SigningPublicKey {
                     _ => false,
                 }
             }
+            SigningPublicKey::Ed25519(key) => {
+                match signature {
+                    Signature::Ed25519(sig) => key.verify(sig, message),
+                    _ => false,
+                }
+            }
             SigningPublicKey::SSH(key) => {
                 match signature {
                     Signature::SSH(sig) =>
@@ -109,6 +121,9 @@ impl CBORTaggedEncodable for SigningPublicKey {
             SigningPublicKey::ECDSA(key) => {
                 vec![(1).into(), CBOR::to_byte_string(key.data())].into()
             }
+            SigningPublicKey::Ed25519(key) => {
+                vec![(2).into(), CBOR::to_byte_string(key.data())].into()
+            }
             SigningPublicKey::SSH(key) => {
                 let string = key.to_openssh().unwrap();
                 CBOR::to_tagged_value(tags::SSH_TEXT_PUBLIC_KEY, string)
@@ -139,6 +154,10 @@ impl CBORTaggedDecodable for SigningPublicKey {
                     if let CBORCase::Unsigned(1) = ele_0 {
                         if let CBORCase::ByteString(data) = ele_1 {
                             return Ok(Self::ECDSA(ECPublicKey::from_data_ref(data)?));
+                        }
+                    } else if let CBORCase::Unsigned(2) = ele_0 {
+                        if let CBORCase::ByteString(data) = ele_1 {
+                            return Ok(Self::Ed25519(Ed25519PublicKey::from_data_ref(data)?));
                         }
                     }
                 }

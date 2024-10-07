@@ -1,7 +1,7 @@
 use std::{ cell::RefCell, rc::Rc };
 
 use bc_ur::prelude::*;
-use crate::{ tags, ECKey, ECPrivateKey, Signature, Signer, SigningPublicKey, Verifier };
+use crate::{ tags, ECKey, ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningPublicKey, Verifier };
 use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use anyhow::{ bail, Result, Error };
 use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
@@ -30,6 +30,7 @@ pub enum SigningOptions {
 pub enum SigningPrivateKey {
     Schnorr(ECPrivateKey),
     ECDSA(ECPrivateKey),
+    Ed25519(Ed25519PrivateKey),
     SSH(Box<SSHPrivateKey>),
 }
 
@@ -40,6 +41,10 @@ impl SigningPrivateKey {
 
     pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
         Self::ECDSA(key)
+    }
+
+    pub const fn new_ed25519(key: Ed25519PrivateKey) -> Self {
+        Self::Ed25519(key)
     }
 
     pub fn new_ssh(key: SSHPrivateKey) -> Self {
@@ -83,13 +88,17 @@ impl SigningPrivateKey {
         match self {
             Self::Schnorr(key) => { SigningPublicKey::from_schnorr(key.schnorr_public_key()) }
             Self::ECDSA(key) => { SigningPublicKey::from_ecdsa(key.public_key()) }
+            Self::Ed25519(key) => { SigningPublicKey::from_ed25519(key.public_key()) }
             Self::SSH(key) => { SigningPublicKey::from_ssh(key.public_key().clone()) }
         }
     }
 }
 
 impl SigningPrivateKey {
-    fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
+    fn ecdsa_sign(
+        &self,
+        message: impl AsRef<[u8]>
+    ) -> Result<Signature> {
         if let Some(private_key) = self.to_ecdsa() {
             let sig = private_key.ecdsa_sign(message);
             Ok(Signature::ecdsa_from_data(sig))
@@ -108,6 +117,18 @@ impl SigningPrivateKey {
             Ok(Signature::schnorr_from_data(sig))
         } else {
             bail!("Invalid key type for Schnorr signing");
+        }
+    }
+
+    pub fn ed25519_sign(
+        &self,
+        message: impl AsRef<[u8]>
+    ) -> Result<Signature> {
+        if let Self::Ed25519(key) = self {
+            let sig = key.sign(message.as_ref());
+            Ok(Signature::ed25519_from_data(sig))
+        } else {
+            bail!("Invalid key type for Ed25519 signing");
         }
     }
 
@@ -144,6 +165,7 @@ impl Signer for SigningPrivateKey {
                 }
             }
             Self::ECDSA(_) => { self.ecdsa_sign(message) }
+            Self::Ed25519(_) => { self.ed25519_sign(message) }
             Self::SSH(_) => {
                 if let Some(SigningOptions::Ssh { namespace, hash_alg }) = options {
                     self.ssh_sign(message, namespace, hash_alg)
@@ -181,6 +203,9 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             SigningPrivateKey::ECDSA(key) => {
                 vec![(1).into(), CBOR::to_byte_string(key.data())].into()
             }
+            SigningPrivateKey::Ed25519(key) => {
+                vec![(2).into(), CBOR::to_byte_string(key.data())].into()
+            }
             SigningPrivateKey::SSH(key) => {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::SSH_TEXT_PRIVATE_KEY, (*string).clone())
@@ -199,8 +224,6 @@ impl TryFrom<CBOR> for SigningPrivateKey {
 
 impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
-        // let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        // Self::from_data_ref(&data)
         match untagged_cbor.into_case() {
             CBORCase::ByteString(data) => { Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)) }
             CBORCase::Array(mut elements) => {
@@ -209,6 +232,10 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                     let data = elements.remove(0).try_into_byte_string()?;
                     let key = ECPrivateKey::from_data_ref(data)?;
                     return Ok(Self::ECDSA(key));
+                } else if tag == 2 {
+                    let data = elements.remove(0).try_into_byte_string()?;
+                    let key = Ed25519PrivateKey::from_data_ref(data)?;
+                    return Ok(Self::Ed25519(key));
                 }
                 bail!("Invalid tag for SigningPrivateKey");
             }

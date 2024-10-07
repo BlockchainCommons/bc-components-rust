@@ -46,6 +46,10 @@ impl Signature {
         Ok(Self::ecdsa_from_data(arr))
     }
 
+    pub fn ed25519_from_data(data: [u8; ED25519_SIGNATURE_SIZE]) -> Self {
+        Self::Ed25519(data)
+    }
+
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_SIGNATURE_SIZE {
@@ -185,7 +189,7 @@ impl CBORTaggedDecodable for Signature {
 mod tests {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::{ ECPrivateKey, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier };
+    use crate::{ ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier };
     use bc_rand::make_fake_random_number_generator;
     use dcbor::prelude::*;
     use hex_literal::hex;
@@ -198,6 +202,12 @@ mod tests {
     );
     const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_schnorr(
         ECPrivateKey::from_data(
+            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
+        )
+    );
+
+    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ed25519(
+        Ed25519PrivateKey::from_data(
             hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
         )
     );
@@ -274,5 +284,18 @@ mod tests {
         );
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
+    }
+
+    #[test]
+    fn test_ed25519_signing() {
+        let public_key = ED25519_SIGNING_PRIVATE_KEY.public_key();
+        let signature = ED25519_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
+
+        assert!(public_key.verify(&signature, MESSAGE));
+        assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
+
+        let another_signature = ED25519_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
+        assert_eq!(signature, another_signature);
+        assert!(public_key.verify(&another_signature, MESSAGE));
     }
 }
