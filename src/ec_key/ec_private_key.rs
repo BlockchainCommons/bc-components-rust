@@ -1,39 +1,46 @@
 use anyhow::{bail, Result};
-use bc_rand::RandomNumberGenerator;
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
 
+pub const ECDSA_PRIVATE_KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
+
 /// An elliptic curve digital signature algorithm (ECDSA) private key.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ECPrivateKey([u8; Self::KEY_SIZE]);
+pub struct ECPrivateKey([u8; ECDSA_PRIVATE_KEY_SIZE]);
 
 impl ECPrivateKey {
     /// Creates a new random ECDSA private key.
     pub fn new() -> Self {
-        let mut rng = bc_rand::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         Self::new_using(&mut rng)
     }
 
     /// Creates a new random ECDSA private key using the given random number generator.
-    pub fn new_using(rng: &mut impl bc_rand::RandomNumberGenerator) -> Self {
-        let mut key = [0u8; Self::KEY_SIZE];
+    pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
+        let mut key = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         rng.fill_random_data(&mut key);
         Self::from_data(key)
     }
 
+    /// Returns the ECDSA private key as an array of bytes.
+    pub fn data(&self) -> &[u8; ECDSA_PRIVATE_KEY_SIZE] {
+        &self.0
+    }
+
     /// Restores an ECDSA private key from an array of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
+    pub const fn from_data(data: [u8; ECDSA_PRIVATE_KEY_SIZE]) -> Self {
         Self(data)
     }
 
     /// Restores an ECDSA private key from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
+        if data.len() != ECDSA_PRIVATE_KEY_SIZE {
             bail!("Invalid EC private key size");
         }
-        let mut arr = [0u8; Self::KEY_SIZE];
+        let mut arr = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         arr.copy_from_slice(data);
         Ok(Self::from_data(arr))
     }
@@ -70,13 +77,13 @@ impl ECPrivateKey {
         &self,
         message: impl AsRef<[u8]>,
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
-        let mut rng = bc_rand::SecureRandomNumberGenerator;
+        let mut rng = SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, &mut rng)
     }
 }
 
-impl From<[u8; 32]> for ECPrivateKey {
-    fn from(data: [u8; 32]) -> Self {
+impl From<[u8; ECDSA_PRIVATE_KEY_SIZE]> for ECPrivateKey {
+    fn from(data: [u8; ECDSA_PRIVATE_KEY_SIZE]) -> Self {
         Self::from_data(data)
     }
 }
@@ -105,7 +112,7 @@ impl Default for ECPrivateKey {
     }
 }
 
-impl<'a> From<&'a ECPrivateKey> for &'a [u8; ECPrivateKey::KEY_SIZE] {
+impl<'a> From<&'a ECPrivateKey> for &'a [u8; ECDSA_PRIVATE_KEY_SIZE] {
     fn from(value: &'a ECPrivateKey) -> Self {
         &value.0
     }
@@ -122,10 +129,10 @@ impl ECKeyBase for ECPrivateKey {
 
     fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
+        if data.len() != ECDSA_PRIVATE_KEY_SIZE {
             bail!("Invalid EC private key size");
         }
-        let mut key = [0u8; Self::KEY_SIZE];
+        let mut key = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         key.copy_from_slice(data);
         Ok(Self(key))
     }

@@ -3,19 +3,20 @@ use bc_crypto::SCHNORR_SIGNATURE_SIZE;
 
 use crate::ECKeyBase;
 
+pub const SCHNORR_PUBLIC_KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 
 /// A Schnorr (x-only) elliptic curve public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct SchnorrPublicKey([u8; Self::KEY_SIZE]);
+pub struct SchnorrPublicKey([u8; SCHNORR_PUBLIC_KEY_SIZE]);
 
 impl SchnorrPublicKey {
-    /// Restores a Schnorr public key from a vector of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
+    /// Restores a Schnorr public key from an array of bytes.
+    pub const fn from_data(data: [u8; SCHNORR_PUBLIC_KEY_SIZE]) -> Self {
         Self(data)
     }
 
-    /// Returns the Schnorr public key as a vector of bytes.
-    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
+    /// Returns the Schnorr public key from an array of bytes.
+    pub fn data(&self) -> &[u8; SCHNORR_PUBLIC_KEY_SIZE] {
         &self.0
     }
 }
@@ -37,8 +38,8 @@ impl<'a> From<&'a SchnorrPublicKey> for &'a [u8; SchnorrPublicKey::KEY_SIZE] {
     }
 }
 
-impl From<[u8; Self::KEY_SIZE]> for SchnorrPublicKey {
-    fn from(value: [u8; Self::KEY_SIZE]) -> Self {
+impl From<[u8; SCHNORR_PUBLIC_KEY_SIZE]> for SchnorrPublicKey {
+    fn from(value: [u8; SCHNORR_PUBLIC_KEY_SIZE]) -> Self {
         Self::from_data(value)
     }
 }
@@ -66,10 +67,10 @@ impl ECKeyBase for SchnorrPublicKey {
 
     fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
+        if data.len() != SCHNORR_PUBLIC_KEY_SIZE {
             bail!("invalid Schnorr public key size");
         }
-        let mut key = [0u8; Self::KEY_SIZE];
+        let mut key = [0u8; SCHNORR_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);
         Ok(Self(key))
     }

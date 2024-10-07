@@ -4,23 +4,27 @@ use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags};
 
+pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
+
 /// A compressed elliptic curve digital signature algorithm (ECDSA) compressed public key.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ECPublicKey([u8; Self::KEY_SIZE]);
+pub struct ECPublicKey([u8; ECDSA_PUBLIC_KEY_SIZE]);
 
 impl ECPublicKey {
-    /// Restores an ECDSA public key from a vector of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
+    /// Restores an ECDSA public key from an array of bytes.
+    pub const fn from_data(data: [u8; ECDSA_PUBLIC_KEY_SIZE]) -> Self {
         Self(data)
+    }
+
+    /// Returns the ECDSA public key as an array of bytes.
+    pub fn data(&self) -> &[u8; ECDSA_PUBLIC_KEY_SIZE] {
+        &self.0
     }
 }
 
 impl ECPublicKey {
     /// Verifies the given ECDSA signature for the given message using this ECDSA public key.
-    pub fn verify<D>(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: D) -> bool
-    where
-        D: AsRef<[u8]>,
-    {
+    pub fn verify(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: impl AsRef<[u8]>) -> bool {
         bc_crypto::ecdsa_verify(&self.0, signature, message)
     }
 }
@@ -42,10 +46,10 @@ impl ECKeyBase for ECPublicKey {
 
     fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
+        if data.len() != ECDSA_PUBLIC_KEY_SIZE {
             bail!("Invalid ECDSA public key size");
         }
-        let mut key = [0u8; Self::KEY_SIZE];
+        let mut key = [0u8; ECDSA_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);
         Ok(Self(key))
     }
@@ -73,8 +77,8 @@ impl<'a> From<&'a ECPublicKey> for &'a [u8; ECPublicKey::KEY_SIZE] {
     }
 }
 
-impl From<[u8; Self::KEY_SIZE]> for ECPublicKey {
-    fn from(value: [u8; Self::KEY_SIZE]) -> Self {
+impl From<[u8; ECDSA_PUBLIC_KEY_SIZE]> for ECPublicKey {
+    fn from(value: [u8; ECDSA_PUBLIC_KEY_SIZE]) -> Self {
         Self::from_data(value)
     }
 }

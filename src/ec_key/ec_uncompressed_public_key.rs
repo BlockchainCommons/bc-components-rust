@@ -3,14 +3,16 @@ use bc_ur::prelude::*;
 
 use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
 
+pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
+
 /// A compressed elliptic curve digital signature algorithm (ECDSA) uncompressed public key.
 ///
 /// This is considered a "legacy" key type, and is not recommended for use.
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct ECUncompressedPublicKey([u8; Self::KEY_SIZE]);
+pub struct ECUncompressedPublicKey([u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]);
 
 impl ECUncompressedPublicKey {
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
+    pub const fn from_data(data: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]) -> Self {
         Self(data)
     }
 }
@@ -32,10 +34,10 @@ impl ECKeyBase for ECUncompressedPublicKey {
 
     fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
         let data = data.as_ref();
-        if data.len() != Self::KEY_SIZE {
+        if data.len() != ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE {
             bail!("Invalid ECDSA uncompressed public key size");
         }
-        let mut key = [0u8; Self::KEY_SIZE];
+        let mut key = [0u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);
         Ok(Self(key))
     }
@@ -57,8 +59,8 @@ impl ECPublicKeyBase for ECUncompressedPublicKey {
     }
 }
 
-impl From<[u8; Self::KEY_SIZE]> for ECUncompressedPublicKey {
-    fn from(value: [u8; Self::KEY_SIZE]) -> Self {
+impl From<[u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]> for ECUncompressedPublicKey {
+    fn from(value: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]) -> Self {
         Self::from_data(value)
     }
 }

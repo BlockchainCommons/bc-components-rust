@@ -59,7 +59,7 @@ impl PrivateKeyBase {
         Self(data.into())
     }
 
-    /// Restores a `PrivateKeyBase` from an optional reference to a vector of bytes.
+    /// Restores a `PrivateKeyBase` from an optional reference to an array of bytes.
     ///
     /// If the data is `None`, a new random `PrivateKeyBase` is generated.
     pub fn from_optional_data(data: Option<impl Into<Vec<u8>>>) -> Self {
@@ -228,7 +228,7 @@ mod tests {
     use bc_ur::{ UREncodable, URDecodable };
     use hex_literal::hex;
 
-    use crate::{ ECKeyBase, PrivateKeyBase };
+    use crate::PrivateKeyBase;
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 

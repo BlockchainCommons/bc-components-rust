@@ -1,4 +1,4 @@
-use bc_crypto::{ SCHNORR_SIGNATURE_SIZE, ECDSA_SIGNATURE_SIZE };
+use bc_crypto::{ ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE };
 use bc_ur::prelude::*;
 use ssh_key::{ LineEnding, SshSig };
 use crate::tags;
@@ -9,6 +9,7 @@ use anyhow::{ bail, Result, Error };
 pub enum Signature {
     Schnorr([u8; SCHNORR_SIGNATURE_SIZE]),
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
+    Ed25519([u8; ED25519_SIGNATURE_SIZE]),
     SSH(SshSig),
 }
 
@@ -18,7 +19,7 @@ impl Signature {
         Self::Schnorr(data)
     }
 
-    /// Restores a Schnorr signature from a vector of bytes.
+    /// Restores a Schnorr signature from an array of bytes.
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
@@ -29,12 +30,12 @@ impl Signature {
         Ok(Self::schnorr_from_data(arr))
     }
 
-    /// Restores an ECDSA signature from a vector of bytes.
+    /// Restores an ECDSA signature from an array of bytes.
     pub fn ecdsa_from_data(data: [u8; ECDSA_SIGNATURE_SIZE]) -> Self {
         Self::ECDSA(data)
     }
 
-    /// Restores an ECDSA signature from a vector of bytes.
+    /// Restores an ECDSA signature from an array of bytes.
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
@@ -43,6 +44,16 @@ impl Signature {
         let mut arr = [0u8; ECDSA_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
         Ok(Self::ecdsa_from_data(arr))
+    }
+
+    pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
+        let data = data.as_ref();
+        if data.len() != ED25519_SIGNATURE_SIZE {
+            bail!("Invalid Ed25519 signature size");
+        }
+        let mut arr = [0u8; ED25519_SIGNATURE_SIZE];
+        arr.copy_from_slice(data);
+        Ok(Self::Ed25519(arr))
     }
 
     /// Restores an SSH signature from a `SshSig`.
@@ -81,6 +92,9 @@ impl std::fmt::Debug for Signature {
             Signature::ECDSA(data) => {
                 f.debug_struct("ECDSA").field("data", &hex::encode(data)).finish()
             }
+            Signature::Ed25519(data) => {
+                f.debug_struct("Ed25519").field("data", &hex::encode(data)).finish()
+            }
             Signature::SSH(sig) => { f.debug_struct("SSH").field("sig", sig).finish() }
         }
     }
@@ -109,6 +123,7 @@ impl CBORTaggedEncodable for Signature {
         match self {
             Signature::Schnorr(data) => CBOR::to_byte_string(data),
             Signature::ECDSA(data) => vec![(1).into(), CBOR::to_byte_string(data)].into(),
+            Signature::Ed25519(data) => vec![(2).into(), CBOR::to_byte_string(data)].into(),
             Signature::SSH(sig) => {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::SSH_TEXT_SIGNATURE, pem)
@@ -141,6 +156,11 @@ impl CBORTaggedDecodable for Signature {
                         CBORCase::Unsigned(1) => {
                             if let CBORCase::ByteString(data) = ele_1 {
                                 return Self::ecdsa_from_data_ref(data);
+                            }
+                        }
+                        CBORCase::Unsigned(2) => {
+                            if let CBORCase::ByteString(data) = ele_1 {
+                                return Self::ed25519_from_data_ref(data);
                             }
                         }
                         _ => (),

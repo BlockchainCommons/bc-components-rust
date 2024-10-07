@@ -11,7 +11,7 @@ pub use sskr::{ Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecr
 pub struct SSKRShare(Vec<u8>);
 
 impl SSKRShare {
-    /// Restores an `SSKRShare` from a vector of bytes.
+    /// Restores an `SSKRShare` from an array of bytes.
     pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
         Self(data.into())
     }

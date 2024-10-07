@@ -1,7 +1,7 @@
 use std::{ cell::RefCell, rc::Rc };
 
 use bc_ur::prelude::*;
-use crate::{ tags, ECKey, ECKeyBase, ECPrivateKey, Signature, Signer, SigningPublicKey, Verifier };
+use crate::{ tags, ECKey, ECPrivateKey, Signature, Signer, SigningPublicKey, Verifier };
 use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use anyhow::{ bail, Result, Error };
 use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
