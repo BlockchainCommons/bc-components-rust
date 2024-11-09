@@ -59,7 +59,7 @@ impl Digest {
     }
 
     /// Get the data of the digest.
-    pub fn data(&self) -> &[u8; 32] {
+    pub fn data(&self) -> &[u8; Self::DIGEST_SIZE] {
         self.into()
     }
 
@@ -188,7 +188,7 @@ impl CBORTaggedDecodable for Digest {
     }
 }
 
-// Convert from a reference to a byte vector to an instance.
+// Convert from an instance reference to an instance.
 impl From<&Digest> for Digest {
     fn from(digest: &Digest) -> Self {
         digest.clone()

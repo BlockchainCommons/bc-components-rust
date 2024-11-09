@@ -88,6 +88,7 @@ tag_constant!(SIGNATURE, 40020, "signature");
 tag_constant!(SIGNING_PRIVATE_KEY, 40021, "signing-private-key");
 tag_constant!(SIGNING_PUBLIC_KEY, 40022, "signing-public-key");
 tag_constant!(SYMMETRIC_KEY, 40023, "crypto-key");
+tag_constant!(XID, 40024, "xid");
 
 // Bitcoin-related
 
@@ -194,6 +195,7 @@ impl LazyTagsStore {
                 SSKR_SHARE,
                 SSKR_SHARE_V1,
                 SYMMETRIC_KEY,
+                XID,
                 USE_INFO,
                 USE_INFO_V1,
             ]);

@@ -83,7 +83,8 @@ mod ec_key;
 pub use ec_key::*;
 
 /// CBOR Tags used or defined by this crate.
-pub mod tags;
+pub mod tags_registry;
+pub use tags_registry as tags;
 pub use tags::GLOBAL_TAGS;
 
 mod private_key_data_provider;
@@ -97,6 +98,9 @@ pub use public_key_base::PublicKeyBase;
 
 mod sealed_message;
 pub use sealed_message::SealedMessage;
+
+mod xid;
+pub use xid::XID;
 
 mod sskr_mod;
 pub use sskr_mod::{
