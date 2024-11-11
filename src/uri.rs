@@ -6,7 +6,7 @@ use anyhow::{ bail, Result, Error };
 use crate::tags;
 
 /// A URI.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub struct URI(String);
 
 impl URI {

@@ -5,7 +5,7 @@ use crate::{tags, Digest, PrivateKeyBase, PublicKeyBase, SigningPrivateKey, Sign
 use bc_ur::prelude::*;
 
 /// A XID (eXtensible IDentifier).
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Hash)]
 pub struct XID([u8; Self::XID_SIZE]);
 
 impl XID {
