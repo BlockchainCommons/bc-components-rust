@@ -28,175 +28,175 @@ use dcbor::prelude::*;
 // The new leaf tag is #6.201, but we will still recognize #6.24 for backwards
 // compatibility.
 
-// pub const TAG_DATE: u64 = 1; // Declared in dcbor
+// pub const TAG_DATE: TagValue = 1; // Declared in dcbor
 
-pub const TAG_URI: u64 = 32;
-pub const TAG_UUID: u64 = 37;
+pub const TAG_URI: TagValue = 32;
+pub const TAG_UUID: TagValue = 37;
 
-pub const TAG_ENCODED_CBOR: u64 = 24;
+pub const TAG_ENCODED_CBOR: TagValue = 24;
 
-pub const TAG_ENVELOPE: u64 = 200;
-pub const TAG_LEAF: u64 = 201;
+pub const TAG_ENVELOPE: TagValue = 200;
+pub const TAG_LEAF: TagValue = 201;
 
 // Envelope extension tags
-pub const TAG_KNOWN_VALUE: u64 = 40000;
-pub const TAG_DIGEST: u64 = 40001;
-pub const TAG_ENCRYPTED: u64 = 40002;
-pub const TAG_COMPRESSED: u64 = 40003;
+pub const TAG_KNOWN_VALUE: TagValue = 40000;
+pub const TAG_DIGEST: TagValue = 40001;
+pub const TAG_ENCRYPTED: TagValue = 40002;
+pub const TAG_COMPRESSED: TagValue = 40003;
 
 // Tags for subtypes specific to Distributed Function Calls.
-pub const TAG_REQUEST: u64 = 40004;
-pub const TAG_RESPONSE: u64 = 40005;
-pub const TAG_FUNCTION: u64 = 40006;
-pub const TAG_PARAMETER: u64 = 40007;
-pub const TAG_PLACEHOLDER: u64 = 40008;
-pub const TAG_REPLACEMENT: u64 = 40009;
+pub const TAG_REQUEST: TagValue = 40004;
+pub const TAG_RESPONSE: TagValue = 40005;
+pub const TAG_FUNCTION: TagValue = 40006;
+pub const TAG_PARAMETER: TagValue = 40007;
+pub const TAG_PLACEHOLDER: TagValue = 40008;
+pub const TAG_REPLACEMENT: TagValue = 40009;
 
 // These are the utility structures we've identified and speced related to other
 // various applications that aren't specifically Bitcoin-related.
 
-pub const TAG_SEED_V1: u64 = 300; // Fixed
-pub const TAG_EC_KEY_V1: u64 = 306; // Fixed
-pub const TAG_SSKR_SHARE_V1: u64 = 309; // Fixed
+pub const TAG_SEED_V1: TagValue = 300; // Fixed
+pub const TAG_EC_KEY_V1: TagValue = 306; // Fixed
+pub const TAG_SSKR_SHARE_V1: TagValue = 309; // Fixed
 
-pub const TAG_SEED: u64 = 40300;
-pub const TAG_EC_KEY: u64 = 40306;
-pub const TAG_SSKR_SHARE: u64 = 40309;
+pub const TAG_SEED: TagValue = 40300;
+pub const TAG_EC_KEY: TagValue = 40306;
+pub const TAG_SSKR_SHARE: TagValue = 40309;
 
-pub const TAG_AGREEMENT_PRIVATE_KEY: u64 = 40010;
-pub const TAG_AGREEMENT_PUBLIC_KEY: u64 = 40011;
-pub const TAG_ARID: u64 = 40012;
-pub const TAG_NONCE: u64 = 40014;
-pub const TAG_PASSWORD: u64 = 40015;
-pub const TAG_PRIVATE_KEY_BASE: u64 = 40016;
-pub const TAG_PUBLIC_KEY_BASE: u64 = 40017;
-pub const TAG_SALT: u64 = 40018;
-pub const TAG_SEALED_MESSAGE: u64 = 40019;
-pub const TAG_SIGNATURE: u64 = 40020;
-pub const TAG_SIGNING_PRIVATE_KEY: u64 = 40021;
-pub const TAG_SIGNING_PUBLIC_KEY: u64 = 40022;
-pub const TAG_SYMMETRIC_KEY: u64 = 40023;
-pub const TAG_XID: u64 = 40024;
+pub const TAG_AGREEMENT_PRIVATE_KEY: TagValue = 40010;
+pub const TAG_AGREEMENT_PUBLIC_KEY: TagValue = 40011;
+pub const TAG_ARID: TagValue = 40012;
+pub const TAG_NONCE: TagValue = 40014;
+pub const TAG_PASSWORD: TagValue = 40015;
+pub const TAG_PRIVATE_KEY_BASE: TagValue = 40016;
+pub const TAG_PUBLIC_KEY_BASE: TagValue = 40017;
+pub const TAG_SALT: TagValue = 40018;
+pub const TAG_SEALED_MESSAGE: TagValue = 40019;
+pub const TAG_SIGNATURE: TagValue = 40020;
+pub const TAG_SIGNING_PRIVATE_KEY: TagValue = 40021;
+pub const TAG_SIGNING_PUBLIC_KEY: TagValue = 40022;
+pub const TAG_SYMMETRIC_KEY: TagValue = 40023;
+pub const TAG_XID: TagValue = 40024;
 
 // Bitcoin-related
 
-pub const TAG_HDKEY_V1: u64 = 303; // Fixed
-pub const TAG_DERIVATION_PATH_V1: u64 = 304; // Fixed
-pub const TAG_USE_INFO_V1: u64 = 305; // Fixed
-pub const TAG_ADDRESS_V1: u64 = 307; // Fixed
-pub const TAG_OUTPUT_DESCRIPTOR_V1: u64 = 307; // Fixed
-pub const TAG_PSBT_V1: u64 = 310; // Fixed
-pub const TAG_ACCOUNT_V1: u64 = 311; // Fixed
+pub const TAG_HDKEY_V1: TagValue = 303; // Fixed
+pub const TAG_DERIVATION_PATH_V1: TagValue = 304; // Fixed
+pub const TAG_USE_INFO_V1: TagValue = 305; // Fixed
+pub const TAG_ADDRESS_V1: TagValue = 307; // Fixed
+pub const TAG_OUTPUT_DESCRIPTOR_V1: TagValue = 307; // Fixed
+pub const TAG_PSBT_V1: TagValue = 310; // Fixed
+pub const TAG_ACCOUNT_V1: TagValue = 311; // Fixed
 
-pub const TAG_HDKEY: u64 = 40303;
-pub const TAG_DERIVATION_PATH: u64 = 40304;
-pub const TAG_USE_INFO: u64 = 40305;
-pub const TAG_ADDRESS: u64 = 40307;
-pub const TAG_OUTPUT_DESCRIPTOR: u64 = 40308;
-pub const TAG_PSBT: u64 = 40310;
-pub const TAG_ACCOUNT_DESCRIPTOR: u64 = 40311;
+pub const TAG_HDKEY: TagValue = 40303;
+pub const TAG_DERIVATION_PATH: TagValue = 40304;
+pub const TAG_USE_INFO: TagValue = 40305;
+pub const TAG_ADDRESS: TagValue = 40307;
+pub const TAG_OUTPUT_DESCRIPTOR: TagValue = 40308;
+pub const TAG_PSBT: TagValue = 40310;
+pub const TAG_ACCOUNT_DESCRIPTOR: TagValue = 40311;
 
-pub const TAG_SSH_TEXT_PRIVATE_KEY: u64 = 40800;
-pub const TAG_SSH_TEXT_PUBLIC_KEY: u64 = 40801;
-pub const TAG_SSH_TEXT_SIGNATURE: u64 = 40802;
-pub const TAG_SSH_TEXT_CERTIFICATE: u64 = 40803;
+pub const TAG_SSH_TEXT_PRIVATE_KEY: TagValue = 40800;
+pub const TAG_SSH_TEXT_PUBLIC_KEY: TagValue = 40801;
+pub const TAG_SSH_TEXT_SIGNATURE: TagValue = 40802;
+pub const TAG_SSH_TEXT_CERTIFICATE: TagValue = 40803;
 
 // Tags for subtypes specific to AccountBundle (crypto-output).
-pub const TAG_OUTPUT_SCRIPT_HASH: u64 = 400; // Fixed
-pub const TAG_OUTPUT_WITNESS_SCRIPT_HASH: u64 = 401; // Fixed
-pub const TAG_OUTPUT_PUBLIC_KEY: u64 = 402; // Fixed
-pub const TAG_OUTPUT_PUBLIC_KEY_HASH: u64 = 403; // Fixed
-pub const TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH: u64 = 404; // Fixed
-pub const TAG_OUTPUT_COMBO: u64 = 405; // Fixed
-pub const TAG_OUTPUT_MULTISIG: u64 = 406; // Fixed
-pub const TAG_OUTPUT_SORTED_MULTISIG: u64 = 407; // Fixed
-pub const TAG_OUTPUT_RAW_SCRIPT: u64 = 408; // Fixed
-pub const TAG_OUTPUT_TAPROOT: u64 = 409; // Fixed
-pub const TAG_OUTPUT_COSIGNER: u64 = 410; // Fixed
+pub const TAG_OUTPUT_SCRIPT_HASH: TagValue = 400; // Fixed
+pub const TAG_OUTPUT_WITNESS_SCRIPT_HASH: TagValue = 401; // Fixed
+pub const TAG_OUTPUT_PUBLIC_KEY: TagValue = 402; // Fixed
+pub const TAG_OUTPUT_PUBLIC_KEY_HASH: TagValue = 403; // Fixed
+pub const TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH: TagValue = 404; // Fixed
+pub const TAG_OUTPUT_COMBO: TagValue = 405; // Fixed
+pub const TAG_OUTPUT_MULTISIG: TagValue = 406; // Fixed
+pub const TAG_OUTPUT_SORTED_MULTISIG: TagValue = 407; // Fixed
+pub const TAG_OUTPUT_RAW_SCRIPT: TagValue = 408; // Fixed
+pub const TAG_OUTPUT_TAPROOT: TagValue = 409; // Fixed
+pub const TAG_OUTPUT_COSIGNER: TagValue = 410; // Fixed
 
 pub fn register_tags() {
     dcbor::register_tags();
 
-    let tags = [
-        Tag::new_with_name(TAG_URI, "url"),
-        Tag::new_with_name(TAG_UUID, "uuid"),
+    let tags = vec![
+        (TAG_URI, "url"),
+        (TAG_UUID, "uuid"),
 
-        Tag::new_with_name(TAG_ENCODED_CBOR, "encoded-cbor"),
+        (TAG_ENCODED_CBOR, "encoded-cbor"),
 
-        Tag::new_with_name(TAG_ENVELOPE, "envelope"),
-        Tag::new_with_name(TAG_LEAF, "leaf"),
+        (TAG_ENVELOPE, "envelope"),
+        (TAG_LEAF, "leaf"),
 
-        Tag::new_with_name(TAG_KNOWN_VALUE, "known-value"),
-        Tag::new_with_name(TAG_DIGEST, "digest"),
-        Tag::new_with_name(TAG_ENCRYPTED, "encrypted"),
-        Tag::new_with_name(TAG_COMPRESSED, "compressed"),
+        (TAG_KNOWN_VALUE, "known-value"),
+        (TAG_DIGEST, "digest"),
+        (TAG_ENCRYPTED, "encrypted"),
+        (TAG_COMPRESSED, "compressed"),
 
-        Tag::new_with_name(TAG_REQUEST, "request"),
-        Tag::new_with_name(TAG_RESPONSE, "response"),
-        Tag::new_with_name(TAG_FUNCTION, "function"),
-        Tag::new_with_name(TAG_PARAMETER, "parameter"),
-        Tag::new_with_name(TAG_PLACEHOLDER, "placeholder"),
-        Tag::new_with_name(TAG_REPLACEMENT, "replacement"),
+        (TAG_REQUEST, "request"),
+        (TAG_RESPONSE, "response"),
+        (TAG_FUNCTION, "function"),
+        (TAG_PARAMETER, "parameter"),
+        (TAG_PLACEHOLDER, "placeholder"),
+        (TAG_REPLACEMENT, "replacement"),
 
-        Tag::new_with_name(TAG_SEED_V1, "crypto-seed"),
-        Tag::new_with_name(TAG_EC_KEY_V1, "crypto-eckey"),
-        Tag::new_with_name(TAG_SSKR_SHARE_V1, "crypto-sskr"),
+        (TAG_SEED_V1, "crypto-seed"),
+        (TAG_EC_KEY_V1, "crypto-eckey"),
+        (TAG_SSKR_SHARE_V1, "crypto-sskr"),
 
-        Tag::new_with_name(TAG_SEED, "seed"),
-        Tag::new_with_name(TAG_EC_KEY, "eckey"),
-        Tag::new_with_name(TAG_SSKR_SHARE, "sskr"),
+        (TAG_SEED, "seed"),
+        (TAG_EC_KEY, "eckey"),
+        (TAG_SSKR_SHARE, "sskr"),
 
-        Tag::new_with_name(TAG_AGREEMENT_PRIVATE_KEY, "agreement-private-key"),
-        Tag::new_with_name(TAG_AGREEMENT_PUBLIC_KEY, "agreement-public-key"),
-        Tag::new_with_name(TAG_ARID, "arid"),
-        Tag::new_with_name(TAG_NONCE, "nonce"),
-        Tag::new_with_name(TAG_PASSWORD, "password"),
-        Tag::new_with_name(TAG_PRIVATE_KEY_BASE, "crypto-prvkeys"),
-        Tag::new_with_name(TAG_PUBLIC_KEY_BASE, "crypto-pubkeys"),
-        Tag::new_with_name(TAG_SALT, "salt"),
-        Tag::new_with_name(TAG_SEALED_MESSAGE, "crypto-sealed"),
-        Tag::new_with_name(TAG_SIGNATURE, "signature"),
-        Tag::new_with_name(TAG_SIGNING_PRIVATE_KEY, "signing-private-key"),
-        Tag::new_with_name(TAG_SIGNING_PUBLIC_KEY, "signing-public-key"),
-        Tag::new_with_name(TAG_SYMMETRIC_KEY, "crypto-key"),
-        Tag::new_with_name(TAG_XID, "xid"),
+        (TAG_AGREEMENT_PRIVATE_KEY, "agreement-private-key"),
+        (TAG_AGREEMENT_PUBLIC_KEY, "agreement-public-key"),
+        (TAG_ARID, "arid"),
+        (TAG_NONCE, "nonce"),
+        (TAG_PASSWORD, "password"),
+        (TAG_PRIVATE_KEY_BASE, "crypto-prvkeys"),
+        (TAG_PUBLIC_KEY_BASE, "crypto-pubkeys"),
+        (TAG_SALT, "salt"),
+        (TAG_SEALED_MESSAGE, "crypto-sealed"),
+        (TAG_SIGNATURE, "signature"),
+        (TAG_SIGNING_PRIVATE_KEY, "signing-private-key"),
+        (TAG_SIGNING_PUBLIC_KEY, "signing-public-key"),
+        (TAG_SYMMETRIC_KEY, "crypto-key"),
+        (TAG_XID, "xid"),
 
-        Tag::new_with_name(TAG_HDKEY_V1, "crypto-hdkey"),
-        Tag::new_with_name(TAG_DERIVATION_PATH_V1, "crypto-keypath"),
-        Tag::new_with_name(TAG_USE_INFO_V1, "crypto-coin-info"),
-        Tag::new_with_name(TAG_ADDRESS_V1, "crypto-address"),
-        Tag::new_with_name(TAG_OUTPUT_DESCRIPTOR_V1, "crypto-output"),
-        Tag::new_with_name(TAG_PSBT_V1, "crypto-psbt"),
-        Tag::new_with_name(TAG_ACCOUNT_V1, "crypto-account"),
+        (TAG_HDKEY_V1, "crypto-hdkey"),
+        (TAG_DERIVATION_PATH_V1, "crypto-keypath"),
+        (TAG_USE_INFO_V1, "crypto-coin-info"),
+        (TAG_ADDRESS_V1, "crypto-address"),
+        (TAG_OUTPUT_DESCRIPTOR_V1, "crypto-output"),
+        (TAG_PSBT_V1, "crypto-psbt"),
+        (TAG_ACCOUNT_V1, "crypto-account"),
 
-        Tag::new_with_name(TAG_HDKEY, "hdkey"),
-        Tag::new_with_name(TAG_DERIVATION_PATH, "keypath"),
-        Tag::new_with_name(TAG_USE_INFO, "coin-info"),
-        Tag::new_with_name(TAG_ADDRESS, "address"),
-        Tag::new_with_name(TAG_OUTPUT_DESCRIPTOR, "output-descriptor"),
-        Tag::new_with_name(TAG_PSBT, "psbt"),
-        Tag::new_with_name(TAG_ACCOUNT_DESCRIPTOR, "account-descriptor"),
+        (TAG_HDKEY, "hdkey"),
+        (TAG_DERIVATION_PATH, "keypath"),
+        (TAG_USE_INFO, "coin-info"),
+        (TAG_ADDRESS, "address"),
+        (TAG_OUTPUT_DESCRIPTOR, "output-descriptor"),
+        (TAG_PSBT, "psbt"),
+        (TAG_ACCOUNT_DESCRIPTOR, "account-descriptor"),
 
-        Tag::new_with_name(TAG_SSH_TEXT_PRIVATE_KEY, "ssh-private"),
-        Tag::new_with_name(TAG_SSH_TEXT_PUBLIC_KEY, "ssh-public"),
-        Tag::new_with_name(TAG_SSH_TEXT_SIGNATURE, "ssh-signature"),
-        Tag::new_with_name(TAG_SSH_TEXT_CERTIFICATE, "ssh-certificate"),
+        (TAG_SSH_TEXT_PRIVATE_KEY, "ssh-private"),
+        (TAG_SSH_TEXT_PUBLIC_KEY, "ssh-public"),
+        (TAG_SSH_TEXT_SIGNATURE, "ssh-signature"),
+        (TAG_SSH_TEXT_CERTIFICATE, "ssh-certificate"),
 
-        Tag::new_with_name(TAG_OUTPUT_SCRIPT_HASH, "output-script-hash"),
-        Tag::new_with_name(TAG_OUTPUT_WITNESS_SCRIPT_HASH, "output-witness-script-hash"),
-        Tag::new_with_name(TAG_OUTPUT_PUBLIC_KEY, "output-public-key"),
-        Tag::new_with_name(TAG_OUTPUT_PUBLIC_KEY_HASH, "output-public-key-hash"),
-        Tag::new_with_name(TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH, "output-witness-public-key-hash"),
-        Tag::new_with_name(TAG_OUTPUT_COMBO, "output-combo"),
-        Tag::new_with_name(TAG_OUTPUT_MULTISIG, "output-multisig"),
-        Tag::new_with_name(TAG_OUTPUT_SORTED_MULTISIG, "output-sorted-multisig"),
-        Tag::new_with_name(TAG_OUTPUT_RAW_SCRIPT, "output-raw-script"),
-        Tag::new_with_name(TAG_OUTPUT_TAPROOT, "output-taproot"),
-        Tag::new_with_name(TAG_OUTPUT_COSIGNER, "output-cosigner"),
+        (TAG_OUTPUT_SCRIPT_HASH, "output-script-hash"),
+        (TAG_OUTPUT_WITNESS_SCRIPT_HASH, "output-witness-script-hash"),
+        (TAG_OUTPUT_PUBLIC_KEY, "output-public-key"),
+        (TAG_OUTPUT_PUBLIC_KEY_HASH, "output-public-key-hash"),
+        (TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH, "output-witness-public-key-hash"),
+        (TAG_OUTPUT_COMBO, "output-combo"),
+        (TAG_OUTPUT_MULTISIG, "output-multisig"),
+        (TAG_OUTPUT_SORTED_MULTISIG, "output-sorted-multisig"),
+        (TAG_OUTPUT_RAW_SCRIPT, "output-raw-script"),
+        (TAG_OUTPUT_TAPROOT, "output-taproot"),
+        (TAG_OUTPUT_COSIGNER, "output-cosigner"),
     ];
     with_tags_mut!(|tags_store: &mut TagsStore| {
         for tag in tags.into_iter() {
-            tags_store.insert(tag);
+            tags_store.insert(Tag::new(tag.0, tag.1));
         }
     });
 }
