@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use dcbor::prelude::*;
 
 // Assignments marked "Fixed" are likely to be in active use by external developers.
@@ -29,6 +31,13 @@ use dcbor::prelude::*;
 // compatibility.
 
 pub use dcbor::TAG_DATE;
+
+use crate::{ Digest, Nonce, PublicKeyBase, SSKRShare, Salt, SealedMessage, Signature, ARID, URI, UUID, XID };
+use ssh_key::{
+    private::PrivateKey as SSHPrivateKey,
+    public::PublicKey as SSHPublicKey,
+    SshSig as SSHSignature,
+};
 
 pub const TAG_URI: TagValue = 32;
 pub const TAG_UUID: TagValue = 37;
@@ -192,15 +201,151 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_OUTPUT_SORTED_MULTISIG, "output-sorted-multisig"),
         (TAG_OUTPUT_RAW_SCRIPT, "output-raw-script"),
         (TAG_OUTPUT_TAPROOT, "output-taproot"),
-        (TAG_OUTPUT_COSIGNER, "output-cosigner"),
+        (TAG_OUTPUT_COSIGNER, "output-cosigner")
     ];
     for tag in tags.into_iter() {
         tags_store.insert(Tag::new(tag.0, tag.1));
     }
+
+    tags_store.set_summarizer(
+        TAG_DIGEST,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let arid = Digest::from_untagged_cbor(untagged_cbor)?;
+            Ok(arid.short_description().flanked_by("Digest(", ")"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_ARID,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let arid = ARID::from_untagged_cbor(untagged_cbor)?;
+            Ok(arid.short_description().flanked_by("ARID(", ")"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_XID,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let xid = XID::from_untagged_cbor(untagged_cbor)?;
+            Ok(xid.short_description().flanked_by("XID(", ")"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_URI,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let uri = URI::from_untagged_cbor(untagged_cbor)?;
+            Ok(uri.to_string().flanked_by("URI(", ")"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_UUID,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let uuid = UUID::from_untagged_cbor(untagged_cbor)?;
+            Ok(uuid.to_string().flanked_by("UUID(", ")"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_NONCE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            Nonce::from_untagged_cbor(untagged_cbor)?;
+            Ok("Nonce".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SALT,
+        Arc::new(move |untagged_cbor: CBOR| {
+            Salt::from_untagged_cbor(untagged_cbor)?;
+            Ok("Salt".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_PUBLIC_KEY_BASE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            PublicKeyBase::from_untagged_cbor(untagged_cbor)?;
+            Ok("PublicKeyBase".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SIGNATURE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            Signature::from_untagged_cbor(untagged_cbor)?;
+            Ok("Signature".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SEALED_MESSAGE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            SealedMessage::from_untagged_cbor(untagged_cbor)?;
+            Ok("SealedMessage".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SSKR_SHARE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            SSKRShare::from_untagged_cbor(untagged_cbor)?;
+            Ok("SSKRShare".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SSH_TEXT_PRIVATE_KEY,
+        Arc::new(move |untagged_cbor: CBOR| {
+            SSHPrivateKey::from_openssh(untagged_cbor.try_into_text()?)?;
+            Ok("SSHPrivateKey".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SSH_TEXT_PUBLIC_KEY,
+        Arc::new(move |untagged_cbor: CBOR| {
+            SSHPublicKey::from_openssh(&untagged_cbor.try_into_text()?)?;
+            Ok("SSHPublicKey".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SSH_TEXT_SIGNATURE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            SSHSignature::from_pem(untagged_cbor.try_into_text()?)?;
+            Ok("SSHSignature".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_SSH_TEXT_CERTIFICATE,
+        Arc::new(move |_untagged_cbor: CBOR| {
+            // todo: validation
+            Ok("SSHCertificate".to_string())
+        })
+    );
 }
 
 pub fn register_tags() {
     with_tags_mut!(|tags_store: &mut TagsStore| {
         register_tags_in(tags_store);
     });
+}
+
+trait StringUtils {
+    fn flanked_by(&self, left: &str, right: &str) -> String;
+}
+
+impl StringUtils for &str {
+    fn flanked_by(&self, left: &str, right: &str) -> String {
+        format!("{}{}{}", left, self, right)
+    }
+}
+
+impl StringUtils for String {
+    fn flanked_by(&self, left: &str, right: &str) -> String {
+        format!("{}{}{}", left, self, right)
+    }
 }
