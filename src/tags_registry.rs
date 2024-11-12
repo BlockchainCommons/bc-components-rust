@@ -114,8 +114,8 @@ pub const TAG_OUTPUT_RAW_SCRIPT: TagValue = 408; // Fixed
 pub const TAG_OUTPUT_TAPROOT: TagValue = 409; // Fixed
 pub const TAG_OUTPUT_COSIGNER: TagValue = 410; // Fixed
 
-pub fn register_tags() {
-    dcbor::register_tags();
+pub fn register_tags_in(tags_store: &mut TagsStore) {
+    dcbor::register_tags_in(tags_store);
 
     let tags = vec![
         (TAG_URI, "url"),
@@ -194,9 +194,13 @@ pub fn register_tags() {
         (TAG_OUTPUT_TAPROOT, "output-taproot"),
         (TAG_OUTPUT_COSIGNER, "output-cosigner"),
     ];
+    for tag in tags.into_iter() {
+        tags_store.insert(Tag::new(tag.0, tag.1));
+    }
+}
+
+pub fn register_tags() {
     with_tags_mut!(|tags_store: &mut TagsStore| {
-        for tag in tags.into_iter() {
-            tags_store.insert(Tag::new(tag.0, tag.1));
-        }
+        register_tags_in(tags_store);
     });
 }

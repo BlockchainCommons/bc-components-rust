@@ -85,7 +85,7 @@ pub use ec_key::*;
 /// CBOR Tags used or defined by this crate.
 pub mod tags_registry;
 pub use tags_registry as tags;
-pub use tags::register_tags;
+pub use tags::{register_tags, register_tags_in};
 
 mod private_key_data_provider;
 pub use private_key_data_provider::PrivateKeyDataProvider;
