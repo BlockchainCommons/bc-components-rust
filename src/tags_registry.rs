@@ -32,7 +32,19 @@ use dcbor::prelude::*;
 
 pub use dcbor::TAG_DATE;
 
-use crate::{ Digest, Nonce, PublicKeyBase, SSKRShare, Salt, SealedMessage, Signature, ARID, URI, UUID, XID };
+use crate::{
+    Digest,
+    Nonce,
+    PublicKeyBase,
+    SSKRShare,
+    Salt,
+    SealedMessage,
+    Signature,
+    ARID,
+    URI,
+    UUID,
+    XID,
+};
 use ssh_key::{
     private::PrivateKey as SSHPrivateKey,
     public::PublicKey as SSHPublicKey,
