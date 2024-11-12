@@ -28,7 +28,7 @@ use dcbor::prelude::*;
 // The new leaf tag is #6.201, but we will still recognize #6.24 for backwards
 // compatibility.
 
-// pub const TAG_DATE: TagValue = 1; // Declared in dcbor
+pub use dcbor::TAG_DATE;
 
 pub const TAG_URI: TagValue = 32;
 pub const TAG_UUID: TagValue = 37;
