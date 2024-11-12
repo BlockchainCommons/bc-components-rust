@@ -68,7 +68,7 @@ impl AsRef<AgreementPublicKey> for AgreementPublicKey {
 
 impl CBORTagged for AgreementPublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::AGREEMENT_PUBLIC_KEY]
+        tags_for_values(&[tags::TAG_AGREEMENT_PUBLIC_KEY])
     }
 }
 

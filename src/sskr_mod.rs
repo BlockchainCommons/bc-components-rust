@@ -73,7 +73,7 @@ impl SSKRShare {
 
 impl CBORTagged for SSKRShare {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SSKR_SHARE, tags::SSKR_SHARE_V1]
+        tags_for_values(&[tags::TAG_SSKR_SHARE, tags::TAG_SSKR_SHARE_V1])
     }
 }
 

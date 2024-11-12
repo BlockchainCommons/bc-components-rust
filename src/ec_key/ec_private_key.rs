@@ -150,7 +150,7 @@ impl ECKey for ECPrivateKey {
 
 impl CBORTagged for ECPrivateKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::EC_KEY, tags::EC_KEY_V1]
+        tags_for_values(&[tags::TAG_EC_KEY, tags::TAG_EC_KEY_V1])
     }
 }
 

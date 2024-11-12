@@ -105,7 +105,7 @@ impl AsRef<AgreementPrivateKey> for AgreementPrivateKey {
 
 impl CBORTagged for AgreementPrivateKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::AGREEMENT_PRIVATE_KEY]
+        tags_for_values(&[tags::TAG_AGREEMENT_PRIVATE_KEY])
     }
 }
 

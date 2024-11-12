@@ -104,7 +104,7 @@ impl AsRef<SigningPublicKey> for SigningPublicKey {
 
 impl CBORTagged for SigningPublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SIGNING_PUBLIC_KEY]
+        tags_for_values(&[tags::TAG_SIGNING_PUBLIC_KEY])
     }
 }
 
@@ -126,7 +126,7 @@ impl CBORTaggedEncodable for SigningPublicKey {
             }
             SigningPublicKey::SSH(key) => {
                 let string = key.to_openssh().unwrap();
-                CBOR::to_tagged_value(tags::SSH_TEXT_PUBLIC_KEY, string)
+                CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PUBLIC_KEY, string)
             }
         }
     }
@@ -164,7 +164,7 @@ impl CBORTaggedDecodable for SigningPublicKey {
                 bail!("invalid signing public key");
             }
             CBORCase::Tagged(tag, item) => {
-                if tag == tags::SSH_TEXT_PUBLIC_KEY {
+                if tag.value() == tags::TAG_SSH_TEXT_PUBLIC_KEY {
                     let string = item.try_into_text()?;
                     let key = SSHPublicKey::from_openssh(&string)?;
                     return Ok(Self::SSH(key));

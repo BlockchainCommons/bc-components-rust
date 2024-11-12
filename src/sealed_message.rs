@@ -66,7 +66,7 @@ impl AsRef<SealedMessage> for SealedMessage {
 
 impl CBORTagged for SealedMessage {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SEALED_MESSAGE]
+        tags_for_values(&[tags::TAG_SEALED_MESSAGE])
     }
 }
 

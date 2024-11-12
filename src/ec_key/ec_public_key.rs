@@ -91,7 +91,7 @@ impl<'a> From<&'a ECPublicKey> for &'a [u8] {
 
 impl CBORTagged for ECPublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::EC_KEY, tags::EC_KEY_V1]
+        tags_for_values(&[tags::TAG_EC_KEY, tags::TAG_EC_KEY_V1])
     }
 }
 

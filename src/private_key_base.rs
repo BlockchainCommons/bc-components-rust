@@ -187,7 +187,7 @@ impl AsRef<[u8]> for PrivateKeyBase {
 
 impl CBORTagged for PrivateKeyBase {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::PRIVATE_KEY_BASE]
+        tags_for_values(&[tags::TAG_PRIVATE_KEY_BASE])
     }
 }
 
@@ -230,6 +230,7 @@ mod tests {
 
     #[test]
     fn test_private_key_base() {
+        crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
         assert_eq!(
             private_key_base.ecdsa_signing_private_key().to_ecdsa().unwrap().data(),

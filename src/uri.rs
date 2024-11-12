@@ -51,7 +51,7 @@ impl AsRef<URI> for URI {
 
 impl CBORTagged for URI {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::URI]
+        tags_for_values(&[tags::TAG_URI])
     }
 }
 

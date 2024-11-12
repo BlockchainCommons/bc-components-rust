@@ -79,7 +79,7 @@ impl AsRef<ARID> for ARID {
 
 impl CBORTagged for ARID {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::ARID]
+        tags_for_values(&[tags::TAG_ARID])
     }
 }
 

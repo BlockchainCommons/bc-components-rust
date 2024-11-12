@@ -107,7 +107,7 @@ impl AsRef<Salt> for Salt {
 
 impl CBORTagged for Salt {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SALT]
+        tags_for_values(&[tags::TAG_SALT])
     }
 }
 

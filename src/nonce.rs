@@ -79,7 +79,7 @@ impl AsRef<Nonce> for Nonce {
 
 impl CBORTagged for Nonce {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::NONCE]
+        tags_for_values(&[tags::TAG_NONCE])
     }
 }
 

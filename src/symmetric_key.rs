@@ -147,7 +147,7 @@ impl std::fmt::Debug for SymmetricKey {
 
 impl CBORTagged for SymmetricKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SYMMETRIC_KEY]
+        tags_for_values(&[tags::TAG_SYMMETRIC_KEY])
     }
 }
 

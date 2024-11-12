@@ -61,7 +61,7 @@ impl AsRef<AgreementPublicKey> for PublicKeyBase {
 
 impl CBORTagged for PublicKeyBase {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::PUBLIC_KEY_BASE]
+        tags_for_values(&[tags::TAG_PUBLIC_KEY_BASE])
     }
 }
 
@@ -116,6 +116,7 @@ mod tests {
 
     #[test]
     fn test_private_key_base() {
+        crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
         let public_key_base = private_key_base.schnorr_public_key_base();
 

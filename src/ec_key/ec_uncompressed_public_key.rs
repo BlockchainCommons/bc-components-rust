@@ -73,7 +73,7 @@ impl AsRef<[u8]> for ECUncompressedPublicKey {
 
 impl CBORTagged for ECUncompressedPublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::EC_KEY, tags::EC_KEY_V1]
+        tags_for_values(&[tags::TAG_EC_KEY, tags::TAG_EC_KEY_V1])
     }
 }
 

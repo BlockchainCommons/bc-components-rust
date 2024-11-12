@@ -112,7 +112,7 @@ impl AsRef<Signature> for Signature {
 
 impl CBORTagged for Signature {
     fn cbor_tags() -> Vec<dcbor::Tag> {
-        vec![tags::SIGNATURE]
+        tags_for_values(&[tags::TAG_SIGNATURE])
     }
 }
 
@@ -130,7 +130,7 @@ impl CBORTaggedEncodable for Signature {
             Signature::Ed25519(data) => vec![(2).into(), CBOR::to_byte_string(data)].into(),
             Signature::SSH(sig) => {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
-                CBOR::to_tagged_value(tags::SSH_TEXT_SIGNATURE, pem)
+                CBOR::to_tagged_value(tags::TAG_SSH_TEXT_SIGNATURE, pem)
             }
         }
     }
@@ -173,7 +173,7 @@ impl CBORTaggedDecodable for Signature {
                 bail!("Invalid signature format");
             }
             CBORCase::Tagged(tag, item) => {
-                if tag == tags::SSH_TEXT_SIGNATURE {
+                if tag.value() == tags::TAG_SSH_TEXT_SIGNATURE {
                     let string = item.try_into_text()?;
                     let pem = SshSig::from_pem(string)?;
                     return Ok(Self::SSH(pem));
@@ -233,18 +233,12 @@ mod tests {
         let signature = SCHNORR_SIGNING_PRIVATE_KEY.sign_with_options(MESSAGE, Some(options)).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
-        assert_eq!(
-            CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
-            (
-                indoc! {
-                    r#"
+        let expected = indoc! {r#"
         40020(
-           h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
+            h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
         )
-        "#
-                }
-            ).trim()
-        );
+        "#}.trim();
+        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(), expected);
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
@@ -267,21 +261,17 @@ mod tests {
         let signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
-        assert_eq!(
-            CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
-            (
-                indoc! {
-                    r#"
+        let expected = indoc! {
+        r#"
         40020(
-           [
-              1,
-              h'1458d0f3d97e25109b38fd965782b43213134d02b01388a14e74ebf21e5dea4866f25a23866de9ecf0f9b72404d8192ed71fba4dc355cd89b47213e855cf6d23'
-           ]
+            [
+                1,
+                h'1458d0f3d97e25109b38fd965782b43213134d02b01388a14e74ebf21e5dea4866f25a23866de9ecf0f9b72404d8192ed71fba4dc355cd89b47213e855cf6d23'
+            ]
         )
-        "#
-                }
-            ).trim()
-        );
+        "#}.trim();
+        let cbor = CBOR::try_from_data(&tagged_cbor_data).unwrap();
+        assert_eq!(cbor.diagnostic(), expected);
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }

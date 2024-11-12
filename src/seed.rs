@@ -123,7 +123,7 @@ impl PrivateKeyDataProvider for Seed {
 
 impl CBORTagged for Seed {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SEED, tags::SEED_V1]
+        tags_for_values(&[tags::TAG_SEED, tags::TAG_SEED_V1])
     }
 }
 

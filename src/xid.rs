@@ -144,7 +144,7 @@ impl std::fmt::Display for XID {
 
 impl CBORTagged for XID {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::XID]
+        tags_for_values(&[tags::TAG_XID])
     }
 }
 
@@ -229,6 +229,7 @@ mod tests {
 
     #[test]
     fn test_xid() {
+        crate::register_tags();
         let xid = XID::from_data_ref(hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")).unwrap();
         assert_eq!(xid.to_hex(), "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037");
         assert_eq!(xid.short_description(), "de285368");

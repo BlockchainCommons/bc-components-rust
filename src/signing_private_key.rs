@@ -186,7 +186,7 @@ impl Verifier for SigningPrivateKey {
 
 impl CBORTagged for SigningPrivateKey {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::SIGNING_PRIVATE_KEY]
+        tags_for_values(&[tags::TAG_SIGNING_PRIVATE_KEY])
     }
 }
 
@@ -208,7 +208,7 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             }
             SigningPrivateKey::SSH(key) => {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
-                CBOR::to_tagged_value(tags::SSH_TEXT_PRIVATE_KEY, (*string).clone())
+                CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PRIVATE_KEY, (*string).clone())
             }
         }
     }
@@ -240,7 +240,7 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                 bail!("Invalid tag for SigningPrivateKey");
             }
             CBORCase::Tagged(tag, item) => {
-                if tag == tags::SSH_TEXT_PRIVATE_KEY {
+                if tag.value() == tags::TAG_SSH_TEXT_PRIVATE_KEY {
                     let string = item.try_into_text()?;
                     let key = SSHPrivateKey::from_openssh(string)?;
                     return Ok(Self::SSH(Box::new(key)));

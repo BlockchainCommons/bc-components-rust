@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use dcbor::{ CBORTagged, Tag, CBOR, CBORTaggedEncodable, CBORTaggedDecodable };
+use dcbor::prelude::*;
 use crate::{ digest_provider::DigestProvider, tags };
 use anyhow::{ bail, Result, Error };
 
@@ -157,7 +157,7 @@ impl std::fmt::Display for Digest {
 
 impl CBORTagged for Digest {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::DIGEST]
+        tags_for_values(&[tags::TAG_DIGEST])
     }
 }
 
@@ -242,6 +242,7 @@ mod tests {
 
     #[test]
     fn test_ur() {
+        crate::register_tags();
         let data = "hello world";
         let digest = Digest::from_image(data.as_bytes());
         let ur_string = digest.ur_string();

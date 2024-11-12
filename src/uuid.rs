@@ -68,7 +68,7 @@ impl AsRef<UUID> for UUID {
 
 impl CBORTagged for UUID {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::UUID]
+        tags_for_values(&[tags::TAG_UUID])
     }
 }
 

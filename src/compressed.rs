@@ -151,7 +151,7 @@ impl AsRef<Compressed> for Compressed {
 
 impl CBORTagged for Compressed {
     fn cbor_tags() -> Vec<Tag> {
-        vec![tags::COMPRESSED]
+        tags_for_values(&[tags::TAG_COMPRESSED])
     }
 }
 

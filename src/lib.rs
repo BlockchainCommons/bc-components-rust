@@ -85,7 +85,7 @@ pub use ec_key::*;
 /// CBOR Tags used or defined by this crate.
 pub mod tags_registry;
 pub use tags_registry as tags;
-pub use tags::GLOBAL_TAGS;
+pub use tags::register_tags;
 
 mod private_key_data_provider;
 pub use private_key_data_provider::PrivateKeyDataProvider;
@@ -121,7 +121,7 @@ pub use hkdf_rng::HKDFRng;
 #[cfg(test)]
 mod tests {
     use crate::{
-        tags, AgreementPrivateKey, AgreementPublicKey, ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey, Verifier
+        AgreementPrivateKey, AgreementPublicKey, ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey, Verifier
     };
     use bc_crypto::{
         ecdsa_new_private_key_using,
@@ -145,13 +145,8 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn tags() {
-        assert_eq!(tags::LEAF.value(), 201);
-        assert_eq!(tags::LEAF.name().as_ref().unwrap(), "leaf");
-    }
-
-    #[test]
     fn test_agreement_keys() {
+        crate::register_tags();
         let mut rng = make_fake_random_number_generator();
         let private_key = AgreementPrivateKey::new_using(&mut rng);
         let private_key_ur = private_key.ur_string();
@@ -194,6 +189,7 @@ mod tests {
 
     #[test]
     fn test_ecdsa_signing_keys() {
+        crate::register_tags();
         let mut rng = make_fake_random_number_generator();
         let schnorr_private_key = SigningPrivateKey::new_schnorr(ECPrivateKey::new_using(&mut rng));
         let schnorr_private_key_ur = schnorr_private_key.ur_string();
