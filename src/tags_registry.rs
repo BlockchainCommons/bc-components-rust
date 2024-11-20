@@ -62,6 +62,7 @@ pub const TAG_FUNCTION: TagValue = 40006;
 pub const TAG_PARAMETER: TagValue = 40007;
 pub const TAG_PLACEHOLDER: TagValue = 40008;
 pub const TAG_REPLACEMENT: TagValue = 40009;
+pub const TAG_EVENT: TagValue = 40010;
 
 // These are the utility structures we've identified and speced related to other
 // various applications that aren't specifically Bitcoin-related.
@@ -148,6 +149,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_PARAMETER, "parameter"),
         (TAG_PLACEHOLDER, "placeholder"),
         (TAG_REPLACEMENT, "replacement"),
+        (TAG_EVENT, "event"),
 
         (TAG_SEED_V1, "crypto-seed"),
         (TAG_EC_KEY_V1, "crypto-eckey"),
