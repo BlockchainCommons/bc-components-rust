@@ -1,5 +1,5 @@
 use bc_ur::prelude::*;
-use crate::{ tags, AgreementPublicKey, Signature, SigningPublicKey, Verifier };
+use crate::{ tags, AgreementPublicKey, Encrypter, Signature, SigningPublicKey, Verifier };
 use anyhow::{ bail, Error, Result };
 
 /// Holds information used to communicate cryptographically with a remote entity.
@@ -101,6 +101,12 @@ impl CBORTaggedDecodable for PublicKeyBase {
             }
             _ => bail!("PublicKeyBase must be an array"),
         }
+    }
+}
+
+impl Encrypter for PublicKeyBase {
+    fn agreement_public_key(&self) -> &AgreementPublicKey {
+        &self.agreement_public_key
     }
 }
 

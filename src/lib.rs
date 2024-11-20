@@ -79,6 +79,9 @@ pub use signing_public_key::SigningPublicKey;
 mod signer;
 pub use signer::{Signer, Verifier};
 
+mod encrypter;
+pub use encrypter::Encrypter;
+
 mod ec_key;
 pub use ec_key::*;
 

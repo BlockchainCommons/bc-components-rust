@@ -1,4 +1,4 @@
-use crate::{ EncryptedMessage, AgreementPublicKey, PublicKeyBase, PrivateKeyBase, Nonce, tags };
+use crate::{ tags, AgreementPublicKey, EncryptedMessage, Encrypter, Nonce, PrivateKeyBase };
 use bc_ur::prelude::*;
 use anyhow::{ bail, Result, Error };
 
@@ -12,7 +12,7 @@ pub struct SealedMessage {
 
 impl SealedMessage {
     /// Creates a new `SealedMessage` from the given plaintext and recipient.
-    pub fn new(plaintext: impl Into<Vec<u8>>, recipient: &PublicKeyBase) -> Self {
+    pub fn new(plaintext: impl Into<Vec<u8>>, recipient: &dyn Encrypter) -> Self {
         Self::new_with_aad(plaintext, recipient, None::<Vec<u8>>)
     }
 
@@ -20,7 +20,7 @@ impl SealedMessage {
     /// additional authenticated data.
     pub fn new_with_aad(
         plaintext: impl Into<Vec<u8>>,
-        recipient: &PublicKeyBase,
+        recipient: &dyn Encrypter,
         aad: Option<impl Into<Vec<u8>>>
     ) -> Self {
         Self::new_opt(plaintext, recipient, aad, None::<Vec<u8>>, None::<Nonce>)
@@ -31,7 +31,7 @@ impl SealedMessage {
     /// and test nonce.
     pub fn new_opt(
         plaintext: impl Into<Vec<u8>>,
-        recipient: &PublicKeyBase,
+        recipient: &dyn Encrypter,
         aad: Option<impl Into<Vec<u8>>>,
         test_key_material: Option<impl Into<Vec<u8>>>,
         test_nonce: Option<impl AsRef<Nonce>>

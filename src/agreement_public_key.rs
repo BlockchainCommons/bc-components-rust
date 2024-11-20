@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_ur::prelude::*;
-use crate::tags;
+use crate::{tags, Encrypter};
 use anyhow::{ bail, Error, Result };
 
 /// A Curve25519 public key used for X25519 key agreement.
@@ -123,5 +123,11 @@ impl From<AgreementPublicKey> for Vec<u8> {
 impl From<&AgreementPublicKey> for Vec<u8> {
     fn from(key: &AgreementPublicKey) -> Self {
         key.0.to_vec()
+    }
+}
+
+impl Encrypter for AgreementPublicKey {
+    fn agreement_public_key(&self) -> &AgreementPublicKey {
+        self
     }
 }
