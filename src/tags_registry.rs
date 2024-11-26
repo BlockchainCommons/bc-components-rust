@@ -33,7 +33,7 @@ use dcbor::prelude::*;
 pub use dcbor::TAG_DATE;
 
 use crate::{
-    Digest, Nonce, PublicKeyBase, SSKRShare, Salt, SealedMessage, Seed, Signature, ARID, URI, UUID, XID
+    Digest, Nonce, PrivateKeyBase, PublicKeyBase, SSKRShare, Salt, SealedMessage, Seed, Signature, ARID, URI, UUID, XID
 };
 use ssh_key::{
     private::PrivateKey as SSHPrivateKey,
@@ -280,6 +280,14 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             PublicKeyBase::from_untagged_cbor(untagged_cbor)?;
             Ok("PublicKeyBase".to_string())
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_PRIVATE_KEY_BASE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            PrivateKeyBase::from_untagged_cbor(untagged_cbor)?;
+            Ok("PrivateKeyBase".to_string())
         })
     );
 
