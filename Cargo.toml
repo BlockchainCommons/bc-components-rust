@@ -14,8 +14,8 @@ documentation = "https://docs.rs/bc-components"
 [dependencies]
 bc-crypto = "^0.5.0"
 bc-rand = "^0.2.0"
-dcbor = "^0.15.0"
-bc-ur = "^0.5.0"
+dcbor = "^0.16.0"
+bc-ur = "^0.6.0"
 sskr = "^0.4.0"
 
 hex = "^0.4.3"
