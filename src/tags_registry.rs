@@ -33,7 +33,7 @@ use dcbor::prelude::*;
 pub use dcbor::TAG_DATE;
 
 use crate::{
-    Digest, Nonce, PrivateKeyBase, PublicKeyBase, SSKRShare, Salt, SealedMessage, Seed, Signature, ARID, URI, UUID, XID
+    Digest, Nonce, PrivateKeyBase, PublicKeyBase, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, ARID, URI, UUID, XID
 };
 use ssh_key::{
     private::PrivateKey as SSHPrivateKey,
@@ -89,6 +89,9 @@ pub const TAG_SIGNING_PRIVATE_KEY: TagValue = 40021;
 pub const TAG_SIGNING_PUBLIC_KEY: TagValue = 40022;
 pub const TAG_SYMMETRIC_KEY: TagValue = 40023;
 pub const TAG_XID: TagValue = 40024;
+
+// Needs IANA registration
+pub const TAG_REFERENCE: TagValue = 40025;
 
 // Bitcoin-related
 
@@ -278,8 +281,16 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     tags_store.set_summarizer(
         TAG_PUBLIC_KEY_BASE,
         Arc::new(move |untagged_cbor: CBOR| {
-            PublicKeyBase::from_untagged_cbor(untagged_cbor)?;
-            Ok("PublicKeyBase".to_string())
+            let public_key_base = PublicKeyBase::from_untagged_cbor(untagged_cbor)?;
+            Ok(format!("{public_key_base}"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_REFERENCE,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let reference = Reference::from_untagged_cbor(untagged_cbor)?;
+            Ok(format!("{reference}"))
         })
     );
 

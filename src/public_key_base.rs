@@ -1,5 +1,5 @@
 use bc_ur::prelude::*;
-use crate::{ tags, AgreementPublicKey, Encrypter, Signature, SigningPublicKey, Verifier };
+use crate::{ tags, AgreementPublicKey, Digest, Encrypter, Reference, ReferenceProvider, Signature, SigningPublicKey, Verifier };
 use anyhow::{ bail, Error, Result };
 
 /// Holds information used to communicate cryptographically with a remote entity.
@@ -38,6 +38,12 @@ impl PublicKeyBase {
 impl Verifier for PublicKeyBase {
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         self.signing_public_key.verify(signature, message)
+    }
+}
+
+impl ReferenceProvider for PublicKeyBase {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(self.tagged_cbor().to_cbor_data()))
     }
 }
 
@@ -110,13 +116,19 @@ impl Encrypter for PublicKeyBase {
     }
 }
 
+impl std::fmt::Display for PublicKeyBase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PublicKeyBase({})", self.reference().ref_hex_short())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use bc_ur::{ UREncodable, URDecodable };
     use hex_literal::hex;
     use dcbor::prelude::*;
 
-    use crate::{ PrivateKeyBase, PublicKeyBase };
+    use crate::{ PrivateKeyBase, PublicKeyBase, ReferenceProvider };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
@@ -140,5 +152,8 @@ mod tests {
             "ur:crypto-pubkeys/lftanshfhdcxzcgtcpytvsgafsondpjkbkoxaopsnniycawpnbnlwsgtregdfhgynyjksrgafmcstansgrhdcxlnfnwfzstovlrdfeuoghvwwyuesbcltsmetbgeurpfoyswfrzojlwdenjzckvadnrndtgsya"
         );
         assert_eq!(PublicKeyBase::from_ur_string(&ur).unwrap(), public_key_base);
+
+        assert_eq!(format!("{}", public_key_base), "PublicKeyBase(c9ede672)");
+        assert_eq!(format!("{}", public_key_base.reference()), "Reference(c9ede672)");
     }
 }

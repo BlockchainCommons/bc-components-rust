@@ -85,6 +85,9 @@ pub use encrypter::Encrypter;
 mod ec_key;
 pub use ec_key::*;
 
+mod reference;
+pub use reference::*;
+
 /// CBOR Tags used or defined by this crate.
 pub mod tags_registry;
 pub use tags_registry as tags;

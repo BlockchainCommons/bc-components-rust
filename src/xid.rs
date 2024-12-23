@@ -1,8 +1,7 @@
 use dcbor::prelude::*;
 use anyhow::{ bail, Result, Error };
 
-use crate::{tags, Digest, PrivateKeyBase, PublicKeyBase, SigningPrivateKey, SigningPublicKey};
-use bc_ur::prelude::*;
+use crate::{tags, Digest, PrivateKeyBase, PublicKeyBase, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
 
 /// A XID (eXtensible IDentifier).
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -65,32 +64,23 @@ impl XID {
 
     /// The first four bytes of the XID as a hexadecimal string.
     pub fn short_description(&self) -> String {
-        hex::encode(&self.0[..4])
+        self.ref_hex_short()
     }
 
     /// The first four bytes of the XID as upper-case ByteWords.
     pub fn bytewords_identifier(&self, prefix: bool) -> String {
-        let s = bytewords::identifier(&self.0[..4].try_into().unwrap()).to_uppercase();
-        if prefix {
-            format!("🅧 {}", s)
-        } else {
-            s
-        }
+        self.ref_bytewords(if prefix {Some("🅧")} else {None})
     }
 
     /// The first four bytes of the XID as Bytemoji.
     pub fn bytemoji_identifier(&self, prefix: bool) -> String {
-        let s = bytewords::bytemoji_identifier(&self.0[..4].try_into().unwrap()).to_uppercase();
-        if prefix {
-            format!("🅧 {}", s)
-        } else {
-            s
-        }
+        self.ref_bytemoji(if prefix {Some("🅧")} else {None})
     }
+}
 
-    /// The entire CBOR of the XID, run through SHA-256.
-    pub fn lifehash_fingerprint(&self) -> Digest {
-        Digest::from_image(self.to_cbor().to_cbor_data())
+impl ReferenceProvider for XID {
+    fn reference(&self) -> Reference {
+        Reference::from_data(*self.data())
     }
 }
 
@@ -225,7 +215,9 @@ mod tests {
     use crate::{ECPrivateKey, SigningPrivateKey};
 
     use super::*;
+    use bc_ur::prelude::*;
     use hex_literal::hex;
+    use indoc::indoc;
 
     #[test]
     fn test_xid() {
@@ -242,19 +234,45 @@ mod tests {
         assert_eq!(XID::from_ur_string(xid_string).unwrap(), xid);
         assert_eq!(xid.bytewords_identifier(true), "🅧 URGE DICE GURU IRIS");
         assert_eq!(xid.bytemoji_identifier(true), "🅧 🐻 😻 🍞 💐");
-        assert_eq!(format!("{}", xid.lifehash_fingerprint()), "Digest(e9d80e53f996dd89fac0155b27ed78b1cce10bf2d3581773eee9cbdf9a4a797f)");
     }
 
     #[test]
     fn test_xid_from_key() {
+        crate::register_tags();
         let private_key = SigningPrivateKey::new_schnorr(
             ECPrivateKey::from_data(
                 hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
             )
         );
         let public_key = private_key.public_key();
+
+        let key_cbor = public_key.to_cbor();
+        assert_eq!(key_cbor.diagnostic(), indoc! {"
+            40022(
+                h'e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a'
+            )
+        "}.trim());
+        assert_eq!(key_cbor.hex_annotated(), indoc! {"
+            d9 9c56                                 # tag(40022) signing-public-key
+                5820                                # bytes(32)
+                    e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a
+        "}.trim());
+        let key_cbor_data = key_cbor.to_cbor_data();
+        assert_eq!(key_cbor_data, hex!("d99c565820e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a"));
+        let digest = Digest::from_image(&key_cbor_data);
+        assert_eq!(digest.data(), &hex!("d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47"));
+
         let xid = XID::new(&public_key);
         assert_eq!(format!("{:?}", xid), "XID(d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47)");
         xid.validate(&public_key);
+
+        assert_eq!(format!("{}", xid), "XID(d40e0602)");
+        let reference = xid.reference();
+        assert_eq!(format!("{reference}"), "Reference(d40e0602)");
+
+        assert_eq!(reference.bytewords_identifier(None), "TINY BETA ATOM ALSO");
+        assert_eq!(reference.bytemoji_identifier(None), "🧦 🤨 😎 😆");
+
+        assert_eq!(digest.data(), xid.data());
     }
 }
