@@ -113,7 +113,7 @@ impl CBORTaggedDecodable for SealedMessage {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ SealedMessage, PrivateKeyBase };
+    use crate::{ PrivateKeyBase, PublicKeyBaseProvider, SealedMessage };
     use hex_literal::hex;
 
     #[test]
@@ -126,7 +126,7 @@ mod tests {
 
         let bob_seed = &hex!("187a5973c64d359c836eba466a44db7b");
         let bob_private_key = PrivateKeyBase::from_data(bob_seed);
-        let bob_public_key = bob_private_key.schnorr_public_key_base();
+        let bob_public_key = bob_private_key.public_key_base();
 
         let carol_seed = &hex!("8574afab18e229651c1be8f76ffee523");
         let carol_private_key = PrivateKeyBase::from_data(carol_seed);

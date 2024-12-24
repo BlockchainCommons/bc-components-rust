@@ -35,6 +35,16 @@ impl PublicKeyBase {
     }
 }
 
+pub trait PublicKeyBaseProvider {
+    fn public_key_base(&self) -> PublicKeyBase;
+}
+
+impl PublicKeyBaseProvider for PublicKeyBase {
+    fn public_key_base(&self) -> PublicKeyBase {
+        self.clone()
+    }
+}
+
 impl Verifier for PublicKeyBase {
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         self.signing_public_key.verify(signature, message)
@@ -128,7 +138,7 @@ mod tests {
     use hex_literal::hex;
     use dcbor::prelude::*;
 
-    use crate::{ PrivateKeyBase, PublicKeyBase, ReferenceProvider };
+    use crate::{ PrivateKeyBase, PublicKeyBase, PublicKeyBaseProvider, ReferenceProvider };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
@@ -136,7 +146,7 @@ mod tests {
     fn test_private_key_base() {
         crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
-        let public_key_base = private_key_base.schnorr_public_key_base();
+        let public_key_base = private_key_base.public_key_base();
 
         let cbor = CBOR::from(public_key_base.clone());
 

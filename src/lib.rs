@@ -100,13 +100,13 @@ mod private_key_base;
 pub use private_key_base::PrivateKeyBase;
 
 mod public_key_base;
-pub use public_key_base::PublicKeyBase;
+pub use public_key_base::{PublicKeyBase, PublicKeyBaseProvider};
 
 mod sealed_message;
 pub use sealed_message::SealedMessage;
 
 mod xid;
-pub use xid::XID;
+pub use xid::{XID, XIDProvider};
 
 mod sskr_mod;
 pub use sskr_mod::{

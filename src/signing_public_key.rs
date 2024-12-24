@@ -56,7 +56,6 @@ impl SigningPublicKey {
             _ => None,
         }
     }
-
 }
 
 impl Verifier for SigningPublicKey {

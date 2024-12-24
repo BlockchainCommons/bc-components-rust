@@ -36,8 +36,8 @@ impl XID {
     /// Create a new XID from the given public key (the "genesis key").
     ///
     /// The XID is the SHA-256 digest of the CBOR encoding of the public key.
-    pub fn new(genesis_key: &SigningPublicKey) -> Self {
-        let key_cbor_data = genesis_key.to_cbor_data();
+    pub fn new(genesis_key: impl AsRef<SigningPublicKey>) -> Self {
+        let key_cbor_data = genesis_key.as_ref().to_cbor_data();
         let digest = Digest::from_image(key_cbor_data);
         Self::from_data(*digest.data())
     }
@@ -75,6 +75,22 @@ impl XID {
     /// The first four bytes of the XID as Bytemoji.
     pub fn bytemoji_identifier(&self, prefix: bool) -> String {
         self.ref_bytemoji(if prefix {Some("🅧")} else {None})
+    }
+}
+
+pub trait XIDProvider {
+    fn xid(&self) -> XID;
+}
+
+impl XIDProvider for XID {
+    fn xid(&self) -> XID {
+        self.clone()
+    }
+}
+
+impl XIDProvider for SigningPublicKey {
+    fn xid(&self) -> XID {
+        XID::new(self)
     }
 }
 
