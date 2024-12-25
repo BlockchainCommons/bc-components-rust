@@ -89,16 +89,20 @@ impl std::fmt::Display for URI {
 }
 
 // Convert from a string to a URI.
-impl From<&str> for URI {
-    fn from(uri: &str) -> Self {
-        Self::new(uri).unwrap()
+impl TryFrom<&str> for URI {
+    type Error = Error;
+
+    fn try_from(uri: &str) -> Result<Self, Self::Error> {
+        Self::new(uri).map_err(Into::into)
     }
 }
 
 // Convert from a string to a URI.
-impl From<String> for URI {
-    fn from(uri: String) -> Self {
-        Self::new(uri).unwrap()
+impl TryFrom<String> for URI {
+    type Error = Error;
+
+    fn try_from(uri: String) -> Result<Self, Self::Error> {
+        Self::try_from(uri.as_str())
     }
 }
 
