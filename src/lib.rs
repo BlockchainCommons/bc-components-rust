@@ -34,14 +34,8 @@ pub use compressed::Compressed;
 mod nonce;
 pub use nonce::Nonce;
 
-mod symmetric_key;
-pub use symmetric_key::SymmetricKey;
-
-mod encrypted_message;
-pub use encrypted_message::EncryptedMessage;
-
-mod authentication_tag;
-pub use authentication_tag::AuthenticationTag;
+mod symmetric;
+pub use symmetric::{SymmetricKey, EncryptedMessage, AuthenticationTag};
 
 mod salt;
 pub use salt::Salt;
@@ -61,17 +55,8 @@ pub use ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 mod seed;
 pub use seed::Seed;
 
-mod signature;
-pub use signature::Signature;
-
-mod signing_private_key;
-pub use signing_private_key::{ SigningPrivateKey, SigningOptions };
-
-mod signing_public_key;
-pub use signing_public_key::SigningPublicKey;
-
-mod signer;
-pub use signer::{Signer, Verifier};
+mod signing;
+pub use signing::{Signature, SigningPrivateKey, SigningOptions, SigningPublicKey, Signer, Verifier};
 
 mod encrypter;
 pub use encrypter::Encrypter;
