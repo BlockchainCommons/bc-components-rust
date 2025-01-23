@@ -10,6 +10,9 @@ pub use encapsulation_public_key::EncapsulationPublicKey;
 mod encapsulation_ciphertext;
 pub use encapsulation_ciphertext::EncapsulationCiphertext;
 
+mod sealed_message;
+pub use sealed_message::SealedMessage;
+
 #[cfg(test)]
 mod tests {
     use crate::{Encapsulation, Kyber};

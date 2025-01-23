@@ -22,8 +22,8 @@
 mod digest;
 pub use digest::Digest;
 
-mod arid;
-pub use arid::ARID;
+mod id;
+pub use id::{ARID, URI, UUID, XID, XIDProvider};
 
 mod digest_provider;
 pub use digest_provider::DigestProvider;
@@ -39,12 +39,6 @@ pub use symmetric::{SymmetricKey, EncryptedMessage, AuthenticationTag};
 
 mod salt;
 pub use salt::Salt;
-
-mod uri;
-pub use uri::URI;
-
-mod uuid;
-pub use uuid::UUID;
 
 mod x25519;
 pub use x25519::{X25519PublicKey, X25519PrivateKey};
@@ -81,12 +75,6 @@ pub use private_key_base::PrivateKeyBase;
 mod public_key_base;
 pub use public_key_base::{PublicKeyBase, PublicKeyBaseProvider};
 
-mod sealed_message;
-pub use sealed_message::SealedMessage;
-
-mod xid;
-pub use xid::{XID, XIDProvider};
-
 mod dilithium;
 pub use dilithium::{
     Dilithium,
@@ -109,6 +97,7 @@ pub use encapsulation::{
     EncapsulationPrivateKey,
     EncapsulationPublicKey,
     EncapsulationCiphertext,
+    SealedMessage,
 };
 
 mod sskr_mod;
