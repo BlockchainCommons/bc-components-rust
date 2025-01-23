@@ -1,5 +1,5 @@
 use bc_ur::prelude::*;
-use crate::{ tags, AgreementPublicKey, Digest, Encrypter, Reference, ReferenceProvider, Signature, SigningPublicKey, Verifier };
+use crate::{ tags, X25519PublicKey, Digest, Encrypter, Reference, ReferenceProvider, Signature, SigningPublicKey, Verifier };
 use anyhow::{ bail, Error, Result };
 
 /// Holds information used to communicate cryptographically with a remote entity.
@@ -9,14 +9,14 @@ use anyhow::{ bail, Error, Result };
 #[derive(Clone, Eq, PartialEq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
-    agreement_public_key: AgreementPublicKey,
+    agreement_public_key: X25519PublicKey,
 }
 
 impl PublicKeyBase {
     /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `AgreementPublicKey`.
     pub fn new(
         signing_public_key: SigningPublicKey,
-        agreement_public_key: AgreementPublicKey
+        agreement_public_key: X25519PublicKey
     ) -> Self {
         Self {
             signing_public_key,
@@ -30,7 +30,7 @@ impl PublicKeyBase {
     }
 
     /// Returns the `AgreementPublicKey` of this `PublicKeyBase`.
-    pub fn agreement_public_key(&self) -> &AgreementPublicKey {
+    pub fn agreement_public_key(&self) -> &X25519PublicKey {
         &self.agreement_public_key
     }
 }
@@ -69,8 +69,8 @@ impl AsRef<SigningPublicKey> for PublicKeyBase {
     }
 }
 
-impl AsRef<AgreementPublicKey> for PublicKeyBase {
-    fn as_ref(&self) -> &AgreementPublicKey {
+impl AsRef<X25519PublicKey> for PublicKeyBase {
+    fn as_ref(&self) -> &X25519PublicKey {
         &self.agreement_public_key
     }
 }
@@ -112,7 +112,7 @@ impl CBORTaggedDecodable for PublicKeyBase {
                 }
 
                 let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
-                let agreement_public_key = AgreementPublicKey::try_from(elements[1].clone())?;
+                let agreement_public_key = X25519PublicKey::try_from(elements[1].clone())?;
                 Ok(Self::new(signing_public_key, agreement_public_key))
             }
             _ => bail!("PublicKeyBase must be an array"),
@@ -121,7 +121,7 @@ impl CBORTaggedDecodable for PublicKeyBase {
 }
 
 impl Encrypter for PublicKeyBase {
-    fn agreement_public_key(&self) -> &AgreementPublicKey {
+    fn agreement_public_key(&self) -> &X25519PublicKey {
         &self.agreement_public_key
     }
 }

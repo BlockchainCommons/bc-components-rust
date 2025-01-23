@@ -7,9 +7,9 @@ use anyhow::{ bail, Error, Result };
 ///
 /// <https://datatracker.ietf.org/doc/html/rfc7748>
 #[derive(Clone, PartialEq, Eq, Hash)]
-pub struct AgreementPublicKey([u8; Self::KEY_SIZE]);
+pub struct X25519PublicKey([u8; Self::KEY_SIZE]);
 
-impl AgreementPublicKey {
+impl X25519PublicKey {
     pub const KEY_SIZE: usize = 32;
 
     /// Restore an `AgreementPublicKey` from a fixed-size array of bytes.
@@ -48,43 +48,43 @@ impl AgreementPublicKey {
     }
 }
 
-impl From<Rc<AgreementPublicKey>> for AgreementPublicKey {
-    fn from(value: Rc<AgreementPublicKey>) -> Self {
+impl From<Rc<X25519PublicKey>> for X25519PublicKey {
+    fn from(value: Rc<X25519PublicKey>) -> Self {
         value.as_ref().clone()
     }
 }
 
-impl<'a> From<&'a AgreementPublicKey> for &'a [u8; AgreementPublicKey::KEY_SIZE] {
-    fn from(value: &'a AgreementPublicKey) -> Self {
+impl<'a> From<&'a X25519PublicKey> for &'a [u8; X25519PublicKey::KEY_SIZE] {
+    fn from(value: &'a X25519PublicKey) -> Self {
         &value.0
     }
 }
 
-impl AsRef<AgreementPublicKey> for AgreementPublicKey {
-    fn as_ref(&self) -> &AgreementPublicKey {
+impl AsRef<X25519PublicKey> for X25519PublicKey {
+    fn as_ref(&self) -> &X25519PublicKey {
         self
     }
 }
 
-impl CBORTagged for AgreementPublicKey {
+impl CBORTagged for X25519PublicKey {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_AGREEMENT_PUBLIC_KEY])
     }
 }
 
-impl From<AgreementPublicKey> for CBOR {
-    fn from(value: AgreementPublicKey) -> Self {
+impl From<X25519PublicKey> for CBOR {
+    fn from(value: X25519PublicKey) -> Self {
         value.tagged_cbor()
     }
 }
 
-impl CBORTaggedEncodable for AgreementPublicKey {
+impl CBORTaggedEncodable for X25519PublicKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.data())
     }
 }
 
-impl TryFrom<CBOR> for AgreementPublicKey {
+impl TryFrom<CBOR> for X25519PublicKey {
     type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
@@ -92,42 +92,42 @@ impl TryFrom<CBOR> for AgreementPublicKey {
     }
 }
 
-impl CBORTaggedDecodable for AgreementPublicKey {
+impl CBORTaggedDecodable for X25519PublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         Self::from_data_ref(data)
     }
 }
 
-impl std::fmt::Debug for AgreementPublicKey {
+impl std::fmt::Debug for X25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "AgreementPublicKey({})", self.hex())
     }
 }
 
 // Convert from a reference to a byte vector to a AgreementPublicKey.
-impl From<&AgreementPublicKey> for AgreementPublicKey {
-    fn from(key: &AgreementPublicKey) -> Self {
+impl From<&X25519PublicKey> for X25519PublicKey {
+    fn from(key: &X25519PublicKey) -> Self {
         key.clone()
     }
 }
 
 // Convert from a byte vector to a AgreementPublicKey.
-impl From<AgreementPublicKey> for Vec<u8> {
-    fn from(key: AgreementPublicKey) -> Self {
+impl From<X25519PublicKey> for Vec<u8> {
+    fn from(key: X25519PublicKey) -> Self {
         key.0.to_vec()
     }
 }
 
 // Convert from a reference to a byte vector to a AgreementPublicKey.
-impl From<&AgreementPublicKey> for Vec<u8> {
-    fn from(key: &AgreementPublicKey) -> Self {
+impl From<&X25519PublicKey> for Vec<u8> {
+    fn from(key: &X25519PublicKey) -> Self {
         key.0.to_vec()
     }
 }
 
-impl Encrypter for AgreementPublicKey {
-    fn agreement_public_key(&self) -> &AgreementPublicKey {
+impl Encrypter for X25519PublicKey {
+    fn agreement_public_key(&self) -> &X25519PublicKey {
         self
     }
 }

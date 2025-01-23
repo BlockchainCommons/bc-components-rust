@@ -2,11 +2,11 @@ use anyhow::{Result, bail};
 use dcbor::prelude::*;
 use crate::KyberPublicKey;
 
-use crate::{tags, AgreementPublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
+use crate::{tags, X25519PublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EncapsulationPublicKey {
-    X25519(AgreementPublicKey),
+    X25519(X25519PublicKey),
     Kyber(KyberPublicKey),
 }
 
@@ -51,7 +51,7 @@ impl TryFrom<CBOR> for EncapsulationPublicKey {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => {
                 match tag.value() {
-                    tags::TAG_AGREEMENT_PUBLIC_KEY => Ok(EncapsulationPublicKey::X25519(AgreementPublicKey::try_from(cbor)?)),
+                    tags::TAG_AGREEMENT_PUBLIC_KEY => Ok(EncapsulationPublicKey::X25519(X25519PublicKey::try_from(cbor)?)),
                     tags::TAG_KYBER_PUBLIC_KEY => Ok(EncapsulationPublicKey::Kyber(KyberPublicKey::try_from(cbor)?)),
                     _ => bail!("Invalid encapsulation public key")
                 }

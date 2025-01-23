@@ -52,17 +52,11 @@ pub use uri::URI;
 mod uuid;
 pub use uuid::UUID;
 
-mod agreement_public_key;
-pub use agreement_public_key::AgreementPublicKey;
+mod x25519;
+pub use x25519::{X25519PublicKey, X25519PrivateKey};
 
-mod agreement_private_key;
-pub use agreement_private_key::AgreementPrivateKey;
-
-mod ed25519_private_key;
-pub use ed25519_private_key::Ed25519PrivateKey;
-
-mod ed25519_public_key;
-pub use ed25519_public_key::Ed25519PublicKey;
+mod ed25519;
+pub use ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 
 mod seed;
 pub use seed::Seed;
@@ -151,7 +145,7 @@ pub use hkdf_rng::HKDFRng;
 #[cfg(test)]
 mod tests {
     use crate::{
-        AgreementPrivateKey, AgreementPublicKey, ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey, Verifier
+        X25519PrivateKey, X25519PublicKey, ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey, Verifier
     };
     use bc_crypto::{
         ecdsa_new_private_key_using,
@@ -178,13 +172,13 @@ mod tests {
     fn test_agreement_keys() {
         crate::register_tags();
         let mut rng = make_fake_random_number_generator();
-        let private_key = AgreementPrivateKey::new_using(&mut rng);
+        let private_key = X25519PrivateKey::new_using(&mut rng);
         let private_key_ur = private_key.ur_string();
         assert_eq!(
             private_key_ur,
             "ur:agreement-private-key/hdcxkbrehkrkrsjztodseytknecfgewmgdmwfsvdvysbpmghuozsprknfwkpnehydlweynwkrtct"
         );
-        assert_eq!(AgreementPrivateKey::from_ur_string(private_key_ur).unwrap(), private_key);
+        assert_eq!(X25519PrivateKey::from_ur_string(private_key_ur).unwrap(), private_key);
 
         let public_key = private_key.public_key();
         let public_key_ur = public_key.ur_string();
@@ -192,9 +186,9 @@ mod tests {
             public_key_ur,
             "ur:agreement-public-key/hdcxwnryknkbbymnoxhswmptgydsotwswsghfmrkksfxntbzjyrnuornkildchgswtdahehpwkrl"
         );
-        assert_eq!(AgreementPublicKey::from_ur_string(public_key_ur).unwrap(), public_key);
+        assert_eq!(X25519PublicKey::from_ur_string(public_key_ur).unwrap(), public_key);
 
-        let derived_private_key = AgreementPrivateKey::derive_from_key_material(
+        let derived_private_key = X25519PrivateKey::derive_from_key_material(
             "password".as_bytes()
         );
         assert_eq!(
@@ -206,10 +200,10 @@ mod tests {
     #[test]
     fn test_agreement() {
         let mut rng = make_fake_random_number_generator();
-        let alice_private_key = AgreementPrivateKey::new_using(&mut rng);
+        let alice_private_key = X25519PrivateKey::new_using(&mut rng);
         let alice_public_key = alice_private_key.public_key();
 
-        let bob_private_key = AgreementPrivateKey::new_using(&mut rng);
+        let bob_private_key = X25519PrivateKey::new_using(&mut rng);
         let bob_public_key = bob_private_key.public_key();
 
         let alice_shared_key = alice_private_key.shared_key_with(&bob_public_key);

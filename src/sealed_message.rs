@@ -1,18 +1,18 @@
-use crate::{ tags, AgreementPublicKey, EncryptedMessage, Encrypter, Nonce, PrivateKeyBase };
+use crate::{ tags, EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey, EncryptedMessage, Nonce };
 use bc_ur::prelude::*;
 use anyhow::{ bail, Result, Error };
 
 /// A sealed message can be sent to anyone, but only the intended recipient can
 /// decrypt it.
-#[derive(Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct SealedMessage {
     message: EncryptedMessage,
-    ephemeral_public_key: AgreementPublicKey,
+    encapsulated_key: EncapsulationCiphertext,
 }
 
 impl SealedMessage {
     /// Creates a new `SealedMessage` from the given plaintext and recipient.
-    pub fn new(plaintext: impl Into<Vec<u8>>, recipient: &dyn Encrypter) -> Self {
+    pub fn new(plaintext: impl Into<Vec<u8>>, recipient: &EncapsulationPublicKey) -> Self {
         Self::new_with_aad(plaintext, recipient, None::<Vec<u8>>)
     }
 
@@ -20,10 +20,10 @@ impl SealedMessage {
     /// additional authenticated data.
     pub fn new_with_aad(
         plaintext: impl Into<Vec<u8>>,
-        recipient: &dyn Encrypter,
+        recipient: &EncapsulationPublicKey,
         aad: Option<impl Into<Vec<u8>>>
     ) -> Self {
-        Self::new_opt(plaintext, recipient, aad, None::<Vec<u8>>, None::<Nonce>)
+        Self::new_opt(plaintext, recipient, aad, None::<Nonce>)
     }
 
     /// Creates a new `SealedMessage` from the given plaintext, recipient, and
@@ -31,29 +31,21 @@ impl SealedMessage {
     /// and test nonce.
     pub fn new_opt(
         plaintext: impl Into<Vec<u8>>,
-        recipient: &dyn Encrypter,
+        recipient: &EncapsulationPublicKey,
         aad: Option<impl Into<Vec<u8>>>,
-        test_key_material: Option<impl Into<Vec<u8>>>,
         test_nonce: Option<impl AsRef<Nonce>>
     ) -> Self {
-        let ephemeral_sender = PrivateKeyBase::from_optional_data(test_key_material);
-        let recipient_public_key = recipient.agreement_public_key();
-        let shared_key = ephemeral_sender
-            .agreement_private_key()
-            .shared_key_with(recipient_public_key);
+        let (shared_key, encapsulated_key) = recipient.encapsulate_new_shared_secret();
         let message = shared_key.encrypt(plaintext, aad, test_nonce);
-        let ephemeral_public_key = ephemeral_sender.agreement_private_key().public_key();
         Self {
             message,
-            ephemeral_public_key,
+            encapsulated_key,
         }
     }
 
     /// Decrypts the message using the recipient's private key.
-    pub fn decrypt(&self, private_key: &PrivateKeyBase) -> Result<Vec<u8>> {
-        let shared_key = private_key
-            .agreement_private_key()
-            .shared_key_with(&self.ephemeral_public_key);
+    pub fn decrypt(&self, private_key: &EncapsulationPrivateKey) -> Result<Vec<u8>> {
+        let shared_key = private_key.decapsulate_shared_secret(&self.encapsulated_key)?;
         shared_key.decrypt(&self.message)
     }
 }
@@ -87,7 +79,7 @@ impl TryFrom<CBOR> for SealedMessage {
 impl CBORTaggedEncodable for SealedMessage {
     fn untagged_cbor(&self) -> CBOR {
         let message: CBOR = self.message.clone().into();
-        let ephemeral_public_key: CBOR = self.ephemeral_public_key.clone().into();
+        let ephemeral_public_key: CBOR = self.encapsulated_key.clone().into();
         [message, ephemeral_public_key].into()
     }
 }
@@ -103,7 +95,7 @@ impl CBORTaggedDecodable for SealedMessage {
                 let ephemeral_public_key = elements[1].clone().try_into()?;
                 Ok(Self {
                     message,
-                    ephemeral_public_key,
+                    encapsulated_key: ephemeral_public_key,
                 })
             }
             _ => bail!("SealedMessage must be an array"),
@@ -113,24 +105,36 @@ impl CBORTaggedDecodable for SealedMessage {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ PrivateKeyBase, PublicKeyBaseProvider, SealedMessage };
-    use hex_literal::hex;
+    use crate::{ Encapsulation, Kyber, SealedMessage };
 
     #[test]
-    fn test_sealed_message() {
+    fn test_sealed_message_x25519() {
         let plaintext = b"Some mysteries aren't meant to be solved.";
 
-        let alice_seed = &hex!("82f32c855d3d542256180810797e0073");
-        let alice_private_key = PrivateKeyBase::from_data(alice_seed);
-        // let alice_public_key = alice_private_key.public_key();
+        let encapsulation = Encapsulation::X25519;
+        let (alice_private_key, _) = encapsulation.keypair();
+        let (bob_private_key, bob_public_key) = encapsulation.keypair();
+        let (carol_private_key, _) = encapsulation.keypair();
 
-        let bob_seed = &hex!("187a5973c64d359c836eba466a44db7b");
-        let bob_private_key = PrivateKeyBase::from_data(bob_seed);
-        let bob_public_key = bob_private_key.public_key_base();
+        // Alice constructs a message for Bob's eyes only.
+        let sealed_message = SealedMessage::new(plaintext, &bob_public_key);
 
-        let carol_seed = &hex!("8574afab18e229651c1be8f76ffee523");
-        let carol_private_key = PrivateKeyBase::from_data(carol_seed);
-        // let carol_public_key = carol_private_key.public_key();
+        // Bob decrypts and reads the message.
+        assert_eq!(sealed_message.decrypt(&bob_private_key).unwrap(), plaintext);
+
+        // No one else can decrypt the message, not even the sender.
+        assert!(sealed_message.decrypt(&alice_private_key).is_err());
+        assert!(sealed_message.decrypt(&carol_private_key).is_err());
+    }
+
+    #[test]
+    fn test_sealed_message_kyber512() {
+        let plaintext = b"Some mysteries aren't meant to be solved.";
+
+        let encapsulation = Encapsulation::Kyber(Kyber::Kyber512);
+        let (alice_private_key, _) = encapsulation.keypair();
+        let (bob_private_key, bob_public_key) = encapsulation.keypair();
+        let (carol_private_key, _) = encapsulation.keypair();
 
         // Alice constructs a message for Bob's eyes only.
         let sealed_message = SealedMessage::new(plaintext, &bob_public_key);
