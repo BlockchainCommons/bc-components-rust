@@ -93,6 +93,16 @@ pub const TAG_XID: TagValue = 40024;
 // Needs IANA registration
 pub const TAG_REFERENCE: TagValue = 40025;
 
+// Needs IANA registration
+pub const TAG_KYBER_PRIVATE_KEY: TagValue = 40100;
+pub const TAG_KYBER_PUBLIC_KEY: TagValue = 40101;
+pub const TAG_KYBER_CIPHERTEXT: TagValue = 40102;
+
+// Needs IANA registration
+pub const TAG_DILITHIUM_PRIVATE_KEY: TagValue = 40103;
+pub const TAG_DILITHIUM_PUBLIC_KEY: TagValue = 40104;
+pub const TAG_DILITHIUM_SIGNATURE: TagValue = 40105;
+
 // Bitcoin-related
 
 pub const TAG_HDKEY_V1: TagValue = 303; // Fixed
@@ -176,6 +186,16 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_SIGNING_PUBLIC_KEY, "signing-public-key"),
         (TAG_SYMMETRIC_KEY, "crypto-key"),
         (TAG_XID, "xid"),
+
+        (TAG_REFERENCE, "reference"),
+
+        (TAG_KYBER_PRIVATE_KEY, "kyber-private-key"),
+        (TAG_KYBER_PUBLIC_KEY, "kyber-public-key"),
+        (TAG_KYBER_CIPHERTEXT, "kyber-ciphertext"),
+
+        (TAG_DILITHIUM_PRIVATE_KEY, "dilithium-private-key"),
+        (TAG_DILITHIUM_PUBLIC_KEY, "dilithium-public-key"),
+        (TAG_DILITHIUM_SIGNATURE, "dilithium-signature"),
 
         (TAG_HDKEY_V1, "crypto-hdkey"),
         (TAG_DERIVATION_PATH_V1, "crypto-keypath"),

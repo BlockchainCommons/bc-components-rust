@@ -108,6 +108,30 @@ pub use sealed_message::SealedMessage;
 mod xid;
 pub use xid::{XID, XIDProvider};
 
+mod dilithium;
+pub use dilithium::{
+    Dilithium,
+    DilithiumPrivateKey,
+    DilithiumPublicKey,
+    DilithiumSignature,
+};
+
+mod kyber;
+pub use kyber::{
+    Kyber,
+    KyberPrivateKey,
+    KyberPublicKey,
+    KyberCiphertext,
+};
+
+mod encapsulation;
+pub use encapsulation::{
+    Encapsulation,
+    EncapsulationPrivateKey,
+    EncapsulationPublicKey,
+    EncapsulationCiphertext,
+};
+
 mod sskr_mod;
 pub use sskr_mod::{
     SSKRGroupSpec,

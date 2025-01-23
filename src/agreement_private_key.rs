@@ -20,6 +20,13 @@ impl AgreementPrivateKey {
         Self::new_using(&mut rng)
     }
 
+    /// Generate a new random `AgreementPrivateKey` and corresponding `AgreementPublicKey`.
+    pub fn keypair() -> (AgreementPrivateKey, AgreementPublicKey) {
+        let private_key = AgreementPrivateKey::new();
+        let public_key = private_key.public_key();
+        (private_key, public_key)
+    }
+
     /// Generate a new random `AgreementPrivateKey` using the given random number generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self(x25519_new_agreement_private_key_using(rng))

@@ -50,7 +50,7 @@ impl SealedMessage {
     }
 
     /// Decrypts the message using the recipient's private key.
-    pub fn decrypt(&self, private_key: &PrivateKeyBase) -> Result<Vec<u8>, bc_crypto::Error> {
+    pub fn decrypt(&self, private_key: &PrivateKeyBase) -> Result<Vec<u8>> {
         let shared_key = private_key
             .agreement_private_key()
             .shared_key_with(&self.ephemeral_public_key);
