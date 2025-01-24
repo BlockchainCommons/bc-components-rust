@@ -4,7 +4,7 @@ use crate::KyberPublicKey;
 
 use crate::{tags, X25519PublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum EncapsulationPublicKey {
     X25519(X25519PublicKey),
     Kyber(KyberPublicKey),
@@ -22,7 +22,7 @@ impl EncapsulationPublicKey {
         match self {
             EncapsulationPublicKey::X25519(public_key) => {
                 let emphemeral_sender = PrivateKeyBase::new();
-                let ephemeral_private_key = emphemeral_sender.agreement_private_key();
+                let ephemeral_private_key = emphemeral_sender.x25519_private_key();
                 let ephemeral_public_key = ephemeral_private_key.public_key();
                 let shared_key = ephemeral_private_key.shared_key_with(public_key);
                 (shared_key, EncapsulationCiphertext::X25519(ephemeral_public_key))

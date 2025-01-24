@@ -1,6 +1,16 @@
-use bc_ur::prelude::*;
-use crate::{ tags, X25519PublicKey, Digest, Encrypter, Reference, ReferenceProvider, Signature, SigningPublicKey, Verifier };
 use anyhow::{ bail, Error, Result };
+use bc_ur::prelude::*;
+use crate::{
+    tags,
+    Digest,
+    EncapsulationPublicKey,
+    Encrypter,
+    Reference,
+    ReferenceProvider,
+    Signature,
+    SigningPublicKey,
+    Verifier,
+};
 
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
@@ -9,18 +19,18 @@ use anyhow::{ bail, Error, Result };
 #[derive(Clone, PartialEq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
-    agreement_public_key: X25519PublicKey,
+    encapsulation_public_key: EncapsulationPublicKey,
 }
 
 impl PublicKeyBase {
-    /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `AgreementPublicKey`.
+    /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `EncapsulationPublicKey`.
     pub fn new(
         signing_public_key: SigningPublicKey,
-        agreement_public_key: X25519PublicKey
+        encapsulation_public_key: EncapsulationPublicKey
     ) -> Self {
         Self {
             signing_public_key,
-            agreement_public_key,
+            encapsulation_public_key,
         }
     }
 
@@ -29,9 +39,9 @@ impl PublicKeyBase {
         &self.signing_public_key
     }
 
-    /// Returns the `AgreementPublicKey` of this `PublicKeyBase`.
-    pub fn agreement_public_key(&self) -> &X25519PublicKey {
-        &self.agreement_public_key
+    /// Returns the `EncapsulationPublicKey` of this `PublicKeyBase`.
+    pub fn enapsulation_public_key(&self) -> &EncapsulationPublicKey {
+        &self.encapsulation_public_key
     }
 }
 
@@ -69,9 +79,9 @@ impl AsRef<SigningPublicKey> for PublicKeyBase {
     }
 }
 
-impl AsRef<X25519PublicKey> for PublicKeyBase {
-    fn as_ref(&self) -> &X25519PublicKey {
-        &self.agreement_public_key
+impl AsRef<EncapsulationPublicKey> for PublicKeyBase {
+    fn as_ref(&self) -> &EncapsulationPublicKey {
+        &self.encapsulation_public_key
     }
 }
 
@@ -90,7 +100,7 @@ impl From<PublicKeyBase> for CBOR {
 impl CBORTaggedEncodable for PublicKeyBase {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_public_key.clone().into();
-        let agreement_key_cbor: CBOR = self.agreement_public_key.clone().into();
+        let agreement_key_cbor: CBOR = self.encapsulation_public_key.clone().into();
         vec![signing_key_cbor, agreement_key_cbor].into()
     }
 }
@@ -112,8 +122,10 @@ impl CBORTaggedDecodable for PublicKeyBase {
                 }
 
                 let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
-                let agreement_public_key = X25519PublicKey::try_from(elements[1].clone())?;
-                Ok(Self::new(signing_public_key, agreement_public_key))
+                let encapsulation_public_key = EncapsulationPublicKey::try_from(
+                    elements[1].clone()
+                )?;
+                Ok(Self::new(signing_public_key, encapsulation_public_key))
             }
             _ => bail!("PublicKeyBase must be an array"),
         }
@@ -121,8 +133,8 @@ impl CBORTaggedDecodable for PublicKeyBase {
 }
 
 impl Encrypter for PublicKeyBase {
-    fn agreement_public_key(&self) -> &X25519PublicKey {
-        &self.agreement_public_key
+    fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
+        self.encapsulation_public_key.clone()
     }
 }
 

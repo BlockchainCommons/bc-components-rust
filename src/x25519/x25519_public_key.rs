@@ -1,6 +1,6 @@
 use std::rc::Rc;
 use bc_ur::prelude::*;
-use crate::{tags, Encrypter};
+use crate::{tags, EncapsulationPublicKey, Encrypter};
 use anyhow::{ bail, Error, Result };
 
 /// A Curve25519 public key used for X25519 key agreement.
@@ -127,7 +127,7 @@ impl From<&X25519PublicKey> for Vec<u8> {
 }
 
 impl Encrypter for X25519PublicKey {
-    fn agreement_public_key(&self) -> &X25519PublicKey {
-        self
+    fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
+        EncapsulationPublicKey::X25519(self.clone())
     }
 }

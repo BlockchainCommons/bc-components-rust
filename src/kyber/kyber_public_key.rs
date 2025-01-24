@@ -14,6 +14,13 @@ pub enum KyberPublicKey {
     Kyber1024(Box<kyber1024::PublicKey>),
 }
 
+impl std::hash::Hash for KyberPublicKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.level().hash(state);
+        self.as_bytes().hash(state);
+    }
+}
+
 impl KyberPublicKey {
     pub fn level(&self) -> Kyber {
         match self {

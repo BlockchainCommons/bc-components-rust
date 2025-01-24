@@ -1,5 +1,5 @@
-use crate::X25519PublicKey;
+use crate::EncapsulationPublicKey;
 
 pub trait Encrypter {
-    fn agreement_public_key(&self) -> &X25519PublicKey;
+    fn encapsulation_public_key(&self) -> EncapsulationPublicKey;
 }

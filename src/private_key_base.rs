@@ -13,34 +13,12 @@ use ssh_key::Algorithm as SSHAlgorithm;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    ECPrivateKey,
-    Ed25519PrivateKey,
-    HKDFRng,
-    PrivateKeyDataProvider,
-    PublicKeyBase,
-    PublicKeyBaseProvider,
-    Signature,
-    Signer,
-    SigningOptions,
-    SigningPrivateKey,
-    tags,
-    X25519PrivateKey,
+    tags, ECPrivateKey, Ed25519PrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PublicKeyBase, PublicKeyBaseProvider, SigningPrivateKey, X25519PrivateKey
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
 #[derive(Clone, Eq, PartialEq, ZeroizeOnDrop)]
 pub struct PrivateKeyBase(Vec<u8>);
-
-impl Signer for PrivateKeyBase {
-    fn sign_with_options(
-        &self,
-        message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>
-    ) -> Result<Signature> {
-        let schnorr_key = self.schnorr_signing_private_key();
-        schnorr_key.sign_with_options(message, options)
-    }
-}
 
 impl PrivateKeyBase {
     /// Generate a new random `PrivateKeyBase`.
@@ -114,7 +92,7 @@ impl PrivateKeyBase {
     /// Derive a new `AgreementPrivateKey` from this `PrivateKeyBase`.
     ///
     /// An X25519 key for key agreement and public key encryption.
-    pub fn agreement_private_key(&self) -> X25519PrivateKey {
+    pub fn x25519_private_key(&self) -> X25519PrivateKey {
         X25519PrivateKey::derive_from_key_material(&self.0)
     }
 
@@ -125,7 +103,7 @@ impl PrivateKeyBase {
     pub fn schnorr_public_key_base(&self) -> PublicKeyBase {
         PublicKeyBase::new(
             self.schnorr_signing_private_key().public_key().unwrap(),
-            self.agreement_private_key().public_key()
+            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
         )
     }
 
@@ -136,7 +114,7 @@ impl PrivateKeyBase {
     pub fn ecdsa_public_key_base(&self) -> PublicKeyBase {
         PublicKeyBase::new(
             self.ecdsa_signing_private_key().public_key().unwrap(),
-            self.agreement_private_key().public_key()
+            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
         )
     }
 
@@ -150,7 +128,10 @@ impl PrivateKeyBase {
         comment: impl Into<String>
     ) -> Result<PublicKeyBase> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
-        Ok(PublicKeyBase::new(private_key.public_key().unwrap(), self.agreement_private_key().public_key()))
+        Ok(PublicKeyBase::new(
+            private_key.public_key().unwrap(),
+            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
+        ))
     }
 
     /// Get the raw data of this `PrivateKeyBase`.
@@ -257,11 +238,11 @@ mod tests {
             &hex!("fd4d22f9e8493da52d730aa402ac9e661deca099ef4db5503f519a73c3493e18")
         );
         assert_eq!(
-            private_key_base.agreement_private_key().data(),
+            private_key_base.x25519_private_key().data(),
             &hex!("77ff838285a0403d3618aa8c30491f99f55221be0b944f50bfb371f43b897485")
         );
         assert_eq!(
-            private_key_base.agreement_private_key().public_key().data(),
+            private_key_base.x25519_private_key().public_key().data(),
             &hex!("863cf3facee3ba45dc54e5eedecb21d791d64adfb0a1c63bfb6fea366c1ee62b")
         );
 
