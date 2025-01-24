@@ -7,12 +7,20 @@ use crate::{tags, SymmetricKey};
 
 use super::{Kyber, KyberCiphertext};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum KyberPublicKey {
     Kyber512(Box<kyber512::PublicKey>),
     Kyber768(Box<kyber768::PublicKey>),
     Kyber1024(Box<kyber1024::PublicKey>),
 }
+
+impl PartialEq for KyberPublicKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.level() == other.level() && self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl Eq for KyberPublicKey {}
 
 impl std::hash::Hash for KyberPublicKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

@@ -4,7 +4,7 @@ use crate::{Encrypter, KyberPublicKey};
 
 use crate::{tags, X25519PublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPublicKey {
     X25519(X25519PublicKey),
     Kyber(KyberPublicKey),

@@ -16,7 +16,7 @@ use crate::{
 ///
 /// Includes the entity's public signing key for verifying signatures, and
 /// the entity's public encapsulation key used for public key encryption.
-#[derive(Clone, PartialEq, Debug, Hash)]
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
     encapsulation_public_key: EncapsulationPublicKey,

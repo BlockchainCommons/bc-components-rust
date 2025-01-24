@@ -7,12 +7,20 @@ use crate::tags;
 
 use super::{Dilithium, DilithiumSignature};
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum DilithiumPublicKey {
     Dilithium2(Box<dilithium2::PublicKey>),
     Dilithium3(Box<dilithium3::PublicKey>),
     Dilithium5(Box<dilithium5::PublicKey>),
 }
+
+impl PartialEq for DilithiumPublicKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.level() == other.level() && self.as_bytes() == other.as_bytes()
+    }
+}
+
+impl Eq for DilithiumPublicKey {}
 
 impl std::hash::Hash for DilithiumPublicKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {

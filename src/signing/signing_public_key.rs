@@ -4,7 +4,7 @@ use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
 /// A public key that can be used for signing. Supports both ECDSA and Schnorr.
-#[derive(Clone, Debug, PartialEq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum SigningPublicKey {
     Schnorr(SchnorrPublicKey),
     ECDSA(ECPublicKey),
