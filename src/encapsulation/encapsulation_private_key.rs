@@ -1,6 +1,6 @@
 use anyhow::{Result, bail};
 use dcbor::prelude::*;
-use crate::KyberPrivateKey;
+use crate::{Decrypter, KyberPrivateKey};
 
 use crate::{tags, X25519PrivateKey, Encapsulation, EncapsulationCiphertext, SymmetricKey};
 
@@ -28,6 +28,16 @@ impl EncapsulationPrivateKey {
             }
             _ => bail!("Mismatched key encapsulation types. private key: {:?}, ciphertext: {:?}", self.encapsulation_type(), ciphertext.encapsulation_type()),
         }
+    }
+}
+
+impl Decrypter for EncapsulationPrivateKey {
+    fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
+        self.clone()
+    }
+
+    fn decapsulate_shared_secret(&self, ciphertext: &EncapsulationCiphertext) -> Result<SymmetricKey> {
+        self.decapsulate_shared_secret(ciphertext)
     }
 }
 

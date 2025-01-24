@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_crypto::x25519_new_agreement_private_key_using;
 use bc_ur::prelude::*;
-use crate::{ tags, X25519PublicKey, SymmetricKey };
+use crate::{ tags, Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey };
 use bc_rand::{ SecureRandomNumberGenerator, RandomNumberGenerator };
 use anyhow::{ bail, Error, Result };
 
@@ -82,6 +82,12 @@ impl X25519PrivateKey {
     /// Derive a shared symmetric key from this `AgreementPrivateKey` and the given `AgreementPublicKey`.
     pub fn shared_key_with(&self, public_key: &X25519PublicKey) -> SymmetricKey {
         SymmetricKey::from_data(bc_crypto::x25519_shared_key(self.into(), public_key.into()))
+    }
+}
+
+impl Decrypter for X25519PrivateKey{
+    fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
+        EncapsulationPrivateKey::X25519(self.clone())
     }
 }
 

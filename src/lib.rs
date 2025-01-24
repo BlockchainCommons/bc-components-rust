@@ -53,7 +53,7 @@ mod signing;
 pub use signing::{Signature, SigningPrivateKey, SigningOptions, SigningPublicKey, Signer, Verifier};
 
 mod encrypter;
-pub use encrypter::Encrypter;
+pub use encrypter::{Encrypter, Decrypter};
 
 mod ec_key;
 pub use ec_key::*;

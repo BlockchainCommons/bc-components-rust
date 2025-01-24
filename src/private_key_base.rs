@@ -13,12 +13,43 @@ use ssh_key::Algorithm as SSHAlgorithm;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags, ECPrivateKey, Ed25519PrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PublicKeyBase, PublicKeyBaseProvider, SigningPrivateKey, X25519PrivateKey
+    tags,
+    Decrypter,
+    ECPrivateKey,
+    Ed25519PrivateKey,
+    EncapsulationPrivateKey,
+    EncapsulationPublicKey,
+    HKDFRng,
+    PrivateKeyDataProvider,
+    PublicKeyBase,
+    PublicKeyBaseProvider,
+    Signature,
+    Signer,
+    SigningOptions,
+    SigningPrivateKey,
+    X25519PrivateKey,
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
 #[derive(Clone, Eq, PartialEq, ZeroizeOnDrop)]
 pub struct PrivateKeyBase(Vec<u8>);
+
+impl Signer for PrivateKeyBase {
+    fn sign_with_options(
+        &self,
+        message: &dyn AsRef<[u8]>,
+        options: Option<SigningOptions>
+    ) -> Result<Signature> {
+        let schnorr_key = self.schnorr_signing_private_key();
+        schnorr_key.sign_with_options(message, options)
+    }
+}
+
+impl Decrypter for PrivateKeyBase {
+    fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
+        EncapsulationPrivateKey::X25519(self.x25519_private_key())
+    }
+}
 
 impl PrivateKeyBase {
     /// Generate a new random `PrivateKeyBase`.
@@ -128,10 +159,12 @@ impl PrivateKeyBase {
         comment: impl Into<String>
     ) -> Result<PublicKeyBase> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
-        Ok(PublicKeyBase::new(
-            private_key.public_key().unwrap(),
-            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
-        ))
+        Ok(
+            PublicKeyBase::new(
+                private_key.public_key().unwrap(),
+                EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
+            )
+        )
     }
 
     /// Get the raw data of this `PrivateKeyBase`.

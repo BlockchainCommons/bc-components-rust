@@ -3,7 +3,7 @@ use dcbor::prelude::*;
 use pqcrypto_kyber::*;
 use pqcrypto_traits::kem::{SecretKey, SharedSecret};
 
-use crate::{tags, SymmetricKey};
+use crate::{tags, Decrypter, EncapsulationPrivateKey, SymmetricKey};
 
 use super::{Kyber, KyberCiphertext};
 
@@ -59,6 +59,12 @@ impl KyberPrivateKey {
             }
             _ => panic!("Kyber level mismatch"),
         }
+    }
+}
+
+impl Decrypter for KyberPrivateKey {
+    fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
+        EncapsulationPrivateKey::Kyber(self.clone())
     }
 }
 

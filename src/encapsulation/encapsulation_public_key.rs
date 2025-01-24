@@ -39,6 +39,10 @@ impl Encrypter for EncapsulationPublicKey {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
         self.clone()
     }
+
+    fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, EncapsulationCiphertext) {
+        self.encapsulate_new_shared_secret()
+    }
 }
 
 impl From<EncapsulationPublicKey> for CBOR {
