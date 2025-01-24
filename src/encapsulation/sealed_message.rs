@@ -1,4 +1,4 @@
-use crate::{ tags, EncapsulationCiphertext, EncapsulationPrivateKey, EncryptedMessage, Encrypter, Nonce };
+use crate::{ tags, Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypter, Nonce };
 use bc_ur::prelude::*;
 use anyhow::{ bail, Result, Error };
 
@@ -44,7 +44,7 @@ impl SealedMessage {
     }
 
     /// Decrypts the message using the recipient's private key.
-    pub fn decrypt(&self, private_key: &EncapsulationPrivateKey) -> Result<Vec<u8>> {
+    pub fn decrypt(&self, private_key: &dyn Decrypter) -> Result<Vec<u8>> {
         let shared_key = private_key.decapsulate_shared_secret(&self.encapsulated_key)?;
         shared_key.decrypt(&self.message)
     }

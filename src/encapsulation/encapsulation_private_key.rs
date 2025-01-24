@@ -57,7 +57,7 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => {
                 match tag.value() {
-                    tags::TAG_AGREEMENT_PRIVATE_KEY => Ok(EncapsulationPrivateKey::X25519(X25519PrivateKey::try_from(cbor)?)),
+                    tags::TAG_X25519_PRIVATE_KEY => Ok(EncapsulationPrivateKey::X25519(X25519PrivateKey::try_from(cbor)?)),
                     tags::TAG_KYBER_PRIVATE_KEY => Ok(EncapsulationPrivateKey::Kyber(KyberPrivateKey::try_from(cbor)?)),
                     _ => bail!("Invalid encapsulation private key")
                 }

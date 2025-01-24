@@ -15,7 +15,7 @@ use crate::{
 /// Holds information used to communicate cryptographically with a remote entity.
 ///
 /// Includes the entity's public signing key for verifying signatures, and
-/// the entity's public agreement key used for X25519 key agreement.
+/// the entity's public encapsulation key used for public key encryption.
 #[derive(Clone, PartialEq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
@@ -100,8 +100,8 @@ impl From<PublicKeyBase> for CBOR {
 impl CBORTaggedEncodable for PublicKeyBase {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_public_key.clone().into();
-        let agreement_key_cbor: CBOR = self.encapsulation_public_key.clone().into();
-        vec![signing_key_cbor, agreement_key_cbor].into()
+        let encapsulation_key_cbor: CBOR = self.encapsulation_public_key.clone().into();
+        vec![signing_key_cbor, encapsulation_key_cbor].into()
     }
 }
 

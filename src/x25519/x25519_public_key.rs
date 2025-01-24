@@ -12,16 +12,16 @@ pub struct X25519PublicKey([u8; Self::KEY_SIZE]);
 impl X25519PublicKey {
     pub const KEY_SIZE: usize = 32;
 
-    /// Restore an `AgreementPublicKey` from a fixed-size array of bytes.
+    /// Restore an `X25519PublicKey` from a fixed-size array of bytes.
     pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
         Self(data)
     }
 
-    /// Restore an `AgreementPublicKey` from a reference to an array of bytes.
+    /// Restore an `X25519PublicKey` from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
-            bail!("Invalid agreement public key size");
+            bail!("Invalid X25519 public key size");
         }
         let mut arr = [0u8; Self::KEY_SIZE];
         arr.copy_from_slice(data);
@@ -33,16 +33,16 @@ impl X25519PublicKey {
         self.into()
     }
 
-    /// Restore an `AgreementPublicKey` from a hex string.
+    /// Restore an `X25519PublicKey` from a hex string.
     ///
     /// # Panics
     ///
-    /// Panics if the hex string is invalid or the length is not `AgreementPublicKey::KEY_SIZE * 2`.
+    /// Panics if the hex string is invalid or the length is not `X25519PublicKey::KEY_SIZE * 2`.
     pub fn from_hex(hex: impl AsRef<str>) -> Self {
         Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
-    /// Get the hex string representation of the `AgreementPublicKey`.
+    /// Get the hex string representation of the `X25519PublicKey`.
     pub fn hex(&self) -> String {
         hex::encode(self.data())
     }
@@ -68,7 +68,7 @@ impl AsRef<X25519PublicKey> for X25519PublicKey {
 
 impl CBORTagged for X25519PublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_AGREEMENT_PUBLIC_KEY])
+        tags_for_values(&[tags::TAG_X25519_PUBLIC_KEY])
     }
 }
 
@@ -101,25 +101,25 @@ impl CBORTaggedDecodable for X25519PublicKey {
 
 impl std::fmt::Debug for X25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "AgreementPublicKey({})", self.hex())
+        write!(f, "X25519PublicKey({})", self.hex())
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPublicKey.
+// Convert from a reference to a byte vector to a X25519PublicKey.
 impl From<&X25519PublicKey> for X25519PublicKey {
     fn from(key: &X25519PublicKey) -> Self {
         key.clone()
     }
 }
 
-// Convert from a byte vector to a AgreementPublicKey.
+// Convert from a byte vector to a X25519PublicKey.
 impl From<X25519PublicKey> for Vec<u8> {
     fn from(key: X25519PublicKey) -> Self {
         key.0.to_vec()
     }
 }
 
-// Convert from a reference to a byte vector to a AgreementPublicKey.
+// Convert from a reference to a byte vector to a X25519PublicKey.
 impl From<&X25519PublicKey> for Vec<u8> {
     fn from(key: &X25519PublicKey) -> Self {
         key.0.to_vec()

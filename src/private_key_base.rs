@@ -120,7 +120,7 @@ impl PrivateKeyBase {
         Ok(SigningPrivateKey::new_ssh(private_key))
     }
 
-    /// Derive a new `AgreementPrivateKey` from this `PrivateKeyBase`.
+    /// Derive a new `X25519PrivateKey` from this `PrivateKeyBase`.
     ///
     /// An X25519 key for key agreement and public key encryption.
     pub fn x25519_private_key(&self) -> X25519PrivateKey {

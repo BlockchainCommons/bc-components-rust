@@ -11,7 +11,7 @@ pub enum EncapsulationCiphertext {
 }
 
 impl EncapsulationCiphertext {
-    pub fn agreement_public_key(&self) -> Result<&X25519PublicKey> {
+    pub fn x25519_public_key(&self) -> Result<&X25519PublicKey> {
         match self {
             Self::X25519(public_key) => Ok(public_key),
             _ => bail!("Invalid key encapsulation type")
@@ -57,7 +57,7 @@ impl TryFrom<CBOR> for EncapsulationCiphertext {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => {
                 match tag.value() {
-                    tags::TAG_AGREEMENT_PUBLIC_KEY => Ok(EncapsulationCiphertext::X25519(X25519PublicKey::try_from(cbor)?)),
+                    tags::TAG_X25519_PUBLIC_KEY => Ok(EncapsulationCiphertext::X25519(X25519PublicKey::try_from(cbor)?)),
                     tags::TAG_KYBER_CIPHERTEXT => Ok(EncapsulationCiphertext::Kyber(KyberCiphertext::try_from(cbor)?)),
                     _ => bail!("Invalid encapsulation ciphertext")
                 }

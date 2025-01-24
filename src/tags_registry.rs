@@ -75,8 +75,8 @@ pub const TAG_SEED: TagValue = 40300;
 pub const TAG_EC_KEY: TagValue = 40306;
 pub const TAG_SSKR_SHARE: TagValue = 40309;
 
-pub const TAG_AGREEMENT_PRIVATE_KEY: TagValue = 40010;
-pub const TAG_AGREEMENT_PUBLIC_KEY: TagValue = 40011;
+pub const TAG_X25519_PRIVATE_KEY: TagValue = 40010;
+pub const TAG_X25519_PUBLIC_KEY: TagValue = 40011;
 pub const TAG_ARID: TagValue = 40012;
 pub const TAG_NONCE: TagValue = 40014;
 pub const TAG_PASSWORD: TagValue = 40015;
@@ -172,8 +172,8 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_EC_KEY, "eckey"),
         (TAG_SSKR_SHARE, "sskr"),
 
-        (TAG_AGREEMENT_PRIVATE_KEY, "agreement-private-key"),
-        (TAG_AGREEMENT_PUBLIC_KEY, "agreement-public-key"),
+        (TAG_X25519_PRIVATE_KEY, "agreement-private-key"),
+        (TAG_X25519_PUBLIC_KEY, "agreement-public-key"),
         (TAG_ARID, "arid"),
         (TAG_NONCE, "nonce"),
         (TAG_PASSWORD, "password"),

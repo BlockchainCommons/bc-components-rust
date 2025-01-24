@@ -143,7 +143,7 @@ mod tests {
     use indoc::indoc;
 
     #[test]
-    fn test_agreement_keys() {
+    fn test_x25519_keys() {
         crate::register_tags();
         let mut rng = make_fake_random_number_generator();
         let private_key = X25519PrivateKey::new_using(&mut rng);

@@ -28,8 +28,8 @@ bc-components = "0.15.0"
 
 | Name | Description |
 | --- | --- |
-| AgreementPrivateKey | A Curve25519 private key used for X25519 key agreement. |
-| AgreementPublicKey | A Curve25519 public key used for X25519 key agreement. |
+| X25519PrivateKey | A Curve25519 private key used for X25519 key agreement. |
+| X25519PublicKey | A Curve25519 public key used for X25519 key agreement. |
 | AuthenticationTag | The HMAC authentication tag produced by the encryption process. |
 | ARID | An “Apparently Random Identifier” (ARID) |
 | Compressed | A compressed binary object. |
