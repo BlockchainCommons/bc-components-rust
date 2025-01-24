@@ -166,9 +166,11 @@ impl From<&SigningPublicKey> for XID {
     }
 }
 
-impl From<&SigningPrivateKey> for XID {
-    fn from(key: &SigningPrivateKey) -> Self {
-        Self::new(&key.public_key())
+impl TryFrom<&SigningPrivateKey> for XID {
+    type Error = Error;
+
+    fn try_from(key: &SigningPrivateKey) -> Result<Self, Self::Error> {
+        Ok(Self::new(&key.public_key()?))
     }
 }
 
@@ -180,7 +182,7 @@ impl From<&PublicKeyBase> for XID {
 
 impl From<&PrivateKeyBase> for XID {
     fn from(key: &PrivateKeyBase) -> Self {
-        Self::new(&key.schnorr_signing_private_key().public_key())
+        Self::new(&key.schnorr_signing_private_key().public_key().unwrap())
     }
 }
 
@@ -260,7 +262,7 @@ mod tests {
                 hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
             )
         );
-        let public_key = private_key.public_key();
+        let public_key = private_key.public_key().unwrap();
 
         let key_cbor = public_key.to_cbor();
         assert_eq!(key_cbor.diagnostic(), indoc! {"

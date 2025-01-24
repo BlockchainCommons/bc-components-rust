@@ -14,6 +14,13 @@ pub enum DilithiumPublicKey {
     Dilithium5(Box<dilithium5::PublicKey>),
 }
 
+impl std::hash::Hash for DilithiumPublicKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.level().hash(state);
+        self.as_bytes().hash(state);
+    }
+}
+
 impl DilithiumPublicKey {
     pub fn verify(&self, signature: &DilithiumSignature, message: impl AsRef<[u8]>) -> Result<bool> {
         if signature.level() != self.level() {

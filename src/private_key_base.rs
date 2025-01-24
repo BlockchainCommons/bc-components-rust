@@ -13,7 +13,18 @@ use ssh_key::Algorithm as SSHAlgorithm;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags, X25519PrivateKey, ECPrivateKey, Ed25519PrivateKey, HKDFRng, PrivateKeyDataProvider, PublicKeyBase, PublicKeyBaseProvider, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier
+    ECPrivateKey,
+    Ed25519PrivateKey,
+    HKDFRng,
+    PrivateKeyDataProvider,
+    PublicKeyBase,
+    PublicKeyBaseProvider,
+    Signature,
+    Signer,
+    SigningOptions,
+    SigningPrivateKey,
+    tags,
+    X25519PrivateKey,
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
@@ -28,13 +39,6 @@ impl Signer for PrivateKeyBase {
     ) -> Result<Signature> {
         let schnorr_key = self.schnorr_signing_private_key();
         schnorr_key.sign_with_options(message, options)
-    }
-}
-
-impl Verifier for PrivateKeyBase {
-    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
-        let schnorr_key = self.schnorr_signing_private_key();
-        schnorr_key.verify(signature, message)
     }
 }
 
@@ -120,7 +124,7 @@ impl PrivateKeyBase {
     /// - Includes an X25519 key for key agreement and public key encryption.
     pub fn schnorr_public_key_base(&self) -> PublicKeyBase {
         PublicKeyBase::new(
-            self.schnorr_signing_private_key().public_key(),
+            self.schnorr_signing_private_key().public_key().unwrap(),
             self.agreement_private_key().public_key()
         )
     }
@@ -131,7 +135,7 @@ impl PrivateKeyBase {
     /// - Includes an X25519 key for key agreement and public key encryption.
     pub fn ecdsa_public_key_base(&self) -> PublicKeyBase {
         PublicKeyBase::new(
-            self.ecdsa_signing_private_key().public_key(),
+            self.ecdsa_signing_private_key().public_key().unwrap(),
             self.agreement_private_key().public_key()
         )
     }
@@ -146,7 +150,7 @@ impl PrivateKeyBase {
         comment: impl Into<String>
     ) -> Result<PublicKeyBase> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
-        Ok(PublicKeyBase::new(private_key.public_key(), self.agreement_private_key().public_key()))
+        Ok(PublicKeyBase::new(private_key.public_key().unwrap(), self.agreement_private_key().public_key()))
     }
 
     /// Get the raw data of this `PrivateKeyBase`.
@@ -246,6 +250,7 @@ mod tests {
             private_key_base
                 .schnorr_signing_private_key()
                 .public_key()
+                .unwrap()
                 .to_schnorr()
                 .unwrap()
                 .data(),

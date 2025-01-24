@@ -201,7 +201,7 @@ mod tests {
         );
 
         let ecdsa_private_key = SigningPrivateKey::new_ecdsa(ECPrivateKey::new_using(&mut rng));
-        let ecdsa_public_key = ecdsa_private_key.public_key();
+        let ecdsa_public_key = ecdsa_private_key.public_key().unwrap();
         let ecdsa_public_key_ur = ecdsa_public_key.ur_string();
         assert_eq!(
             ecdsa_public_key_ur,
@@ -212,7 +212,7 @@ mod tests {
             ecdsa_public_key
         );
 
-        let schnorr_public_key = schnorr_private_key.public_key();
+        let schnorr_public_key = schnorr_private_key.public_key().unwrap();
         let schnorr_public_key_ur = schnorr_public_key.ur_string();
         assert_eq!(
             schnorr_public_key_ur,
@@ -246,7 +246,7 @@ mod tests {
         let ssh_private_key: &SSHPrivateKey = private_key.to_ssh().unwrap();
         let ssh_private_key_string = ssh_private_key.to_openssh(LineEnding::default()).unwrap();
 
-        let public_key: SigningPublicKey = private_key.public_key();
+        let public_key: SigningPublicKey = private_key.public_key().unwrap();
         let ssh_public_key: &SSHPublicKey = public_key.to_ssh().unwrap();
         let ssh_public_key_string = ssh_public_key.to_openssh().unwrap();
 

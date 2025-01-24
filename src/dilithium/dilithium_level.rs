@@ -13,19 +13,19 @@ pub enum Dilithium {
 }
 
 impl Dilithium {
-    pub fn keypair(self) -> (DilithiumPublicKey, DilithiumPrivateKey) {
+    pub fn keypair(self) -> (DilithiumPrivateKey, DilithiumPublicKey) {
         match self {
             Dilithium::Dilithium2 => {
                 let (pk, sk) = dilithium2::keypair();
-                (DilithiumPublicKey::Dilithium2(Box::new(pk)), DilithiumPrivateKey::Dilithium2(Box::new(sk)))
+                (DilithiumPrivateKey::Dilithium2(Box::new(sk)), DilithiumPublicKey::Dilithium2(Box::new(pk)))
             },
             Dilithium::Dilithium3 => {
                 let (pk, sk) = dilithium3::keypair();
-                (DilithiumPublicKey::Dilithium3(Box::new(pk)), DilithiumPrivateKey::Dilithium3(Box::new(sk)))
+                (DilithiumPrivateKey::Dilithium3(Box::new(sk)), DilithiumPublicKey::Dilithium3(Box::new(pk)))
             },
             Dilithium::Dilithium5 => {
                 let (pk, sk) = dilithium5::keypair();
-                (DilithiumPublicKey::Dilithium5(Box::new(pk)), DilithiumPrivateKey::Dilithium5(Box::new(sk)))
+                (DilithiumPrivateKey::Dilithium5(Box::new(sk)), DilithiumPublicKey::Dilithium5(Box::new(pk)))
             },
         }
     }

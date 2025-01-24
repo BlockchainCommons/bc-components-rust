@@ -1,7 +1,7 @@
 use std::{ cell::RefCell, rc::Rc };
 
 use bc_ur::prelude::*;
-use crate::{ tags, ECKey, ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningPublicKey, Verifier };
+use crate::{ tags, DilithiumPrivateKey, ECKey, ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningPublicKey };
 use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use anyhow::{ bail, Result, Error };
 use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
@@ -26,12 +26,13 @@ pub enum SigningOptions {
 ///
 /// - Both ECDSA and Schnorr keys are based on `ECPrivateKey`.
 /// - SSH keys are based on `SSHPrivateKey`, an alias for (`ssh_key::PrivateKey`).
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq)]
 pub enum SigningPrivateKey {
     Schnorr(ECPrivateKey),
     ECDSA(ECPrivateKey),
     Ed25519(Ed25519PrivateKey),
     SSH(Box<SSHPrivateKey>),
+    Dilithium(DilithiumPrivateKey),
 }
 
 impl SigningPrivateKey {
@@ -84,12 +85,13 @@ impl SigningPrivateKey {
         self.to_ssh().is_some()
     }
 
-    pub fn public_key(&self) -> SigningPublicKey {
+    pub fn public_key(&self) -> Result<SigningPublicKey> {
         match self {
-            Self::Schnorr(key) => { SigningPublicKey::from_schnorr(key.schnorr_public_key()) }
-            Self::ECDSA(key) => { SigningPublicKey::from_ecdsa(key.public_key()) }
-            Self::Ed25519(key) => { SigningPublicKey::from_ed25519(key.public_key()) }
-            Self::SSH(key) => { SigningPublicKey::from_ssh(key.public_key().clone()) }
+            Self::Schnorr(key)  => Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key())),
+            Self::ECDSA(key)    => Ok(SigningPublicKey::from_ecdsa(key.public_key())),
+            Self::Ed25519(key)  => Ok(SigningPublicKey::from_ed25519(key.public_key())),
+            Self::SSH(key)      => Ok(SigningPublicKey::from_ssh(key.public_key().clone())),
+            Self::Dilithium(_)  => bail!("Deriving Dilithium public key not supported"),
         }
     }
 }
@@ -145,6 +147,18 @@ impl SigningPrivateKey {
             bail!("Invalid key type for SSH signing");
         }
     }
+
+    fn dilithium_sign(
+        &self,
+        message: impl AsRef<[u8]>,
+    ) -> Result<Signature> {
+        if let Self::Dilithium(key) = self {
+            let sig = key.sign(message.as_ref());
+            Ok(Signature::Dilithium(sig))
+        } else {
+            bail!("Invalid key type for Dilithium signing");
+        }
+    }
 }
 
 impl Signer for SigningPrivateKey {
@@ -164,8 +178,8 @@ impl Signer for SigningPrivateKey {
                     )
                 }
             }
-            Self::ECDSA(_) => { self.ecdsa_sign(message) }
-            Self::Ed25519(_) => { self.ed25519_sign(message) }
+            Self::ECDSA(_) => self.ecdsa_sign(message),
+            Self::Ed25519(_) => self.ed25519_sign(message),
             Self::SSH(_) => {
                 if let Some(SigningOptions::Ssh { namespace, hash_alg }) = options {
                     self.ssh_sign(message, namespace, hash_alg)
@@ -173,14 +187,10 @@ impl Signer for SigningPrivateKey {
                     bail!("Missing namespace and hash algorithm for SSH signing");
                 }
             }
+            Self::Dilithium(_) => {
+                self.dilithium_sign(message)
+            }
         }
-    }
-}
-
-impl Verifier for SigningPrivateKey {
-    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
-        let public_key = self.public_key();
-        public_key.verify(signature, message)
     }
 }
 
@@ -209,6 +219,9 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             SigningPrivateKey::SSH(key) => {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PRIVATE_KEY, (*string).clone())
+            }
+            SigningPrivateKey::Dilithium(key) => {
+                key.clone().into()
             }
         }
     }

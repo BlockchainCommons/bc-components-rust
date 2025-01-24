@@ -18,7 +18,7 @@ mod tests {
 
     #[test]
     fn test_dilithium2_signing() {
-        let (public_key, private_key) = Dilithium::Dilithium2.keypair();
+        let (private_key, public_key) = Dilithium::Dilithium2.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
         assert!(!public_key.verify(&signature, &MESSAGE[..MESSAGE.len() - 1]).unwrap());
@@ -26,7 +26,7 @@ mod tests {
 
     #[test]
     fn test_dilithium3_signing() {
-        let (public_key, private_key) = Dilithium::Dilithium3.keypair();
+        let (private_key, public_key) = Dilithium::Dilithium3.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
         assert!(!public_key.verify(&signature, &MESSAGE[..MESSAGE.len() - 1]).unwrap());
@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn test_dilithium5_signing() {
-        let (public_key, private_key) = Dilithium::Dilithium5.keypair();
+        let (private_key, public_key) = Dilithium::Dilithium5.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
         assert!(!public_key.verify(&signature, &MESSAGE[..MESSAGE.len() - 1]).unwrap());

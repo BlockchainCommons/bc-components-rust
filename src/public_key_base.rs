@@ -6,7 +6,7 @@ use anyhow::{ bail, Error, Result };
 ///
 /// Includes the entity's public signing key for verifying signatures, and
 /// the entity's public agreement key used for X25519 key agreement.
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Clone, PartialEq, Debug, Hash)]
 pub struct PublicKeyBase {
     signing_public_key: SigningPublicKey,
     agreement_public_key: X25519PublicKey,

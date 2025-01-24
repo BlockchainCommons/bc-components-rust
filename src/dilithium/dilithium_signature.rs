@@ -14,6 +14,12 @@ pub enum DilithiumSignature {
     Dilithium5(Box<dilithium5::DetachedSignature>),
 }
 
+impl PartialEq for DilithiumSignature {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_bytes() == other.as_bytes()
+    }
+}
+
 impl DilithiumSignature {
     pub fn level(&self) -> Dilithium {
         match self {

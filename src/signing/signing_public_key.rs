@@ -1,15 +1,16 @@
-use crate::{ tags, ECKeyBase, ECPublicKey, Ed25519PublicKey, SchnorrPublicKey, Signature, Verifier };
+use crate::{ tags, DilithiumPublicKey, ECKeyBase, ECPublicKey, Ed25519PublicKey, SchnorrPublicKey, Signature, Verifier };
 use anyhow::{ bail, Result, Error };
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
 /// A public key that can be used for signing. Supports both ECDSA and Schnorr.
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Hash)]
 pub enum SigningPublicKey {
     Schnorr(SchnorrPublicKey),
     ECDSA(ECPublicKey),
     Ed25519(Ed25519PublicKey),
     SSH(SSHPublicKey),
+    Dilithium(DilithiumPublicKey),
 }
 
 impl SigningPublicKey {
@@ -91,6 +92,12 @@ impl Verifier for SigningPublicKey {
                     _ => false,
                 }
             }
+            SigningPublicKey::Dilithium(key) => {
+                match signature {
+                    Signature::Dilithium(sig) => key.verify(sig, message).map_err(|_| false).unwrap_or(false),
+                    _ => false,
+                }
+            }
         }
     }
 }
@@ -127,6 +134,9 @@ impl CBORTaggedEncodable for SigningPublicKey {
                 let string = key.to_openssh().unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PUBLIC_KEY, string)
             }
+            SigningPublicKey::Dilithium(key) => {
+                key.clone().into()
+            }
         }
     }
 }
@@ -141,7 +151,7 @@ impl TryFrom<CBOR> for SigningPublicKey {
 
 impl CBORTaggedDecodable for SigningPublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
-        match untagged_cbor.into_case() {
+        match untagged_cbor.clone().into_case() {
             CBORCase::ByteString(data) => {
                 Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
             }
@@ -163,12 +173,18 @@ impl CBORTaggedDecodable for SigningPublicKey {
                 bail!("invalid signing public key");
             }
             CBORCase::Tagged(tag, item) => {
-                if tag.value() == tags::TAG_SSH_TEXT_PUBLIC_KEY {
-                    let string = item.try_into_text()?;
-                    let key = SSHPublicKey::from_openssh(&string)?;
-                    return Ok(Self::SSH(key));
+                match tag.value() {
+                    tags::TAG_SSH_TEXT_PUBLIC_KEY => {
+                        let string = item.try_into_text()?;
+                        let key = SSHPublicKey::from_openssh(&string)?;
+                        Ok(Self::SSH(key))
+                    }
+                    tags::TAG_DILITHIUM_PUBLIC_KEY => {
+                        let key = DilithiumPublicKey::from_tagged_cbor(untagged_cbor)?;
+                        Ok(Self::Dilithium(key))
+                    }
+                    _ => bail!("invalid signing public key"),
                 }
-                bail!("invalid signing public key");
             }
             _ => bail!("invalid signing public key"),
         }
