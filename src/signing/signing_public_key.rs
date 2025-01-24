@@ -69,7 +69,7 @@ impl Verifier for SigningPublicKey {
         match self {
             SigningPublicKey::Schnorr(key) => {
                 match signature {
-                    Signature::Schnorr(sig) => key.schnorr_verify::<_, &[u8]>(sig, message),
+                    Signature::Schnorr(sig) => key.schnorr_verify(sig, message),
                     _ => false,
                 }
             }

@@ -6,6 +6,8 @@ use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use anyhow::{ bail, Result, Error };
 use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
 
+use super::Verifier;
+
 /// Options for signing a message.
 ///
 /// - ECDSA signing requires no options.
@@ -190,6 +192,21 @@ impl Signer for SigningPrivateKey {
             Self::Dilithium(_) => {
                 self.dilithium_sign(message)
             }
+        }
+    }
+}
+
+impl Verifier for SigningPrivateKey {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        match self {
+            Self::Schnorr(key) => {
+                if let Signature::Schnorr(sig) = signature {
+                    key.schnorr_public_key().schnorr_verify(sig, message)
+                } else {
+                    false
+                }
+            }
+            _ => false,
         }
     }
 }

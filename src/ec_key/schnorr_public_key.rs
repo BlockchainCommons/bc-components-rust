@@ -23,11 +23,7 @@ impl SchnorrPublicKey {
 
 impl SchnorrPublicKey {
     /// Verifies the given Schnorr signature for the given message and tag.
-    pub fn schnorr_verify<D1, D2>(&self, signature: &[u8; SCHNORR_SIGNATURE_SIZE],  message: D1) -> bool
-    where
-        D1: AsRef<[u8]>,
-        D2: AsRef<[u8]>
-    {
+    pub fn schnorr_verify(&self, signature: &[u8; SCHNORR_SIGNATURE_SIZE],  message: impl AsRef<[u8]>) -> bool {
         bc_crypto::schnorr_verify(self.into(), signature, message)
     }
 }
