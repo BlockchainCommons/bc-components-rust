@@ -1,6 +1,6 @@
 use anyhow::{Result, bail};
 use dcbor::prelude::*;
-use crate::KyberPublicKey;
+use crate::{Encrypter, KyberPublicKey};
 
 use crate::{tags, X25519PublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
 
@@ -32,6 +32,12 @@ impl EncapsulationPublicKey {
                 (shared_key, EncapsulationCiphertext::Kyber(ciphertext))
             }
         }
+    }
+}
+
+impl Encrypter for EncapsulationPublicKey {
+    fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
+        self.clone()
     }
 }
 
