@@ -74,3 +74,29 @@ impl TryFrom<CBOR> for Dilithium {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dilithium_level() {
+        let level = Dilithium::Dilithium2;
+        assert_eq!(format!("{:?}", level), "Dilithium2");
+        let cbor = CBOR::from(level);
+        let level2 = Dilithium::try_from(cbor).unwrap();
+        assert_eq!(level, level2);
+
+        let level = Dilithium::Dilithium3;
+        assert_eq!(format!("{:?}", level), "Dilithium3");
+        let cbor = CBOR::from(level);
+        let level2 = Dilithium::try_from(cbor).unwrap();
+        assert_eq!(level, level2);
+
+        let level = Dilithium::Dilithium5;
+        assert_eq!(format!("{:?}", level), "Dilithium5");
+        let cbor = CBOR::from(level);
+        let level2 = Dilithium::try_from(cbor).unwrap();
+        assert_eq!(level, level2);
+    }
+}

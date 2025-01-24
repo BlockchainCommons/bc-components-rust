@@ -2,7 +2,7 @@ use anyhow::{bail, Result};
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
-use crate::{ECKeyBase, ECKey, ECPublicKeyBase, tags};
+use crate::{tags, ECKey, ECKeyBase, ECPublicKeyBase, Signature, Verifier};
 
 pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
@@ -56,6 +56,15 @@ impl ECKeyBase for ECPublicKey {
 
     fn data(&self) -> &[u8] {
         self.into()
+    }
+}
+
+impl Verifier for ECPublicKey {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        match signature {
+            Signature::ECDSA(sig) => self.verify(sig, message),
+            _ => false,
+        }
     }
 }
 
