@@ -182,7 +182,7 @@ impl From<&PublicKeyBase> for XID {
 
 impl From<&PrivateKeyBase> for XID {
     fn from(key: &PrivateKeyBase) -> Self {
-        Self::new(&key.schnorr_signing_private_key().public_key().unwrap())
+        Self::new(key.schnorr_signing_private_key().public_key().unwrap())
     }
 }
 
