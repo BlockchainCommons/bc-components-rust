@@ -4,6 +4,8 @@ use ssh_key::{ LineEnding, SshSig };
 use crate::{tags, DilithiumSignature};
 use anyhow::{ bail, Result, Error };
 
+use super::SignatureScheme;
+
 /// A cryptographic signature. Supports ECDSA and Schnorr.
 #[derive(Clone)]
 pub enum Signature {
@@ -97,6 +99,33 @@ impl Signature {
         match self {
             Self::SSH(sig) => Some(sig),
             _ => None,
+        }
+    }
+
+    pub fn scheme(&self) -> Result<SignatureScheme> {
+        match self {
+            Self::Schnorr(_) => Ok(SignatureScheme::Schnorr),
+            Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
+            Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
+            Self::SSH(sig) => {
+                match sig.algorithm() {
+                    ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
+                    ssh_key::Algorithm::Ecdsa { curve } => match curve {
+                        ssh_key::EcdsaCurve::NistP256 => Ok(SignatureScheme::SshEcdsaP256),
+                        ssh_key::EcdsaCurve::NistP384 => Ok(SignatureScheme::SshEcdsaP384),
+                        _ => bail!("Unsupported SSH ECDSA curve"),
+                    },
+                    ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
+                    _ => bail!("Unsupported SSH signature algorithm")
+                }
+            },
+            Self::Dilithium(sig) => {
+                match sig.level() {
+                    crate::Dilithium::Dilithium2 => Ok(SignatureScheme::Dilithium2),
+                    crate::Dilithium::Dilithium3 => Ok(SignatureScheme::Dilithium3),
+                    crate::Dilithium::Dilithium5 => Ok(SignatureScheme::Dilithium5),
+                }
+            },
         }
     }
 }

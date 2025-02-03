@@ -4,8 +4,9 @@ use crate::{ ECPrivateKey, Ed25519PrivateKey, PrivateKeyBase };
 
 use super::{ SigningPrivateKey, SigningPublicKey };
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub enum SignatureScheme {
+    #[default]
     Schnorr,
     Ecdsa,
     Ed25519,

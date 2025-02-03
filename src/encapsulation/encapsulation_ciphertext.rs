@@ -2,7 +2,7 @@ use anyhow::{ bail, Result };
 use dcbor::prelude::*;
 use crate::{tags, KyberCiphertext};
 
-use crate::{X25519PublicKey, Encapsulation};
+use crate::{X25519PublicKey, EncapsulationScheme};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EncapsulationCiphertext {
@@ -33,10 +33,16 @@ impl EncapsulationCiphertext {
         matches!(self, Self::Kyber(_))
     }
 
-    pub fn encapsulation_type(&self) -> Encapsulation {
+    pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
-            Self::X25519(_) => Encapsulation::X25519,
-            Self::Kyber(ct) => Encapsulation::Kyber(ct.level())
+            Self::X25519(_) => EncapsulationScheme::X25519,
+            Self::Kyber(ct) => {
+                match ct.level() {
+                    crate::Kyber::Kyber512 => EncapsulationScheme::Kyber512,
+                    crate::Kyber::Kyber768 => EncapsulationScheme::Kyber768,
+                    crate::Kyber::Kyber1024 => EncapsulationScheme::Kyber1024,
+                }
+            }
         }
     }
 }

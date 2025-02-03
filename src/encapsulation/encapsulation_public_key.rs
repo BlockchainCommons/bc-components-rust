@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use dcbor::prelude::*;
 use crate::{Encrypter, KyberPublicKey};
 
-use crate::{tags, X25519PublicKey, Encapsulation, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
+use crate::{tags, X25519PublicKey, EncapsulationScheme, EncapsulationCiphertext, PrivateKeyBase, SymmetricKey};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPublicKey {
@@ -11,10 +11,16 @@ pub enum EncapsulationPublicKey {
 }
 
 impl EncapsulationPublicKey {
-    pub fn encapsulation_type(&self) -> Encapsulation {
+    pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
-            Self::X25519(_) => Encapsulation::X25519,
-            Self::Kyber(pk) => Encapsulation::Kyber(pk.level()),
+            Self::X25519(_) => EncapsulationScheme::X25519,
+            Self::Kyber(pk) => {
+                match pk.level() {
+                    crate::Kyber::Kyber512 => EncapsulationScheme::Kyber512,
+                    crate::Kyber::Kyber768 => EncapsulationScheme::Kyber768,
+                    crate::Kyber::Kyber1024 => EncapsulationScheme::Kyber1024,
+                }
+            }
         }
     }
 

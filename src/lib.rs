@@ -91,7 +91,7 @@ pub use kyber::{ Kyber, KyberPrivateKey, KyberPublicKey, KyberCiphertext };
 
 mod encapsulation;
 pub use encapsulation::{
-    Encapsulation,
+    EncapsulationScheme,
     EncapsulationPrivateKey,
     EncapsulationPublicKey,
     EncapsulationCiphertext,

@@ -2,7 +2,7 @@ use anyhow::{Result, bail};
 use dcbor::prelude::*;
 use crate::{Decrypter, KyberPrivateKey};
 
-use crate::{tags, X25519PrivateKey, Encapsulation, EncapsulationCiphertext, SymmetricKey};
+use crate::{tags, X25519PrivateKey, EncapsulationScheme, EncapsulationCiphertext, SymmetricKey};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EncapsulationPrivateKey {
@@ -11,10 +11,16 @@ pub enum EncapsulationPrivateKey {
 }
 
 impl EncapsulationPrivateKey {
-    pub fn encapsulation_type(&self) -> Encapsulation {
+    pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
-            Self::X25519(_) => Encapsulation::X25519,
-            Self::Kyber(pk) => Encapsulation::Kyber(pk.level()),
+            Self::X25519(_) => EncapsulationScheme::X25519,
+            Self::Kyber(pk) => {
+                match pk.level() {
+                    crate::Kyber::Kyber512 => EncapsulationScheme::Kyber512,
+                    crate::Kyber::Kyber768 => EncapsulationScheme::Kyber768,
+                    crate::Kyber::Kyber1024 => EncapsulationScheme::Kyber1024,
+                }
+            }
         }
     }
 
@@ -26,7 +32,7 @@ impl EncapsulationPrivateKey {
             (EncapsulationPrivateKey::Kyber(private_key), EncapsulationCiphertext::Kyber(ciphertext)) => {
                 private_key.decapsulate_shared_secret(ciphertext)
             }
-            _ => bail!("Mismatched key encapsulation types. private key: {:?}, ciphertext: {:?}", self.encapsulation_type(), ciphertext.encapsulation_type()),
+            _ => bail!("Mismatched key encapsulation types. private key: {:?}, ciphertext: {:?}", self.encapsulation_scheme(), ciphertext.encapsulation_scheme()),
         }
     }
 }

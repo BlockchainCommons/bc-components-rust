@@ -1,5 +1,5 @@
-mod encapsulation_type;
-pub use encapsulation_type::Encapsulation;
+mod encapsulation_scheme;
+pub use encapsulation_scheme::EncapsulationScheme;
 
 mod encapsulation_private_key;
 pub use encapsulation_private_key::EncapsulationPrivateKey;
@@ -15,9 +15,9 @@ pub use sealed_message::SealedMessage;
 
 #[cfg(test)]
 mod tests {
-    use crate::{Encapsulation, Kyber};
+    use crate::EncapsulationScheme;
 
-    fn test_encapsulation(encapsulation: Encapsulation) {
+    fn test_encapsulation(encapsulation: EncapsulationScheme) {
         let (private_key, public_key) = encapsulation.keypair();
         let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
         let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
@@ -26,21 +26,21 @@ mod tests {
 
     #[test]
     fn test_x25519() {
-        test_encapsulation(Encapsulation::X25519);
+        test_encapsulation(EncapsulationScheme::X25519);
     }
 
     #[test]
     fn test_kyber512() {
-        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber512));
+        test_encapsulation(EncapsulationScheme::Kyber512);
     }
 
     #[test]
     fn test_kyber768() {
-        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber768));
+        test_encapsulation(EncapsulationScheme::Kyber768);
     }
 
     #[test]
     fn test_kyber1024() {
-        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber1024));
+        test_encapsulation(EncapsulationScheme::Kyber1024);
     }
 }

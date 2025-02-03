@@ -2,6 +2,8 @@ use crate::{ tags, Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypt
 use bc_ur::prelude::*;
 use anyhow::{ bail, Result, Error };
 
+use super::EncapsulationScheme;
+
 /// A sealed message can be sent to anyone, but only the intended recipient can
 /// decrypt it.
 #[derive(Clone, PartialEq, Debug)]
@@ -47,6 +49,10 @@ impl SealedMessage {
     pub fn decrypt(&self, private_key: &dyn Decrypter) -> Result<Vec<u8>> {
         let shared_key = private_key.decapsulate_shared_secret(&self.encapsulated_key)?;
         shared_key.decrypt(&self.message)
+    }
+
+    pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
+        self.encapsulated_key.encapsulation_scheme()
     }
 }
 
@@ -105,13 +111,13 @@ impl CBORTaggedDecodable for SealedMessage {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ Encapsulation, Kyber, SealedMessage };
+    use crate::{ EncapsulationScheme, SealedMessage };
 
     #[test]
     fn test_sealed_message_x25519() {
         let plaintext = b"Some mysteries aren't meant to be solved.";
 
-        let encapsulation = Encapsulation::X25519;
+        let encapsulation = EncapsulationScheme::X25519;
         let (alice_private_key, _) = encapsulation.keypair();
         let (bob_private_key, bob_public_key) = encapsulation.keypair();
         let (carol_private_key, _) = encapsulation.keypair();
@@ -131,7 +137,7 @@ mod tests {
     fn test_sealed_message_kyber512() {
         let plaintext = b"Some mysteries aren't meant to be solved.";
 
-        let encapsulation = Encapsulation::Kyber(Kyber::Kyber512);
+        let encapsulation = EncapsulationScheme::Kyber512;
         let (alice_private_key, _) = encapsulation.keypair();
         let (bob_private_key, bob_public_key) = encapsulation.keypair();
         let (carol_private_key, _) = encapsulation.keypair();

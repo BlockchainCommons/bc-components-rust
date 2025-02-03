@@ -33,7 +33,7 @@ use dcbor::prelude::*;
 pub use dcbor::TAG_DATE;
 
 use crate::{
-    Digest, Nonce, PrivateKeyBase, PublicKeyBase, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, ARID, URI, UUID, XID
+    Digest, EncapsulationScheme, Nonce, PrivateKeyBase, PublicKeyBase, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID
 };
 use ssh_key::{
     private::PrivateKey as SSHPrivateKey,
@@ -325,16 +325,32 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     tags_store.set_summarizer(
         TAG_SIGNATURE,
         Arc::new(move |untagged_cbor: CBOR| {
-            Signature::from_untagged_cbor(untagged_cbor)?;
-            Ok("Signature".to_string())
+            let signature = Signature::from_untagged_cbor(untagged_cbor)?;
+            let scheme = signature.scheme();
+            let summary = if let Ok(scheme) = scheme {
+                if scheme == SignatureScheme::default() {
+                    "Signature".to_string()
+                } else {
+                    format!("Signature({scheme:?})")
+                }
+            } else {
+                "Signature(Unknown)".into()
+            };
+            Ok(summary)
         })
     );
 
     tags_store.set_summarizer(
         TAG_SEALED_MESSAGE,
         Arc::new(move |untagged_cbor: CBOR| {
-            SealedMessage::from_untagged_cbor(untagged_cbor)?;
-            Ok("SealedMessage".to_string())
+            let sealed_message = SealedMessage::from_untagged_cbor(untagged_cbor)?;
+            let encapsulation_scheme = sealed_message.encapsulation_scheme();
+            let summary = if encapsulation_scheme == EncapsulationScheme::default() {
+                "SealedMessage".to_string()
+            } else {
+                format!("SealedMessage({encapsulation_scheme:?})")
+            };
+            Ok(summary)
         })
     );
 
