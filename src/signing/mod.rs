@@ -144,7 +144,6 @@ mod tests {
     }
 
     fn test_keypair_signing(scheme: SignatureScheme, options: Option<SigningOptions>) {
-        // println!("Testing {scheme:?}");
         let (private_key, public_key) = scheme.keypair();
         let signature = private_key.sign_with_options(MESSAGE, options).unwrap();
         assert!(public_key.verify(&signature, MESSAGE));
