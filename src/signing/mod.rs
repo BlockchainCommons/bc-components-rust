@@ -143,29 +143,67 @@ mod tests {
         assert_eq!(signature, received_signature);
     }
 
+    fn test_keypair_signing(scheme: SignatureScheme, options: Option<SigningOptions>) {
+        // println!("Testing {scheme:?}");
+        let (private_key, public_key) = scheme.keypair();
+        let signature = private_key.sign_with_options(MESSAGE, options).unwrap();
+        assert!(public_key.verify(&signature, MESSAGE));
+    }
+
     #[test]
-    fn test_keypair_signing() {
-        fn test_keypair(scheme: SignatureScheme, options: Option<SigningOptions>) {
-            // println!("Testing {scheme:?}");
-            let (private_key, public_key) = scheme.keypair();
-            let signature = private_key.sign_with_options(MESSAGE, options).unwrap();
-            assert!(public_key.verify(&signature, MESSAGE));
-        }
+    fn test_schnorr_keypair() {
+        test_keypair_signing(SignatureScheme::Schnorr, None);
+    }
 
-        test_keypair(SignatureScheme::Schnorr, None);
-        test_keypair(SignatureScheme::Ecdsa, None);
-        test_keypair(SignatureScheme::Ed25519, None);
-        test_keypair(SignatureScheme::Dilithium2, None);
-        test_keypair(SignatureScheme::Dilithium3, None);
-        test_keypair(SignatureScheme::Dilithium5, None);
+    #[test]
+    fn test_ecdsa_keypair() {
+        test_keypair_signing(SignatureScheme::Ecdsa, None);
+    }
 
-        let signing_options = SigningOptions::Ssh {
+    #[test]
+    fn test_ed25519_keypair() {
+        test_keypair_signing(SignatureScheme::Ed25519, None);
+    }
+
+    #[test]
+    fn test_dilithium2_keypair() {
+        test_keypair_signing(SignatureScheme::Dilithium2, None);
+    }
+
+    #[test]
+    fn test_dilithium3_keypair() {
+        test_keypair_signing(SignatureScheme::Dilithium3, None);
+    }
+
+    #[test]
+    fn test_dilithium5_keypair() {
+        test_keypair_signing(SignatureScheme::Dilithium5, None);
+    }
+
+    fn signing_options() -> SigningOptions {
+        SigningOptions::Ssh {
             namespace: "ssh".into(),
             hash_alg: HashAlg::Sha512,
-        };
-        test_keypair(SignatureScheme::SshEd25519, Some(signing_options.clone()));
-        test_keypair(SignatureScheme::SshDsa, Some(signing_options.clone()));
-        test_keypair(SignatureScheme::SshEcdsaP256, Some(signing_options.clone()));
-        test_keypair(SignatureScheme::SshEcdsaP384, Some(signing_options.clone()));
+        }
+    }
+
+    #[test]
+    fn test_ssh_ed25519_keypair() {
+        test_keypair_signing(SignatureScheme::SshEd25519, Some(signing_options()));
+    }
+
+    #[test]
+    fn test_ssh_dsa_keypair() {
+        test_keypair_signing(SignatureScheme::SshDsa, Some(signing_options()));
+    }
+
+    #[test]
+    fn test_ssh_ecdsa_p256_keypair() {
+        test_keypair_signing(SignatureScheme::SshEcdsaP256, Some(signing_options()));
+    }
+
+    #[test]
+    fn test_ssh_ecdsa_p384_keypair() {
+        test_keypair_signing(SignatureScheme::SshEcdsaP384, Some(signing_options()));
     }
 }

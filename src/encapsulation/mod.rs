@@ -17,35 +17,30 @@ pub use sealed_message::SealedMessage;
 mod tests {
     use crate::{Encapsulation, Kyber};
 
-    #[test]
-    fn test_x25519() {
-        let (private_key, public_key) = Encapsulation::X25519.keypair();
+    fn test_encapsulation(encapsulation: Encapsulation) {
+        let (private_key, public_key) = encapsulation.keypair();
         let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
         let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
         assert_eq!(secret1, secret2);
+    }
+
+    #[test]
+    fn test_x25519() {
+        test_encapsulation(Encapsulation::X25519);
     }
 
     #[test]
     fn test_kyber512() {
-        let (private_key, public_key) = Encapsulation::Kyber(Kyber::Kyber512).keypair();
-        let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
-        let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
-        assert_eq!(secret1, secret2);
+        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber512));
     }
 
     #[test]
     fn test_kyber768() {
-        let (private_key, public_key) = Encapsulation::Kyber(Kyber::Kyber768).keypair();
-        let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
-        let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
-        assert_eq!(secret1, secret2);
+        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber768));
     }
 
     #[test]
     fn test_kyber1024() {
-        let (private_key, public_key) = Encapsulation::Kyber(Kyber::Kyber1024).keypair();
-        let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
-        let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
-        assert_eq!(secret1, secret2);
+        test_encapsulation(Encapsulation::Kyber(Kyber::Kyber1024));
     }
 }
