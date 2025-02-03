@@ -23,7 +23,7 @@ mod digest;
 pub use digest::Digest;
 
 mod id;
-pub use id::{ARID, URI, UUID, XID, XIDProvider};
+pub use id::{ ARID, URI, UUID, XID, XIDProvider };
 
 mod digest_provider;
 pub use digest_provider::DigestProvider;
@@ -35,25 +35,33 @@ mod nonce;
 pub use nonce::Nonce;
 
 mod symmetric;
-pub use symmetric::{SymmetricKey, EncryptedMessage, AuthenticationTag};
+pub use symmetric::{ SymmetricKey, EncryptedMessage, AuthenticationTag };
 
 mod salt;
 pub use salt::Salt;
 
 mod x25519;
-pub use x25519::{X25519PublicKey, X25519PrivateKey};
+pub use x25519::{ X25519PublicKey, X25519PrivateKey };
 
 mod ed25519;
-pub use ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
+pub use ed25519::{ Ed25519PrivateKey, Ed25519PublicKey };
 
 mod seed;
 pub use seed::Seed;
 
 mod signing;
-pub use signing::{Signature, SigningPrivateKey, SigningOptions, SigningPublicKey, Signer, Verifier};
+pub use signing::{
+    Signature,
+    SignatureScheme,
+    Signer,
+    SigningOptions,
+    SigningPrivateKey,
+    SigningPublicKey,
+    Verifier,
+};
 
 mod encrypter;
-pub use encrypter::{Encrypter, Decrypter};
+pub use encrypter::{ Encrypter, Decrypter };
 
 mod ec_key;
 pub use ec_key::*;
@@ -64,7 +72,7 @@ pub use reference::*;
 /// CBOR Tags used or defined by this crate.
 pub mod tags_registry;
 pub use tags_registry as tags;
-pub use tags::{register_tags, register_tags_in};
+pub use tags::{ register_tags, register_tags_in };
 
 mod private_key_data_provider;
 pub use private_key_data_provider::PrivateKeyDataProvider;
@@ -73,23 +81,13 @@ mod private_key_base;
 pub use private_key_base::PrivateKeyBase;
 
 mod public_key_base;
-pub use public_key_base::{PublicKeyBase, PublicKeyBaseProvider};
+pub use public_key_base::{ PublicKeyBase, PublicKeyBaseProvider };
 
 mod dilithium;
-pub use dilithium::{
-    Dilithium,
-    DilithiumPrivateKey,
-    DilithiumPublicKey,
-    DilithiumSignature,
-};
+pub use dilithium::{ Dilithium, DilithiumPrivateKey, DilithiumPublicKey, DilithiumSignature };
 
 mod kyber;
-pub use kyber::{
-    Kyber,
-    KyberPrivateKey,
-    KyberPublicKey,
-    KyberCiphertext,
-};
+pub use kyber::{ Kyber, KyberPrivateKey, KyberPublicKey, KyberCiphertext };
 
 mod encapsulation;
 pub use encapsulation::{
@@ -119,14 +117,25 @@ pub use hkdf_rng::HKDFRng;
 #[cfg(test)]
 mod tests {
     use crate::{
-        X25519PrivateKey, X25519PublicKey, ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey, Verifier
+        X25519PrivateKey,
+        X25519PublicKey,
+        ECPrivateKey,
+        PrivateKeyBase,
+        Signature,
+        Signer,
+        SigningOptions,
+        SigningPrivateKey,
+        SigningPublicKey,
+        Verifier,
     };
     use bc_crypto::{
         ecdsa_new_private_key_using,
         ecdsa_public_key_from_private_key,
         ecdsa_sign,
         ecdsa_verify,
-        schnorr_public_key_from_private_key, schnorr_sign_using, schnorr_verify,
+        schnorr_public_key_from_private_key,
+        schnorr_sign_using,
+        schnorr_verify,
     };
     use bc_rand::make_fake_random_number_generator;
     use bc_ur::{ UREncodable, URDecodable };
@@ -162,9 +171,7 @@ mod tests {
         );
         assert_eq!(X25519PublicKey::from_ur_string(public_key_ur).unwrap(), public_key);
 
-        let derived_private_key = X25519PrivateKey::derive_from_key_material(
-            "password".as_bytes()
-        );
+        let derived_private_key = X25519PrivateKey::derive_from_key_material("password".as_bytes());
         assert_eq!(
             derived_private_key.ur_string(),
             "ur:agreement-private-key/hdcxkgcfkomeeyiemywkftvabnrdolmttlrnfhjnguvaiehlrldmdpemgyjlatdthsnecytdoxat"

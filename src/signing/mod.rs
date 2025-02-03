@@ -10,6 +10,9 @@ pub use signature::Signature;
 mod signer;
 pub use signer::{Signer, Verifier};
 
+mod signature_scheme;
+pub use signature_scheme::SignatureScheme;
+
 #[cfg(test)]
 mod tests {
     use std::{cell::RefCell, rc::Rc};
@@ -19,6 +22,9 @@ mod tests {
     use dcbor::prelude::*;
     use hex_literal::hex;
     use indoc::indoc;
+    use ssh_key::HashAlg;
+
+    use super::SignatureScheme;
 
     const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ecdsa(
         ECPrivateKey::from_data(
@@ -135,5 +141,31 @@ mod tests {
         let tagged_cbor_data = signature_cbor.to_cbor_data();
         let received_signature = DilithiumSignature::from_tagged_cbor_data(tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
+    }
+
+    #[test]
+    fn test_keypair_signing() {
+        fn test_keypair(scheme: SignatureScheme, options: Option<SigningOptions>) {
+            // println!("Testing {scheme:?}");
+            let (private_key, public_key) = scheme.keypair();
+            let signature = private_key.sign_with_options(MESSAGE, options).unwrap();
+            assert!(public_key.verify(&signature, MESSAGE));
+        }
+
+        test_keypair(SignatureScheme::Schnorr, None);
+        test_keypair(SignatureScheme::Ecdsa, None);
+        test_keypair(SignatureScheme::Ed25519, None);
+        test_keypair(SignatureScheme::Dilithium2, None);
+        test_keypair(SignatureScheme::Dilithium3, None);
+        test_keypair(SignatureScheme::Dilithium5, None);
+
+        let signing_options = SigningOptions::Ssh {
+            namespace: "ssh".into(),
+            hash_alg: HashAlg::Sha512,
+        };
+        test_keypair(SignatureScheme::SshEd25519, Some(signing_options.clone()));
+        test_keypair(SignatureScheme::SshDsa, Some(signing_options.clone()));
+        test_keypair(SignatureScheme::SshEcdsaP256, Some(signing_options.clone()));
+        test_keypair(SignatureScheme::SshEcdsaP384, Some(signing_options.clone()));
     }
 }
