@@ -33,7 +33,7 @@ use dcbor::prelude::*;
 pub use dcbor::TAG_DATE;
 
 use crate::{
-    Digest, EncapsulationScheme, Nonce, PrivateKeyBase, PublicKeyBase, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID
+    Digest, EncapsulationScheme, Nonce, PrivateKeyBase, PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID
 };
 use ssh_key::{
     private::PrivateKey as SSHPrivateKey,
@@ -78,10 +78,11 @@ pub const TAG_SSKR_SHARE: TagValue = 40309;
 pub const TAG_X25519_PRIVATE_KEY: TagValue = 40010;
 pub const TAG_X25519_PUBLIC_KEY: TagValue = 40011;
 pub const TAG_ARID: TagValue = 40012;
+pub const TAG_PRIVATE_KEYS: TagValue = 40013;
 pub const TAG_NONCE: TagValue = 40014;
 pub const TAG_PASSWORD: TagValue = 40015;
 pub const TAG_PRIVATE_KEY_BASE: TagValue = 40016;
-pub const TAG_PUBLIC_KEY_BASE: TagValue = 40017;
+pub const TAG_PUBLIC_KEYS: TagValue = 40017;
 pub const TAG_SALT: TagValue = 40018;
 pub const TAG_SEALED_MESSAGE: TagValue = 40019;
 pub const TAG_SIGNATURE: TagValue = 40020;
@@ -175,10 +176,11 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_X25519_PRIVATE_KEY, "agreement-private-key"),
         (TAG_X25519_PUBLIC_KEY, "agreement-public-key"),
         (TAG_ARID, "arid"),
+        (TAG_PRIVATE_KEYS, "crypto-prvkeys"),
         (TAG_NONCE, "nonce"),
         (TAG_PASSWORD, "password"),
-        (TAG_PRIVATE_KEY_BASE, "crypto-prvkeys"),
-        (TAG_PUBLIC_KEY_BASE, "crypto-pubkeys"),
+        (TAG_PRIVATE_KEY_BASE, "crypto-prvkey-base"),
+        (TAG_PUBLIC_KEYS, "crypto-pubkeys"),
         (TAG_SALT, "salt"),
         (TAG_SEALED_MESSAGE, "crypto-sealed"),
         (TAG_SIGNATURE, "signature"),
@@ -299,10 +301,18 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     );
 
     tags_store.set_summarizer(
-        TAG_PUBLIC_KEY_BASE,
+        TAG_PRIVATE_KEYS,
         Arc::new(move |untagged_cbor: CBOR| {
-            let public_key_base = PublicKeyBase::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("{public_key_base}"))
+            let private_keys = PrivateKeys::from_untagged_cbor(untagged_cbor)?;
+            Ok(format!("{private_keys}"))
+        })
+    );
+
+    tags_store.set_summarizer(
+        TAG_PUBLIC_KEYS,
+        Arc::new(move |untagged_cbor: CBOR| {
+            let public_keys = PublicKeys::from_untagged_cbor(untagged_cbor)?;
+            Ok(format!("{public_keys}"))
         })
     );
 

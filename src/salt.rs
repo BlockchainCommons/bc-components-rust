@@ -9,6 +9,16 @@ use anyhow::{ bail, Result, Error };
 pub struct Salt(Vec<u8>);
 
 impl Salt {
+    /// Return the length of the salt.
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    /// Return true if the salt is empty (this is not recommended).
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     /// Create a new salt from data.
     pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
         Self(data.into())
@@ -141,7 +151,7 @@ impl CBORTaggedDecodable for Salt {
 
 impl std::fmt::Debug for Salt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Salt({})", self.hex())
+        write!(f, "Salt({})", self.len())
     }
 }
 

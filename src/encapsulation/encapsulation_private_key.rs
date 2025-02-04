@@ -4,7 +4,7 @@ use crate::{Decrypter, KyberPrivateKey};
 
 use crate::{tags, X25519PrivateKey, EncapsulationScheme, EncapsulationCiphertext, SymmetricKey};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPrivateKey {
     X25519(X25519PrivateKey),
     Kyber(KyberPrivateKey),

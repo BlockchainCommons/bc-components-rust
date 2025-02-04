@@ -80,8 +80,11 @@ pub use private_key_data_provider::PrivateKeyDataProvider;
 mod private_key_base;
 pub use private_key_base::PrivateKeyBase;
 
-mod public_key_base;
-pub use public_key_base::{ PublicKeyBase, PublicKeyBaseProvider };
+mod private_keys;
+pub use private_keys::{ PrivateKeys, PrivateKeysProvider };
+
+mod public_keys;
+pub use public_keys::{ PublicKeys, PublicKeysProvider };
 
 mod dilithium;
 pub use dilithium::{ Dilithium, DilithiumPrivateKey, DilithiumPublicKey, DilithiumSignature };

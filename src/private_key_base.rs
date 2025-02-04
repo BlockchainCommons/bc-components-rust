@@ -13,7 +13,7 @@ use ssh_key::Algorithm as SSHAlgorithm;
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags, Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PublicKeyBase, PublicKeyBaseProvider, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
+    tags, Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
 };
 
 /// Holds unique data from which keys for signing and encryption can be derived.
@@ -118,45 +118,85 @@ impl PrivateKeyBase {
 
     /// Derive a new `X25519PrivateKey` from this `PrivateKeyBase`.
     ///
-    /// An X25519 key for key agreement and public key encryption.
+    /// An X25519 key for public key encryption.
     pub fn x25519_private_key(&self) -> X25519PrivateKey {
         X25519PrivateKey::derive_from_key_material(&self.0)
     }
 
-    /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
+    /// Derive a new `PrivateKeys` from this `PrivateKeyBase`.
+    ///
+    /// - Includes a Schnorr private key for signing.
+    /// - Includes an X25519 private key for encryption.
+    pub fn schnorr_private_keys(&self) -> PrivateKeys {
+        PrivateKeys::new(
+            self.schnorr_signing_private_key(),
+            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+        )
+    }
+
+    /// Derive a new `PublicKeys` from this `PrivateKeyBase`.
     ///
     /// - Includes a Schnorr public key for signing.
-    /// - Includes an X25519 key for key agreement and public key encryption.
-    pub fn schnorr_public_key_base(&self) -> PublicKeyBase {
-        PublicKeyBase::new(
+    /// - Includes an X25519 public key encryption.
+    pub fn schnorr_public_keys(&self) -> PublicKeys {
+        PublicKeys::new(
             self.schnorr_signing_private_key().public_key().unwrap(),
             EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
         )
     }
 
-    /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
+    /// Derive a new `PrivateKeys` from this `PrivateKeyBase`.
+    ///
+    /// - Includes an ECDSA private key for signing.
+    /// - Includes an X25519 private key for encryption.
+    pub fn ecdsa_private_keys(&self) -> PrivateKeys {
+        PrivateKeys::new(
+            self.ecdsa_signing_private_key(),
+            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+        )
+    }
+
+    /// Derive a new `PublicKeys` from this `PrivateKeyBase`.
     ///
     /// - Includes an ECDSA public key for signing.
-    /// - Includes an X25519 key for key agreement and public key encryption.
-    pub fn ecdsa_public_key_base(&self) -> PublicKeyBase {
-        PublicKeyBase::new(
+    /// - Includes an X25519 public key for encryption.
+    pub fn ecdsa_public_keys(&self) -> PublicKeys {
+        PublicKeys::new(
             self.ecdsa_signing_private_key().public_key().unwrap(),
             EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
         )
     }
 
-    /// Derive a new `PublicKeyBase` from this `PrivateKeyBase`.
+    /// Derive a new `PrivateKeys` from this `PrivateKeyBase`.
     ///
-    /// - Includes an SSH public key for signing.
-    /// - Includes an X25519 key for key agreement and public key encryption.
-    pub fn ssh_public_key_base(
+    /// - Includes an SSH private key for signing.
+    /// - Includes an X25519 private key for encryption.
+    pub fn ssh_private_keys(
         &self,
         algorithm: SSHAlgorithm,
         comment: impl Into<String>
-    ) -> Result<PublicKeyBase> {
+    ) -> Result<PrivateKeys> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
         Ok(
-            PublicKeyBase::new(
+            PrivateKeys::new(
+                private_key,
+                EncapsulationPrivateKey::X25519(self.x25519_private_key())
+            )
+        )
+    }
+
+    /// Derive a new `PublicKeys` from this `PrivateKeyBase`.
+    ///
+    /// - Includes an SSH public key for signing.
+    /// - Includes an X25519 public key for encryption.
+    pub fn ssh_public_keys(
+        &self,
+        algorithm: SSHAlgorithm,
+        comment: impl Into<String>
+    ) -> Result<PublicKeys> {
+        let private_key = self.ssh_signing_private_key(algorithm, comment)?;
+        Ok(
+            PublicKeys::new(
                 private_key.public_key().unwrap(),
                 EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
             )
@@ -169,9 +209,18 @@ impl PrivateKeyBase {
     }
 }
 
-impl PublicKeyBaseProvider for PrivateKeyBase {
-    fn public_key_base(&self) -> PublicKeyBase {
-        self.schnorr_public_key_base()
+impl PrivateKeysProvider for PrivateKeyBase {
+    fn private_keys(&self) -> PrivateKeys {
+        PrivateKeys::new(
+            self.schnorr_signing_private_key(),
+            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+        )
+    }
+}
+
+impl PublicKeysProvider for PrivateKeyBase {
+    fn public_keys(&self) -> PublicKeys {
+        self.schnorr_public_keys()
     }
 }
 
@@ -276,7 +325,7 @@ mod tests {
         );
 
         let ur = private_key_base.ur_string();
-        assert_eq!(ur, "ur:crypto-prvkeys/gdhkwzdtfthptokigtvwnnjsqzcxknsktdsfecsbbk");
+        assert_eq!(ur, "ur:crypto-prvkey-base/gdhkwzdtfthptokigtvwnnjsqzcxknsktdsfecsbbk");
         assert_eq!(PrivateKeyBase::from_ur_string(&ur).unwrap(), private_key_base);
     }
 }

@@ -37,6 +37,20 @@ pub enum SigningPrivateKey {
     Dilithium(DilithiumPrivateKey),
 }
 
+impl std::hash::Hash for SigningPrivateKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Schnorr(key) => key.hash(state),
+            Self::ECDSA(key) => key.hash(state),
+            Self::Ed25519(key) => key.hash(state),
+            Self::SSH(key) => key.to_bytes().unwrap().hash(state),
+            Self::Dilithium(key) => key.as_bytes().hash(state),
+        }
+    }
+}
+
+impl Eq for SigningPrivateKey {}
+
 impl SigningPrivateKey {
     pub const fn new_schnorr(key: ECPrivateKey) -> Self {
         Self::Schnorr(key)
@@ -255,29 +269,43 @@ impl TryFrom<CBOR> for SigningPrivateKey {
 impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.into_case() {
-            CBORCase::ByteString(data) => { Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)) }
+            CBORCase::ByteString(data) => {
+                Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?))
+            }
             CBORCase::Array(mut elements) => {
-                let tag = usize::try_from(elements.remove(0))?;
-                if tag == 1 {
-                    let data = elements.remove(0).try_into_byte_string()?;
-                    let key = ECPrivateKey::from_data_ref(data)?;
-                    return Ok(Self::ECDSA(key));
-                } else if tag == 2 {
-                    let data = elements.remove(0).try_into_byte_string()?;
-                    let key = Ed25519PrivateKey::from_data_ref(data)?;
-                    return Ok(Self::Ed25519(key));
+                let discriminator = usize::try_from(elements.remove(0))?;
+                match discriminator {
+                    1 => {
+                        let data = elements.remove(0).try_into_byte_string()?;
+                        let key = ECPrivateKey::from_data_ref(data)?;
+                        Ok(Self::ECDSA(key))
+                    },
+                    2 => {
+                        let data = elements.remove(0).try_into_byte_string()?;
+                        let key = Ed25519PrivateKey::from_data_ref(data)?;
+                        Ok(Self::Ed25519(key))
+                    },
+                    _ => bail!("Invalid discriminator for SigningPrivateKey: {}", discriminator)
                 }
-                bail!("Invalid tag for SigningPrivateKey");
             }
             CBORCase::Tagged(tag, item) => {
-                if tag.value() == tags::TAG_SSH_TEXT_PRIVATE_KEY {
-                    let string = item.try_into_text()?;
-                    let key = SSHPrivateKey::from_openssh(string)?;
-                    return Ok(Self::SSH(Box::new(key)));
+                let value = tag.value();
+                match value {
+                    tags::TAG_SSH_TEXT_PRIVATE_KEY => {
+                        let string = item.try_into_text()?;
+                        let key = SSHPrivateKey::from_openssh(string)?;
+                        Ok(Self::SSH(Box::new(key)))
+                    }
+                    tags::TAG_DILITHIUM_PRIVATE_KEY => {
+                        let key = DilithiumPrivateKey::from_untagged_cbor(item)?;
+                        Ok(Self::Dilithium(key))
+                    }
+                    _ => bail!("Invalid CBOR tag for SigningPrivateKey: {}", value),
                 }
-                bail!("Invalid CBOR tag for SigningPrivateKey");
             }
-            _ => bail!("Invalid CBOR case for SigningPrivateKey"),
+            _ => {
+                bail!("Invalid CBOR case for SigningPrivateKey");
+            }
         }
     }
 }

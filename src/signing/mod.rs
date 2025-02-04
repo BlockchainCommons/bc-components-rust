@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_schnorr_keypair() {
-        test_keypair_signing(SignatureScheme::Schnorr, None);
+        test_keypair_signing(SignatureScheme::default(), None);
     }
 
     #[test]

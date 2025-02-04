@@ -17,13 +17,13 @@ use crate::{
 /// Includes the entity's public signing key for verifying signatures, and
 /// the entity's public encapsulation key used for public key encryption.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-pub struct PublicKeyBase {
+pub struct PublicKeys {
     signing_public_key: SigningPublicKey,
     encapsulation_public_key: EncapsulationPublicKey,
 }
 
-impl PublicKeyBase {
-    /// Restores a `PublicKeyBase` from a `SigningPublicKey` and an `EncapsulationPublicKey`.
+impl PublicKeys {
+    /// Restores a `PublicKeys` from a `SigningPublicKey` and an `EncapsulationPublicKey`.
     pub fn new(
         signing_public_key: SigningPublicKey,
         encapsulation_public_key: EncapsulationPublicKey
@@ -34,70 +34,70 @@ impl PublicKeyBase {
         }
     }
 
-    /// Returns the `SigningPublicKey` of this `PublicKeyBase`.
+    /// Returns the `SigningPublicKey` of this `PublicKeys`.
     pub fn signing_public_key(&self) -> &SigningPublicKey {
         &self.signing_public_key
     }
 
-    /// Returns the `EncapsulationPublicKey` of this `PublicKeyBase`.
+    /// Returns the `EncapsulationPublicKey` of this `PublicKeys`.
     pub fn enapsulation_public_key(&self) -> &EncapsulationPublicKey {
         &self.encapsulation_public_key
     }
 }
 
-pub trait PublicKeyBaseProvider {
-    fn public_key_base(&self) -> PublicKeyBase;
+pub trait PublicKeysProvider {
+    fn public_keys(&self) -> PublicKeys;
 }
 
-impl PublicKeyBaseProvider for PublicKeyBase {
-    fn public_key_base(&self) -> PublicKeyBase {
+impl PublicKeysProvider for PublicKeys {
+    fn public_keys(&self) -> PublicKeys {
         self.clone()
     }
 }
 
-impl Verifier for PublicKeyBase {
+impl Verifier for PublicKeys {
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         self.signing_public_key.verify(signature, message)
     }
 }
 
-impl ReferenceProvider for PublicKeyBase {
+impl ReferenceProvider for PublicKeys {
     fn reference(&self) -> Reference {
         Reference::from_digest(Digest::from_image(self.tagged_cbor().to_cbor_data()))
     }
 }
 
-impl AsRef<PublicKeyBase> for PublicKeyBase {
-    fn as_ref(&self) -> &PublicKeyBase {
+impl AsRef<PublicKeys> for PublicKeys {
+    fn as_ref(&self) -> &PublicKeys {
         self
     }
 }
 
-impl AsRef<SigningPublicKey> for PublicKeyBase {
+impl AsRef<SigningPublicKey> for PublicKeys {
     fn as_ref(&self) -> &SigningPublicKey {
         &self.signing_public_key
     }
 }
 
-impl AsRef<EncapsulationPublicKey> for PublicKeyBase {
+impl AsRef<EncapsulationPublicKey> for PublicKeys {
     fn as_ref(&self) -> &EncapsulationPublicKey {
         &self.encapsulation_public_key
     }
 }
 
-impl CBORTagged for PublicKeyBase {
+impl CBORTagged for PublicKeys {
     fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_PUBLIC_KEY_BASE])
+        tags_for_values(&[tags::TAG_PUBLIC_KEYS])
     }
 }
 
-impl From<PublicKeyBase> for CBOR {
-    fn from(value: PublicKeyBase) -> Self {
+impl From<PublicKeys> for CBOR {
+    fn from(value: PublicKeys) -> Self {
         value.tagged_cbor()
     }
 }
 
-impl CBORTaggedEncodable for PublicKeyBase {
+impl CBORTaggedEncodable for PublicKeys {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_public_key.clone().into();
         let encapsulation_key_cbor: CBOR = self.encapsulation_public_key.clone().into();
@@ -105,7 +105,7 @@ impl CBORTaggedEncodable for PublicKeyBase {
     }
 }
 
-impl TryFrom<CBOR> for PublicKeyBase {
+impl TryFrom<CBOR> for PublicKeys {
     type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
@@ -113,12 +113,12 @@ impl TryFrom<CBOR> for PublicKeyBase {
     }
 }
 
-impl CBORTaggedDecodable for PublicKeyBase {
+impl CBORTaggedDecodable for PublicKeys {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("PublicKeyBase must have two elements");
+                    bail!("PublicKeys must have two elements");
                 }
 
                 let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
@@ -127,20 +127,20 @@ impl CBORTaggedDecodable for PublicKeyBase {
                 )?;
                 Ok(Self::new(signing_public_key, encapsulation_public_key))
             }
-            _ => bail!("PublicKeyBase must be an array"),
+            _ => bail!("PublicKeys must be an array"),
         }
     }
 }
 
-impl Encrypter for PublicKeyBase {
+impl Encrypter for PublicKeys {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
         self.encapsulation_public_key.clone()
     }
 }
 
-impl std::fmt::Display for PublicKeyBase {
+impl std::fmt::Display for PublicKeys {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PublicKeyBase({})", self.reference().ref_hex_short())
+        write!(f, "PublicKeys({})", self.reference().ref_hex_short())
     }
 }
 
@@ -150,7 +150,7 @@ mod tests {
     use hex_literal::hex;
     use dcbor::prelude::*;
 
-    use crate::{ PrivateKeyBase, PublicKeyBase, PublicKeyBaseProvider, ReferenceProvider };
+    use crate::{ PrivateKeyBase, PublicKeys, PublicKeysProvider, ReferenceProvider };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
@@ -158,24 +158,24 @@ mod tests {
     fn test_private_key_base() {
         crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
-        let public_key_base = private_key_base.public_key_base();
+        let public_keys = private_key_base.public_keys();
 
-        let cbor = CBOR::from(public_key_base.clone());
+        let cbor = CBOR::from(public_keys.clone());
 
-        let public_key_base_2 = PublicKeyBase::try_from(cbor.clone()).unwrap();
-        assert_eq!(public_key_base, public_key_base_2);
+        let public_keys_2 = PublicKeys::try_from(cbor.clone()).unwrap();
+        assert_eq!(public_keys, public_keys_2);
 
-        let cbor_2 = CBOR::from(public_key_base_2);
+        let cbor_2 = CBOR::from(public_keys_2);
         assert_eq!(cbor, cbor_2);
 
-        let ur = public_key_base.ur_string();
+        let ur = public_keys.ur_string();
         assert_eq!(
             ur,
             "ur:crypto-pubkeys/lftanshfhdcxzcgtcpytvsgafsondpjkbkoxaopsnniycawpnbnlwsgtregdfhgynyjksrgafmcstansgrhdcxlnfnwfzstovlrdfeuoghvwwyuesbcltsmetbgeurpfoyswfrzojlwdenjzckvadnrndtgsya"
         );
-        assert_eq!(PublicKeyBase::from_ur_string(&ur).unwrap(), public_key_base);
+        assert_eq!(PublicKeys::from_ur_string(&ur).unwrap(), public_keys);
 
-        assert_eq!(format!("{}", public_key_base), "PublicKeyBase(c9ede672)");
-        assert_eq!(format!("{}", public_key_base.reference()), "Reference(c9ede672)");
+        assert_eq!(format!("{}", public_keys), "PublicKeys(c9ede672)");
+        assert_eq!(format!("{}", public_keys.reference()), "Reference(c9ede672)");
     }
 }

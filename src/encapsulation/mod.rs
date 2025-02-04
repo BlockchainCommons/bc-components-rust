@@ -26,7 +26,7 @@ mod tests {
 
     #[test]
     fn test_x25519() {
-        test_encapsulation(EncapsulationScheme::X25519);
+        test_encapsulation(EncapsulationScheme::default());
     }
 
     #[test]

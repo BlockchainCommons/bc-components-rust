@@ -14,6 +14,18 @@ pub enum KyberPrivateKey {
     Kyber1024(Box<kyber1024::SecretKey>),
 }
 
+impl Eq for KyberPrivateKey {}
+
+impl std::hash::Hash for KyberPrivateKey {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        match self {
+            KyberPrivateKey::Kyber512(sk) => sk.as_bytes().hash(state),
+            KyberPrivateKey::Kyber768(sk) => sk.as_bytes().hash(state),
+            KyberPrivateKey::Kyber1024(sk) => sk.as_bytes().hash(state),
+        }
+    }
+}
+
 impl KyberPrivateKey {
     pub fn level(&self) -> Kyber {
         match self {

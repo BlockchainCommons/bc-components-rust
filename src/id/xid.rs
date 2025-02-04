@@ -1,7 +1,7 @@
 use dcbor::prelude::*;
 use anyhow::{ bail, Result, Error };
 
-use crate::{tags, Digest, PrivateKeyBase, PublicKeyBase, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
+use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
 
 /// A XID (eXtensible IDentifier).
 #[derive(Clone, Eq, PartialEq, Hash)]
@@ -174,8 +174,8 @@ impl TryFrom<&SigningPrivateKey> for XID {
     }
 }
 
-impl From<&PublicKeyBase> for XID {
-    fn from(key: &PublicKeyBase) -> Self {
+impl From<&PublicKeys> for XID {
+    fn from(key: &PublicKeys) -> Self {
         Self::new(key.signing_public_key())
     }
 }

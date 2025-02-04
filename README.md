@@ -26,34 +26,35 @@ bc-components = "0.15.0"
 
 ## Types
 
-| Name | Description |
-| --- | --- |
-| X25519PrivateKey | A Curve25519 private key used for X25519 key agreement. |
-| X25519PublicKey | A Curve25519 public key used for X25519 key agreement. |
-| AuthenticationTag | The HMAC authentication tag produced by the encryption process. |
-| ARID | An “Apparently Random Identifier” (ARID) |
-| Compressed | A compressed binary object. |
-| Digest | A cryptographically secure digest, implemented with SHA-256. |
-| ECPrivateKey | An elliptic curve digital signature algorithm (ECDSA) private key. |
-| ECPublicKey | A compressed elliptic curve digital signature algorithm (ECDSA) compressed public key. |
+
+| Name                    | Description                                                                              |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| X25519PrivateKey        | A Curve25519 private key used for X25519 key agreement.                                  |
+| X25519PublicKey         | A Curve25519 public key used for X25519 key agreement.                                   |
+| AuthenticationTag       | The HMAC authentication tag produced by the encryption process.                          |
+| ARID                    | An “Apparently Random Identifier” (ARID)                                               |
+| Compressed              | A compressed binary object.                                                              |
+| Digest                  | A cryptographically secure digest, implemented with SHA-256.                             |
+| ECPrivateKey            | An elliptic curve digital signature algorithm (ECDSA) private key.                       |
+| ECPublicKey             | A compressed elliptic curve digital signature algorithm (ECDSA) compressed public key.   |
 | ECUncompressedPublicKey | A compressed elliptic curve digital signature algorithm (ECDSA) uncompressed public key. |
-| EncryptedMessage | A secure encrypted message. |
-| Nonce | A random nonce (“number used once”). |
-| PrivateKeyBase | Holds unique data from which keys for signing and encryption can be derived. |
-| PublicKeyBase | Holds information used to communicate cryptographically with a remote entity. |
-| SSKRGroupSpec | A specification for a group of shares within an SSKR split. |
-| SSKRSecret | A secret to be split into shares. |
-| SSKRShare | An SSKR share. Used with the functions `sskr_generate` and `sskr_combine`. |
-| SSKRSpec | A specification for an SSKR split. |
-| Salt | Random salt used to decorrelate other information. |
-| SchnorrPublicKey | A Schnorr (x-only) elliptic curve public key. |
-| SealedMessage | A sealed message can be sent to anyone, but only the intended recipient can decrypt it. |
-| Signature | A cryptographic signature. Supports Schnorr (BIP-340), ECDSA, and SSH. |
-| SigningPublicKey | A public key that can be used for signing. Supports Schnorr, ECDSA, and SSH. |
-| SigningPrivateKey | A private Schnorr, ECDSA, or SSH key for signing. |
-| SymmetricKey | A symmetric encryption key. |
-| URI | A URI. |
-| UUID | A UUID. |
+| EncryptedMessage        | A secure encrypted message.                                                              |
+| Nonce                   | A random nonce (“number used once”).                                                   |
+| PrivateKeyBase          | Holds unique data from which keys for signing and encryption can be derived.             |
+| PublicKeys              | Holds information used to communicate cryptographically with a remote entity.            |
+| SSKRGroupSpec           | A specification for a group of shares within an SSKR split.                              |
+| SSKRSecret              | A secret to be split into shares.                                                        |
+| SSKRShare               | An SSKR share. Used with the functions`sskr_generate` and `sskr_combine`.                |
+| SSKRSpec                | A specification for an SSKR split.                                                       |
+| Salt                    | Random salt used to decorrelate other information.                                       |
+| SchnorrPublicKey        | A Schnorr (x-only) elliptic curve public key.                                            |
+| SealedMessage           | A sealed message can be sent to anyone, but only the intended recipient can decrypt it.  |
+| Signature               | A cryptographic signature. Supports Schnorr (BIP-340), ECDSA, and SSH.                   |
+| SigningPublicKey        | A public key that can be used for signing. Supports Schnorr, ECDSA, and SSH.             |
+| SigningPrivateKey       | A private Schnorr, ECDSA, or SSH key for signing.                                        |
+| SymmetricKey            | A symmetric encryption key.                                                              |
+| URI                     | A URI.                                                                                   |
+| UUID                    | A UUID.                                                                                  |
 
 ## Version History
 
@@ -98,10 +99,11 @@ If your company requires support to use our projects, please feel free to contac
 
 The following people directly contributed to this repository. You can add your name here by getting involved. The first step is learning how to contribute from our [CONTRIBUTING.md](./CONTRIBUTING.md) documentation.
 
-| Name              | Role                | Github                                            | Email                                 | GPG Fingerprint                                    |
-| ----------------- | ------------------- | ------------------------------------------------- | ------------------------------------- | -------------------------------------------------- |
-| Christopher Allen | Principal Architect | [@ChristopherA](https://github.com/ChristopherA)  | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED |
-| Wolf McNally      | Lead Researcher/Engineer         | [@WolfMcNally](https://github.com/wolfmcnally)    | \<Wolf@WolfMcNally.com\>              | 9436 52EE 3844 1760 C3DC  3536 4B6C 2FCF 8947 80AE |
+
+| Name              | Role                     | Github                                           | Email                                 | GPG Fingerprint                                              |
+| ------------------- | -------------------------- | -------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------- |
+| Christopher Allen | Principal Architect      | [@ChristopherA](https://github.com/ChristopherA) | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED           |
+| Wolf McNally      | Lead Researcher/Engineer | [@WolfMcNally](https://github.com/wolfmcnally)   | \<Wolf@WolfMcNally.com\>              | 9436 52EE 3844 1760 C3DC  3536 4B6C 2FCF 8947 80AE |
 
 ## Responsible Disclosure
 
@@ -115,8 +117,9 @@ Please report suspected security vulnerabilities in private via email to Christo
 
 The following keys may be used to communicate sensitive information to developers:
 
+
 | Name              | Fingerprint                                        |
-| ----------------- | -------------------------------------------------- |
+| ------------------- | ---------------------------------------------------- |
 | Christopher Allen | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED |
 
 You can import a key by running the following command with that individual’s fingerprint: `gpg --recv-keys "<fingerprint>"` Ensure that you put quotes around fingerprints that contain spaces.
