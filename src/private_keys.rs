@@ -1,13 +1,22 @@
 use anyhow::{ bail, Error, Result };
 use bc_ur::prelude::*;
 use crate::{
-    tags, Decrypter, Digest, EncapsulationPrivateKey, Reference, ReferenceProvider, Signature, SigningPrivateKey, Verifier
+    tags,
+    Decrypter,
+    Digest,
+    EncapsulationPrivateKey,
+    Reference,
+    ReferenceProvider,
+    Signature,
+    Signer,
+    SigningPrivateKey,
 };
 
-/// Holds information used to communicate cryptographically with a remote entity.
+/// Holds information used to communicate cryptographically with a remote
+/// entity.
 ///
-/// Includes the entity's public signing key for verifying signatures, and
-/// the entity's public encapsulation key used for public key encryption.
+/// Includes the entity's private signing key for making signatures, and the
+/// entity's private encapsulation key used to decrypt messages.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PrivateKeys {
     signing_private_key: SigningPrivateKey,
@@ -16,23 +25,23 @@ pub struct PrivateKeys {
 
 impl PrivateKeys {
     /// Restores a `PrivateKeys` from a `SigningPrivateKey` and an `EncapsulationPrivateKey`.
-    pub fn new(
-        signing_public_key: SigningPrivateKey,
-        encapsulation_public_key: EncapsulationPrivateKey
+    pub fn with_keys(
+        signing_private_key: SigningPrivateKey,
+        encapsulation_private_key: EncapsulationPrivateKey
     ) -> Self {
         Self {
-            signing_private_key: signing_public_key,
-            encapsulation_private_key: encapsulation_public_key,
+            signing_private_key,
+            encapsulation_private_key,
         }
     }
 
     /// Returns the `SigningPrivateKey` of this `PrivateKeys`.
-    pub fn signing_public_key(&self) -> &SigningPrivateKey {
+    pub fn signing_private_key(&self) -> &SigningPrivateKey {
         &self.signing_private_key
     }
 
     /// Returns the `EncapsulationPrivateKey` of this `PrivateKeys`.
-    pub fn enapsulation_public_key(&self) -> &EncapsulationPrivateKey {
+    pub fn enapsulation_private_key(&self) -> &EncapsulationPrivateKey {
         &self.encapsulation_private_key
     }
 }
@@ -44,12 +53,6 @@ pub trait PrivateKeysProvider {
 impl PrivateKeysProvider for PrivateKeys {
     fn private_keys(&self) -> PrivateKeys {
         self.clone()
-    }
-}
-
-impl Verifier for PrivateKeys {
-    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
-        self.signing_private_key.verify(signature, message)
     }
 }
 
@@ -117,10 +120,20 @@ impl CBORTaggedDecodable for PrivateKeys {
                 let encapsulation_private_key = EncapsulationPrivateKey::try_from(
                     elements[1].clone()
                 )?;
-                Ok(Self::new(signing_private_key, encapsulation_private_key))
+                Ok(Self::with_keys(signing_private_key, encapsulation_private_key))
             }
             _ => bail!("PrivateKeys must be an array"),
         }
+    }
+}
+
+impl Signer for PrivateKeys {
+    fn sign_with_options(
+        &self,
+        message: &dyn AsRef<[u8]>,
+        options: Option<crate::SigningOptions>
+    ) -> Result<Signature> {
+        self.signing_private_key.sign_with_options(message, options)
     }
 }
 

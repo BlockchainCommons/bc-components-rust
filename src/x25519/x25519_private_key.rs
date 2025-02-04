@@ -27,6 +27,13 @@ impl X25519PrivateKey {
         (private_key, public_key)
     }
 
+    /// Generate a new random `X25519PrivateKey` and corresponding `X25519PublicKey` using the given random number generator.
+    pub fn keypair_using(rng: &mut impl RandomNumberGenerator) -> (X25519PrivateKey, X25519PublicKey) {
+        let private_key = X25519PrivateKey::new_using(rng);
+        let public_key = private_key.public_key();
+        (private_key, public_key)
+    }
+
     /// Generate a new random `X25519PrivateKey` using the given random number generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self(x25519_new_private_key_using(rng))

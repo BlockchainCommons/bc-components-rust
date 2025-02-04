@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.15.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.16.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.15.0"
+//! bc-components = "0.16.0"
 //! ```
 
 mod digest;
@@ -116,6 +116,9 @@ pub use sskr::SSKRError;
 
 mod hkdf_rng;
 pub use hkdf_rng::HKDFRng;
+
+mod keypair;
+pub use keypair::{keypair, keypair_using, keypair_opt, keypair_opt_using};
 
 #[cfg(test)]
 mod tests {

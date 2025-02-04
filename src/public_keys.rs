@@ -12,10 +12,11 @@ use crate::{
     Verifier,
 };
 
-/// Holds information used to communicate cryptographically with a remote entity.
+/// Holds information used to communicate cryptographically with a remote
+/// entity.
 ///
-/// Includes the entity's public signing key for verifying signatures, and
-/// the entity's public encapsulation key used for public key encryption.
+/// Includes the entity's public signing key for verifying signatures, and the
+/// entity's public encapsulation key used encrypting messages.
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct PublicKeys {
     signing_public_key: SigningPublicKey,
@@ -52,12 +53,6 @@ pub trait PublicKeysProvider {
 impl PublicKeysProvider for PublicKeys {
     fn public_keys(&self) -> PublicKeys {
         self.clone()
-    }
-}
-
-impl Verifier for PublicKeys {
-    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
-        self.signing_public_key.verify(signature, message)
     }
 }
 
@@ -129,6 +124,12 @@ impl CBORTaggedDecodable for PublicKeys {
             }
             _ => bail!("PublicKeys must be an array"),
         }
+    }
+}
+
+impl Verifier for PublicKeys {
+    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+        self.signing_public_key.verify(signature, message)
     }
 }
 

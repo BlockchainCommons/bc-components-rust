@@ -1,8 +1,11 @@
+use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
 use crate::{ ECPrivateKey, Ed25519PrivateKey, PrivateKeyBase };
 
 use super::{ SigningPrivateKey, SigningPublicKey };
+
+use anyhow::{ Result, bail };
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub enum SignatureScheme {
@@ -130,6 +133,65 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
+        }
+    }
+
+    pub fn keypair_using(&self, rng: &mut impl RandomNumberGenerator, comment: impl Into<String>) -> Result<(SigningPrivateKey, SigningPublicKey)> {
+        match self {
+            Self::Schnorr => {
+                let private_key = SigningPrivateKey::new_schnorr(ECPrivateKey::new_using(rng));
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::Ecdsa => {
+                let private_key = SigningPrivateKey::new_ecdsa(ECPrivateKey::new_using(rng));
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::Ed25519 => {
+                let private_key = SigningPrivateKey::new_ed25519(Ed25519PrivateKey::new_using(rng));
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::SshEd25519 => {
+                let private_key_base = PrivateKeyBase::new_using(rng);
+                let private_key = private_key_base
+                    .ssh_signing_private_key(Algorithm::Ed25519, comment)
+                    .unwrap();
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::SshDsa => {
+                let private_key_base = PrivateKeyBase::new_using(rng);
+                let private_key = private_key_base
+                    .ssh_signing_private_key(Algorithm::Dsa, comment)
+                    .unwrap();
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::SshEcdsaP256 => {
+                let private_key_base = PrivateKeyBase::new_using(rng);
+                let private_key = private_key_base
+                    .ssh_signing_private_key(
+                        Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP256 },
+                        comment
+                    )
+                    .unwrap();
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            Self::SshEcdsaP384 => {
+                let private_key_base = PrivateKeyBase::new_using(rng);
+                let private_key = private_key_base
+                    .ssh_signing_private_key(
+                        Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP384 },
+                        comment
+                    )
+                    .unwrap();
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            _ => bail!("Deterministic keypair generation not supported for this signature scheme"),
         }
     }
 }

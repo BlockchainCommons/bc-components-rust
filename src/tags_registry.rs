@@ -62,7 +62,7 @@ pub const TAG_FUNCTION: TagValue = 40006;
 pub const TAG_PARAMETER: TagValue = 40007;
 pub const TAG_PLACEHOLDER: TagValue = 40008;
 pub const TAG_REPLACEMENT: TagValue = 40009;
-pub const TAG_EVENT: TagValue = 40010;
+pub const TAG_EVENT: TagValue = 40026;
 
 // These are the utility structures we've identified and speced related to other
 // various applications that aren't specifically Bitcoin-related.
@@ -109,7 +109,7 @@ pub const TAG_DILITHIUM_SIGNATURE: TagValue = 40105;
 pub const TAG_HDKEY_V1: TagValue = 303; // Fixed
 pub const TAG_DERIVATION_PATH_V1: TagValue = 304; // Fixed
 pub const TAG_USE_INFO_V1: TagValue = 305; // Fixed
-pub const TAG_ADDRESS_V1: TagValue = 307; // Fixed
+// pub const TAG_ADDRESS_V1: TagValue = 307; // Fixed
 pub const TAG_OUTPUT_DESCRIPTOR_V1: TagValue = 307; // Fixed
 pub const TAG_PSBT_V1: TagValue = 310; // Fixed
 pub const TAG_ACCOUNT_V1: TagValue = 311; // Fixed
@@ -202,7 +202,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_HDKEY_V1, "crypto-hdkey"),
         (TAG_DERIVATION_PATH_V1, "crypto-keypath"),
         (TAG_USE_INFO_V1, "crypto-coin-info"),
-        (TAG_ADDRESS_V1, "crypto-address"),
+        // (TAG_ADDRESS_V1, "crypto-address"),
         (TAG_OUTPUT_DESCRIPTOR_V1, "crypto-output"),
         (TAG_PSBT_V1, "crypto-psbt"),
         (TAG_ACCOUNT_V1, "crypto-account"),

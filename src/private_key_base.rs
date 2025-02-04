@@ -128,7 +128,7 @@ impl PrivateKeyBase {
     /// - Includes a Schnorr private key for signing.
     /// - Includes an X25519 private key for encryption.
     pub fn schnorr_private_keys(&self) -> PrivateKeys {
-        PrivateKeys::new(
+        PrivateKeys::with_keys(
             self.schnorr_signing_private_key(),
             EncapsulationPrivateKey::X25519(self.x25519_private_key())
         )
@@ -150,7 +150,7 @@ impl PrivateKeyBase {
     /// - Includes an ECDSA private key for signing.
     /// - Includes an X25519 private key for encryption.
     pub fn ecdsa_private_keys(&self) -> PrivateKeys {
-        PrivateKeys::new(
+        PrivateKeys::with_keys(
             self.ecdsa_signing_private_key(),
             EncapsulationPrivateKey::X25519(self.x25519_private_key())
         )
@@ -178,7 +178,7 @@ impl PrivateKeyBase {
     ) -> Result<PrivateKeys> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
         Ok(
-            PrivateKeys::new(
+            PrivateKeys::with_keys(
                 private_key,
                 EncapsulationPrivateKey::X25519(self.x25519_private_key())
             )
@@ -211,7 +211,7 @@ impl PrivateKeyBase {
 
 impl PrivateKeysProvider for PrivateKeyBase {
     fn private_keys(&self) -> PrivateKeys {
-        PrivateKeys::new(
+        PrivateKeys::with_keys(
             self.schnorr_signing_private_key(),
             EncapsulationPrivateKey::X25519(self.x25519_private_key())
         )
