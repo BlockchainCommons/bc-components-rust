@@ -1,5 +1,8 @@
-use crate::{ tags, DilithiumPublicKey, ECKeyBase, ECPublicKey, Ed25519PublicKey, SchnorrPublicKey, Signature, Verifier };
-use anyhow::{ bail, Result, Error };
+use crate::{
+    tags, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, SchnorrPublicKey, Signature,
+    Verifier,
+};
+use anyhow::{bail, Error, Result};
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
@@ -10,7 +13,7 @@ pub enum SigningPublicKey {
     ECDSA(ECPublicKey),
     Ed25519(Ed25519PublicKey),
     SSH(SSHPublicKey),
-    Dilithium(DilithiumPublicKey),
+    MLDSA(MLDSAPublicKey),
 }
 
 impl SigningPublicKey {
@@ -67,37 +70,28 @@ impl Verifier for SigningPublicKey {
     /// will fail.
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         match self {
-            SigningPublicKey::Schnorr(key) => {
-                match signature {
-                    Signature::Schnorr(sig) => key.schnorr_verify(sig, message),
-                    _ => false,
+            SigningPublicKey::Schnorr(key) => match signature {
+                Signature::Schnorr(sig) => key.schnorr_verify(sig, message),
+                _ => false,
+            },
+            SigningPublicKey::ECDSA(key) => match signature {
+                Signature::ECDSA(sig) => key.verify(sig, message),
+                _ => false,
+            },
+            SigningPublicKey::Ed25519(key) => match signature {
+                Signature::Ed25519(sig) => key.verify(sig, message),
+                _ => false,
+            },
+            SigningPublicKey::SSH(key) => match signature {
+                Signature::SSH(sig) => key.verify(sig.namespace(), message.as_ref(), sig).is_ok(),
+                _ => false,
+            },
+            SigningPublicKey::MLDSA(key) => match signature {
+                Signature::MLDSA(sig) => {
+                    key.verify(sig, message).map_err(|_| false).unwrap_or(false)
                 }
-            }
-            SigningPublicKey::ECDSA(key) => {
-                match signature {
-                    Signature::ECDSA(sig) => key.verify(sig, message),
-                    _ => false,
-                }
-            }
-            SigningPublicKey::Ed25519(key) => {
-                match signature {
-                    Signature::Ed25519(sig) => key.verify(sig, message),
-                    _ => false,
-                }
-            }
-            SigningPublicKey::SSH(key) => {
-                match signature {
-                    Signature::SSH(sig) =>
-                        key.verify(sig.namespace(), message.as_ref(), sig).is_ok(),
-                    _ => false,
-                }
-            }
-            SigningPublicKey::Dilithium(key) => {
-                match signature {
-                    Signature::Dilithium(sig) => key.verify(sig, message).map_err(|_| false).unwrap_or(false),
-                    _ => false,
-                }
-            }
+                _ => false,
+            },
         }
     }
 }
@@ -123,7 +117,7 @@ impl From<SigningPublicKey> for CBOR {
 impl CBORTaggedEncodable for SigningPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {
-            SigningPublicKey::Schnorr(key) => { CBOR::to_byte_string(key.data()) }
+            SigningPublicKey::Schnorr(key) => CBOR::to_byte_string(key.data()),
             SigningPublicKey::ECDSA(key) => {
                 vec![(1).into(), CBOR::to_byte_string(key.data())].into()
             }
@@ -134,9 +128,7 @@ impl CBORTaggedEncodable for SigningPublicKey {
                 let string = key.to_openssh().unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PUBLIC_KEY, string)
             }
-            SigningPublicKey::Dilithium(key) => {
-                key.clone().into()
-            }
+            SigningPublicKey::MLDSA(key) => key.clone().into(),
         }
     }
 }
@@ -152,9 +144,7 @@ impl TryFrom<CBOR> for SigningPublicKey {
 impl CBORTaggedDecodable for SigningPublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.clone().into_case() {
-            CBORCase::ByteString(data) => {
-                Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
-            }
+            CBORCase::ByteString(data) => Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?)),
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
@@ -172,20 +162,18 @@ impl CBORTaggedDecodable for SigningPublicKey {
                 }
                 bail!("invalid signing public key");
             }
-            CBORCase::Tagged(tag, item) => {
-                match tag.value() {
-                    tags::TAG_SSH_TEXT_PUBLIC_KEY => {
-                        let string = item.try_into_text()?;
-                        let key = SSHPublicKey::from_openssh(&string)?;
-                        Ok(Self::SSH(key))
-                    }
-                    tags::TAG_DILITHIUM_PUBLIC_KEY => {
-                        let key = DilithiumPublicKey::from_tagged_cbor(untagged_cbor)?;
-                        Ok(Self::Dilithium(key))
-                    }
-                    _ => bail!("invalid signing public key"),
+            CBORCase::Tagged(tag, item) => match tag.value() {
+                tags::TAG_SSH_TEXT_PUBLIC_KEY => {
+                    let string = item.try_into_text()?;
+                    let key = SSHPublicKey::from_openssh(&string)?;
+                    Ok(Self::SSH(key))
                 }
-            }
+                tags::TAG_MLDSA_PUBLIC_KEY => {
+                    let key = MLDSAPublicKey::from_tagged_cbor(untagged_cbor)?;
+                    Ok(Self::MLDSA(key))
+                }
+                _ => bail!("invalid signing public key"),
+            },
             _ => bail!("invalid signing public key"),
         }
     }

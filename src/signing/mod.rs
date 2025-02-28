@@ -1,5 +1,5 @@
 mod signing_private_key;
-pub use signing_private_key::{SigningPrivateKey, SigningOptions};
+pub use signing_private_key::{SigningOptions, SigningPrivateKey};
 
 mod signing_public_key;
 pub use signing_public_key::SigningPublicKey;
@@ -17,7 +17,10 @@ pub use signature_scheme::SignatureScheme;
 mod tests {
     use std::{cell::RefCell, rc::Rc};
 
-    use crate::{ Dilithium, DilithiumSignature, ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier };
+    use crate::{
+        ECPrivateKey, Ed25519PrivateKey, MLDSASignature, Signature, Signer, SigningOptions,
+        SigningPrivateKey, Verifier, MLDSA,
+    };
     use bc_rand::make_fake_random_number_generator;
     use dcbor::prelude::*;
     use hex_literal::hex;
@@ -26,22 +29,19 @@ mod tests {
 
     use super::SignatureScheme;
 
-    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ecdsa(
-        ECPrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
-    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_schnorr(
-        ECPrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
+    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_ecdsa(ECPrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
+    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_schnorr(ECPrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
 
-    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ed25519(
-        Ed25519PrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
+    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_ed25519(Ed25519PrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
     const MESSAGE: &dyn AsRef<[u8]> = b"Wolf McNally";
 
     #[test]
@@ -61,7 +61,9 @@ mod tests {
     fn test_schnorr_cbor() {
         let rng = Rc::new(RefCell::new(make_fake_random_number_generator()));
         let options = SigningOptions::Schnorr { rng };
-        let signature = SCHNORR_SIGNING_PRIVATE_KEY.sign_with_options(MESSAGE, Some(options)).unwrap();
+        let signature = SCHNORR_SIGNING_PRIVATE_KEY
+            .sign_with_options(MESSAGE, Some(options))
+            .unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
         let expected = indoc! {r#"
@@ -69,7 +71,10 @@ mod tests {
             h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
         )
         "#}.trim();
-        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(), expected);
+        assert_eq!(
+            CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
+            expected
+        );
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
@@ -121,8 +126,8 @@ mod tests {
     }
 
     #[test]
-    fn test_dilithium_signing() {
-        let (private_key, public_key) = Dilithium::Dilithium3.keypair();
+    fn test_mldsa_signing() {
+        let (private_key, public_key) = MLDSA::MLDSA65.keypair();
         let signature = private_key.sign(MESSAGE);
 
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
@@ -133,13 +138,13 @@ mod tests {
     }
 
     #[test]
-    fn test_dilithium_cbor() {
-        let (private_key, public_key) = Dilithium::Dilithium3.keypair();
+    fn test_mldsa_cbor() {
+        let (private_key, public_key) = MLDSA::MLDSA65.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
-        let received_signature = DilithiumSignature::from_tagged_cbor_data(tagged_cbor_data).unwrap();
+        let received_signature = MLDSASignature::from_tagged_cbor_data(tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
 
@@ -165,25 +170,22 @@ mod tests {
     }
 
     #[test]
-    fn test_dilithium2_keypair() {
-        test_keypair_signing(SignatureScheme::Dilithium2, None);
+    fn test_mldsa44_keypair() {
+        test_keypair_signing(SignatureScheme::MLDSA44, None);
     }
 
     #[test]
-    fn test_dilithium3_keypair() {
-        test_keypair_signing(SignatureScheme::Dilithium3, None);
+    fn test_mldsa65_keypair() {
+        test_keypair_signing(SignatureScheme::MLDSA65, None);
     }
 
     #[test]
-    fn test_dilithium5_keypair() {
-        test_keypair_signing(SignatureScheme::Dilithium5, None);
+    fn test_mldsa87_keypair() {
+        test_keypair_signing(SignatureScheme::MLDSA87, None);
     }
 
     fn signing_options() -> SigningOptions {
-        SigningOptions::Ssh {
-            namespace: "ssh".into(),
-            hash_alg: HashAlg::Sha512,
-        }
+        SigningOptions::Ssh { namespace: "ssh".into(), hash_alg: HashAlg::Sha512 }
     }
 
     #[test]

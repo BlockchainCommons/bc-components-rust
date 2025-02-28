@@ -1,10 +1,13 @@
-use std::{ cell::RefCell, rc::Rc };
+use std::{cell::RefCell, rc::Rc};
 
+use crate::{
+    tags, ECKey, ECPrivateKey, Ed25519PrivateKey, MLDSAPrivateKey, Signature, Signer,
+    SigningPublicKey,
+};
+use anyhow::{bail, Error, Result};
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
-use crate::{ tags, DilithiumPrivateKey, ECKey, ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningPublicKey };
-use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
-use anyhow::{ bail, Result, Error };
-use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
+use ssh_key::{private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding};
 
 use super::Verifier;
 
@@ -34,7 +37,7 @@ pub enum SigningPrivateKey {
     ECDSA(ECPrivateKey),
     Ed25519(Ed25519PrivateKey),
     SSH(Box<SSHPrivateKey>),
-    Dilithium(DilithiumPrivateKey),
+    MLDSA(MLDSAPrivateKey),
 }
 
 impl std::hash::Hash for SigningPrivateKey {
@@ -44,7 +47,7 @@ impl std::hash::Hash for SigningPrivateKey {
             Self::ECDSA(key) => key.hash(state),
             Self::Ed25519(key) => key.hash(state),
             Self::SSH(key) => key.to_bytes().unwrap().hash(state),
-            Self::Dilithium(key) => key.as_bytes().hash(state),
+            Self::MLDSA(key) => key.as_bytes().hash(state),
         }
     }
 }
@@ -103,20 +106,17 @@ impl SigningPrivateKey {
 
     pub fn public_key(&self) -> Result<SigningPublicKey> {
         match self {
-            Self::Schnorr(key)  => Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key())),
-            Self::ECDSA(key)    => Ok(SigningPublicKey::from_ecdsa(key.public_key())),
-            Self::Ed25519(key)  => Ok(SigningPublicKey::from_ed25519(key.public_key())),
-            Self::SSH(key)      => Ok(SigningPublicKey::from_ssh(key.public_key().clone())),
-            Self::Dilithium(_)  => bail!("Deriving Dilithium public key not supported"),
+            Self::Schnorr(key) => Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key())),
+            Self::ECDSA(key) => Ok(SigningPublicKey::from_ecdsa(key.public_key())),
+            Self::Ed25519(key) => Ok(SigningPublicKey::from_ed25519(key.public_key())),
+            Self::SSH(key) => Ok(SigningPublicKey::from_ssh(key.public_key().clone())),
+            Self::MLDSA(_) => bail!("Deriving MLDSA public key not supported"),
         }
     }
 }
 
 impl SigningPrivateKey {
-    fn ecdsa_sign(
-        &self,
-        message: impl AsRef<[u8]>
-    ) -> Result<Signature> {
+    fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
         if let Some(private_key) = self.to_ecdsa() {
             let sig = private_key.ecdsa_sign(message);
             Ok(Signature::ecdsa_from_data(sig))
@@ -128,7 +128,7 @@ impl SigningPrivateKey {
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
-        rng: Rc<RefCell<dyn RandomNumberGenerator>>
+        rng: Rc<RefCell<dyn RandomNumberGenerator>>,
     ) -> Result<Signature> {
         if let Some(private_key) = self.to_schnorr() {
             let sig = private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
@@ -138,10 +138,7 @@ impl SigningPrivateKey {
         }
     }
 
-    pub fn ed25519_sign(
-        &self,
-        message: impl AsRef<[u8]>
-    ) -> Result<Signature> {
+    pub fn ed25519_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
         if let Self::Ed25519(key) = self {
             let sig = key.sign(message.as_ref());
             Ok(Signature::ed25519_from_data(sig))
@@ -154,7 +151,7 @@ impl SigningPrivateKey {
         &self,
         message: impl AsRef<[u8]>,
         namespace: impl AsRef<str>,
-        hash_alg: HashAlg
+        hash_alg: HashAlg,
     ) -> Result<Signature> {
         if let Some(private) = self.to_ssh() {
             let sig = private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
@@ -164,15 +161,12 @@ impl SigningPrivateKey {
         }
     }
 
-    fn dilithium_sign(
-        &self,
-        message: impl AsRef<[u8]>,
-    ) -> Result<Signature> {
-        if let Self::Dilithium(key) = self {
+    fn mldsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
+        if let Self::MLDSA(key) = self {
             let sig = key.sign(message.as_ref());
-            Ok(Signature::Dilithium(sig))
+            Ok(Signature::MLDSA(sig))
         } else {
-            bail!("Invalid key type for Dilithium signing");
+            bail!("Invalid key type for MLDSA signing");
         }
     }
 }
@@ -181,17 +175,14 @@ impl Signer for SigningPrivateKey {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>
+        options: Option<SigningOptions>,
     ) -> Result<Signature> {
         match self {
             Self::Schnorr(_) => {
                 if let Some(SigningOptions::Schnorr { rng }) = options {
                     self.schnorr_sign(message, rng)
                 } else {
-                    self.schnorr_sign(
-                        message,
-                        Rc::new(RefCell::new(SecureRandomNumberGenerator))
-                    )
+                    self.schnorr_sign(message, Rc::new(RefCell::new(SecureRandomNumberGenerator)))
                 }
             }
             Self::ECDSA(_) => self.ecdsa_sign(message),
@@ -203,9 +194,7 @@ impl Signer for SigningPrivateKey {
                     bail!("Missing namespace and hash algorithm for SSH signing");
                 }
             }
-            Self::Dilithium(_) => {
-                self.dilithium_sign(message)
-            }
+            Self::MLDSA(_) => self.mldsa_sign(message),
         }
     }
 }
@@ -240,7 +229,7 @@ impl From<SigningPrivateKey> for CBOR {
 impl CBORTaggedEncodable for SigningPrivateKey {
     fn untagged_cbor(&self) -> CBOR {
         match self {
-            SigningPrivateKey::Schnorr(key) => { CBOR::to_byte_string(key.data()) }
+            SigningPrivateKey::Schnorr(key) => CBOR::to_byte_string(key.data()),
             SigningPrivateKey::ECDSA(key) => {
                 vec![(1).into(), CBOR::to_byte_string(key.data())].into()
             }
@@ -251,9 +240,7 @@ impl CBORTaggedEncodable for SigningPrivateKey {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PRIVATE_KEY, (*string).clone())
             }
-            SigningPrivateKey::Dilithium(key) => {
-                key.clone().into()
-            }
+            SigningPrivateKey::MLDSA(key) => key.clone().into(),
         }
     }
 }
@@ -269,9 +256,7 @@ impl TryFrom<CBOR> for SigningPrivateKey {
 impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.into_case() {
-            CBORCase::ByteString(data) => {
-                Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?))
-            }
+            CBORCase::ByteString(data) => Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)),
             CBORCase::Array(mut elements) => {
                 let discriminator = usize::try_from(elements.remove(0))?;
                 match discriminator {
@@ -279,13 +264,16 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                         let data = elements.remove(0).try_into_byte_string()?;
                         let key = ECPrivateKey::from_data_ref(data)?;
                         Ok(Self::ECDSA(key))
-                    },
+                    }
                     2 => {
                         let data = elements.remove(0).try_into_byte_string()?;
                         let key = Ed25519PrivateKey::from_data_ref(data)?;
                         Ok(Self::Ed25519(key))
-                    },
-                    _ => bail!("Invalid discriminator for SigningPrivateKey: {}", discriminator)
+                    }
+                    _ => bail!(
+                        "Invalid discriminator for SigningPrivateKey: {}",
+                        discriminator
+                    ),
                 }
             }
             CBORCase::Tagged(tag, item) => {
@@ -296,9 +284,9 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                         let key = SSHPrivateKey::from_openssh(string)?;
                         Ok(Self::SSH(Box::new(key)))
                     }
-                    tags::TAG_DILITHIUM_PRIVATE_KEY => {
-                        let key = DilithiumPrivateKey::from_untagged_cbor(item)?;
-                        Ok(Self::Dilithium(key))
+                    tags::TAG_MLDSA_PRIVATE_KEY => {
+                        let key = MLDSAPrivateKey::from_untagged_cbor(item)?;
+                        Ok(Self::MLDSA(key))
                     }
                     _ => bail!("Invalid CBOR tag for SigningPrivateKey: {}", value),
                 }

@@ -1,8 +1,8 @@
-use bc_crypto::{ ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE };
+use crate::{tags, MLDSASignature};
+use anyhow::{bail, Error, Result};
+use bc_crypto::{ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
-use ssh_key::{ LineEnding, SshSig };
-use crate::{tags, DilithiumSignature};
-use anyhow::{ bail, Result, Error };
+use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
 
@@ -13,7 +13,7 @@ pub enum Signature {
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
     SSH(SshSig),
-    Dilithium(DilithiumSignature),
+    MLDSA(MLDSASignature),
 }
 
 impl PartialEq for Signature {
@@ -23,7 +23,7 @@ impl PartialEq for Signature {
             (Self::ECDSA(a), Self::ECDSA(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
             (Self::SSH(a), Self::SSH(b)) => a == b,
-            (Self::Dilithium(a), Self::Dilithium(b)) => a.as_bytes() == b.as_bytes(),
+            (Self::MLDSA(a), Self::MLDSA(b)) => a.as_bytes() == b.as_bytes(),
             _ => false,
         }
     }
@@ -107,24 +107,20 @@ impl Signature {
             Self::Schnorr(_) => Ok(SignatureScheme::Schnorr),
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
-            Self::SSH(sig) => {
-                match sig.algorithm() {
-                    ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
-                    ssh_key::Algorithm::Ecdsa { curve } => match curve {
-                        ssh_key::EcdsaCurve::NistP256 => Ok(SignatureScheme::SshEcdsaP256),
-                        ssh_key::EcdsaCurve::NistP384 => Ok(SignatureScheme::SshEcdsaP384),
-                        _ => bail!("Unsupported SSH ECDSA curve"),
-                    },
-                    ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
-                    _ => bail!("Unsupported SSH signature algorithm")
-                }
+            Self::SSH(sig) => match sig.algorithm() {
+                ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
+                ssh_key::Algorithm::Ecdsa { curve } => match curve {
+                    ssh_key::EcdsaCurve::NistP256 => Ok(SignatureScheme::SshEcdsaP256),
+                    ssh_key::EcdsaCurve::NistP384 => Ok(SignatureScheme::SshEcdsaP384),
+                    _ => bail!("Unsupported SSH ECDSA curve"),
+                },
+                ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
+                _ => bail!("Unsupported SSH signature algorithm"),
             },
-            Self::Dilithium(sig) => {
-                match sig.level() {
-                    crate::Dilithium::Dilithium2 => Ok(SignatureScheme::Dilithium2),
-                    crate::Dilithium::Dilithium3 => Ok(SignatureScheme::Dilithium3),
-                    crate::Dilithium::Dilithium5 => Ok(SignatureScheme::Dilithium5),
-                }
+            Self::MLDSA(sig) => match sig.level() {
+                crate::MLDSA::MLDSA44 => Ok(SignatureScheme::MLDSA44),
+                crate::MLDSA::MLDSA65 => Ok(SignatureScheme::MLDSA65),
+                crate::MLDSA::MLDSA87 => Ok(SignatureScheme::MLDSA87),
             },
         }
     }
@@ -133,21 +129,20 @@ impl Signature {
 impl std::fmt::Debug for Signature {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Signature::Schnorr(data) => {
-                f.debug_struct("Schnorr").field("data", &hex::encode(data)).finish()
-            }
-            Signature::ECDSA(data) => {
-                f.debug_struct("ECDSA").field("data", &hex::encode(data)).finish()
-            }
-            Signature::Ed25519(data) => {
-                f.debug_struct("Ed25519").field("data", &hex::encode(data)).finish()
-            }
-            Signature::SSH(sig) => {
-                f.debug_struct("SSH").field("sig", sig).finish()
-            }
-            Signature::Dilithium(sig) => {
-                f.debug_struct("Dilithium").field("sig", sig).finish()
-            }
+            Signature::Schnorr(data) => f
+                .debug_struct("Schnorr")
+                .field("data", &hex::encode(data))
+                .finish(),
+            Signature::ECDSA(data) => f
+                .debug_struct("ECDSA")
+                .field("data", &hex::encode(data))
+                .finish(),
+            Signature::Ed25519(data) => f
+                .debug_struct("Ed25519")
+                .field("data", &hex::encode(data))
+                .finish(),
+            Signature::SSH(sig) => f.debug_struct("SSH").field("sig", sig).finish(),
+            Signature::MLDSA(sig) => f.debug_struct("MLDSA").field("sig", sig).finish(),
         }
     }
 }
@@ -180,7 +175,7 @@ impl CBORTaggedEncodable for Signature {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_SIGNATURE, pem)
             }
-            Signature::Dilithium(sig) => sig.clone().into(),
+            Signature::MLDSA(sig) => sig.clone().into(),
         }
     }
 }
@@ -196,7 +191,7 @@ impl TryFrom<CBOR> for Signature {
 impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         match cbor.clone().into_case() {
-            CBORCase::ByteString(bytes) => { Self::schnorr_from_data_ref(bytes) }
+            CBORCase::ByteString(bytes) => Self::schnorr_from_data_ref(bytes),
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
@@ -221,20 +216,18 @@ impl CBORTaggedDecodable for Signature {
                 }
                 bail!("Invalid signature format");
             }
-            CBORCase::Tagged(tag, item) => {
-                match tag.value() {
-                    tags::TAG_DILITHIUM_SIGNATURE => {
-                        let sig = DilithiumSignature::try_from(cbor)?;
-                        Ok(Self::Dilithium(sig))
-                    }
-                    tags::TAG_SSH_TEXT_SIGNATURE => {
-                        let string = item.try_into_text()?;
-                        let pem = SshSig::from_pem(string)?;
-                        Ok(Self::SSH(pem))
-                    }
-                    _ => bail!("Invalid signature format"),
+            CBORCase::Tagged(tag, item) => match tag.value() {
+                tags::TAG_MLDSA_SIGNATURE => {
+                    let sig = MLDSASignature::try_from(cbor)?;
+                    Ok(Self::MLDSA(sig))
                 }
-            }
+                tags::TAG_SSH_TEXT_SIGNATURE => {
+                    let string = item.try_into_text()?;
+                    let pem = SshSig::from_pem(string)?;
+                    Ok(Self::SSH(pem))
+                }
+                _ => bail!("Invalid signature format"),
+            },
             _ => bail!("Invalid signature format"),
         }
     }

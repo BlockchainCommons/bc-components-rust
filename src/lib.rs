@@ -86,8 +86,8 @@ pub use private_keys::{ PrivateKeys, PrivateKeysProvider };
 mod public_keys;
 pub use public_keys::{ PublicKeys, PublicKeysProvider };
 
-mod dilithium;
-pub use dilithium::{ Dilithium, DilithiumPrivateKey, DilithiumPublicKey, DilithiumSignature };
+mod mldsa;
+pub use mldsa::{ MLDSA, MLDSAPrivateKey, MLDSAPublicKey, MLDSASignature };
 
 mod kyber;
 pub use kyber::{ Kyber, KyberPrivateKey, KyberPublicKey, KyberCiphertext };

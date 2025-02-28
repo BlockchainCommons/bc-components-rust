@@ -1,11 +1,11 @@
 use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
-use crate::{ ECPrivateKey, Ed25519PrivateKey, PrivateKeyBase };
+use crate::{ECPrivateKey, Ed25519PrivateKey, PrivateKeyBase};
 
-use super::{ SigningPrivateKey, SigningPublicKey };
+use super::{SigningPrivateKey, SigningPublicKey};
 
-use anyhow::{ Result, bail };
+use anyhow::{bail, Result};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub enum SignatureScheme {
@@ -13,19 +13,17 @@ pub enum SignatureScheme {
     Schnorr,
     Ecdsa,
     Ed25519,
-    Dilithium2,
-    Dilithium3,
-    Dilithium5,
+    MLDSA44,
+    MLDSA65,
+    MLDSA87,
     SshEd25519,
 
     // Disabled due to tests not working correctly for undiagnosed reasons.
     // SshRsaSha256,
     // SshRsaSha512,
-
     SshDsa,
     SshEcdsaP256,
     SshEcdsaP384,
-
     // Disabled due to a bug in the ssh-key crate.
     // See: https://github.com/RustCrypto/SSH/issues/232
 
@@ -55,22 +53,22 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
-            Self::Dilithium2 => {
-                let (private_key, public_key) = crate::Dilithium::Dilithium2.keypair();
-                let private_key = SigningPrivateKey::Dilithium(private_key);
-                let public_key = SigningPublicKey::Dilithium(public_key);
+            Self::MLDSA44 => {
+                let (private_key, public_key) = crate::MLDSA::MLDSA44.keypair();
+                let private_key = SigningPrivateKey::MLDSA(private_key);
+                let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
-            Self::Dilithium3 => {
-                let (private_key, public_key) = crate::Dilithium::Dilithium3.keypair();
-                let private_key = SigningPrivateKey::Dilithium(private_key);
-                let public_key = SigningPublicKey::Dilithium(public_key);
+            Self::MLDSA65 => {
+                let (private_key, public_key) = crate::MLDSA::MLDSA65.keypair();
+                let private_key = SigningPrivateKey::MLDSA(private_key);
+                let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
-            Self::Dilithium5 => {
-                let (private_key, public_key) = crate::Dilithium::Dilithium5.keypair();
-                let private_key = SigningPrivateKey::Dilithium(private_key);
-                let public_key = SigningPublicKey::Dilithium(public_key);
+            Self::MLDSA87 => {
+                let (private_key, public_key) = crate::MLDSA::MLDSA87.keypair();
+                let private_key = SigningPrivateKey::MLDSA(private_key);
+                let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
             Self::SshEd25519 => {
@@ -116,7 +114,7 @@ impl SignatureScheme {
                 let private_key = private_key_base
                     .ssh_signing_private_key(
                         Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP256 },
-                        comment
+                        comment,
                     )
                     .unwrap();
                 let public_key = private_key.public_key().unwrap();
@@ -127,7 +125,7 @@ impl SignatureScheme {
                 let private_key = private_key_base
                     .ssh_signing_private_key(
                         Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP384 },
-                        comment
+                        comment,
                     )
                     .unwrap();
                 let public_key = private_key.public_key().unwrap();
@@ -136,7 +134,11 @@ impl SignatureScheme {
         }
     }
 
-    pub fn keypair_using(&self, rng: &mut impl RandomNumberGenerator, comment: impl Into<String>) -> Result<(SigningPrivateKey, SigningPublicKey)> {
+    pub fn keypair_using(
+        &self,
+        rng: &mut impl RandomNumberGenerator,
+        comment: impl Into<String>,
+    ) -> Result<(SigningPrivateKey, SigningPublicKey)> {
         match self {
             Self::Schnorr => {
                 let private_key = SigningPrivateKey::new_schnorr(ECPrivateKey::new_using(rng));
@@ -174,7 +176,7 @@ impl SignatureScheme {
                 let private_key = private_key_base
                     .ssh_signing_private_key(
                         Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP256 },
-                        comment
+                        comment,
                     )
                     .unwrap();
                 let public_key = private_key.public_key().unwrap();
@@ -185,7 +187,7 @@ impl SignatureScheme {
                 let private_key = private_key_base
                     .ssh_signing_private_key(
                         Algorithm::Ecdsa { curve: ssh_key::EcdsaCurve::NistP384 },
-                        comment
+                        comment,
                     )
                     .unwrap();
                 let public_key = private_key.public_key().unwrap();
