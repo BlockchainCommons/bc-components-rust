@@ -1,6 +1,6 @@
-use anyhow::{Result, Error, bail};
+use anyhow::{bail, Error, Result};
 use dcbor::prelude::*;
-use pqcrypto_dilithium::*;
+use pqcrypto_mldsa::*;
 
 use super::{DilithiumPrivateKey, DilithiumPublicKey};
 
@@ -16,41 +16,50 @@ impl Dilithium {
     pub fn keypair(self) -> (DilithiumPrivateKey, DilithiumPublicKey) {
         match self {
             Dilithium::Dilithium2 => {
-                let (pk, sk) = dilithium2::keypair();
-                (DilithiumPrivateKey::Dilithium2(Box::new(sk)), DilithiumPublicKey::Dilithium2(Box::new(pk)))
-            },
+                let (pk, sk) = mldsa44::keypair();
+                (
+                    DilithiumPrivateKey::Dilithium2(Box::new(sk)),
+                    DilithiumPublicKey::Dilithium2(Box::new(pk)),
+                )
+            }
             Dilithium::Dilithium3 => {
-                let (pk, sk) = dilithium3::keypair();
-                (DilithiumPrivateKey::Dilithium3(Box::new(sk)), DilithiumPublicKey::Dilithium3(Box::new(pk)))
-            },
+                let (pk, sk) = mldsa65::keypair();
+                (
+                    DilithiumPrivateKey::Dilithium3(Box::new(sk)),
+                    DilithiumPublicKey::Dilithium3(Box::new(pk)),
+                )
+            }
             Dilithium::Dilithium5 => {
-                let (pk, sk) = dilithium5::keypair();
-                (DilithiumPrivateKey::Dilithium5(Box::new(sk)), DilithiumPublicKey::Dilithium5(Box::new(pk)))
-            },
+                let (pk, sk) = mldsa87::keypair();
+                (
+                    DilithiumPrivateKey::Dilithium5(Box::new(sk)),
+                    DilithiumPublicKey::Dilithium5(Box::new(pk)),
+                )
+            }
         }
     }
 
     pub fn private_key_size(&self) -> usize {
         match self {
-            Dilithium::Dilithium2 => dilithium2::secret_key_bytes(),
-            Dilithium::Dilithium3 => dilithium3::secret_key_bytes(),
-            Dilithium::Dilithium5 => dilithium5::secret_key_bytes(),
+            Dilithium::Dilithium2 => mldsa44::secret_key_bytes(),
+            Dilithium::Dilithium3 => mldsa65::secret_key_bytes(),
+            Dilithium::Dilithium5 => mldsa87::secret_key_bytes(),
         }
     }
 
     pub fn public_key_size(&self) -> usize {
         match self {
-            Dilithium::Dilithium2 => dilithium2::public_key_bytes(),
-            Dilithium::Dilithium3 => dilithium3::public_key_bytes(),
-            Dilithium::Dilithium5 => dilithium5::public_key_bytes(),
+            Dilithium::Dilithium2 => mldsa44::public_key_bytes(),
+            Dilithium::Dilithium3 => mldsa65::public_key_bytes(),
+            Dilithium::Dilithium5 => mldsa87::public_key_bytes(),
         }
     }
 
     pub fn signature_size(&self) -> usize {
         match self {
-            Dilithium::Dilithium2 => dilithium2::signature_bytes(),
-            Dilithium::Dilithium3 => dilithium3::signature_bytes(),
-            Dilithium::Dilithium5 => dilithium5::signature_bytes(),
+            Dilithium::Dilithium2 => mldsa44::signature_bytes(),
+            Dilithium::Dilithium3 => mldsa65::signature_bytes(),
+            Dilithium::Dilithium5 => mldsa87::signature_bytes(),
         }
     }
 }

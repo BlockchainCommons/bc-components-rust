@@ -129,7 +129,7 @@ mod tests {
         assert!(!public_key.verify(&signature, b"Wolf Mcnally").unwrap());
 
         let another_signature = private_key.sign(MESSAGE);
-        assert_eq!(signature, another_signature);
+        assert_ne!(signature, another_signature);
     }
 
     #[test]

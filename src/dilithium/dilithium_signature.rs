@@ -1,6 +1,6 @@
-use anyhow::{Result, Error, anyhow, bail};
+use anyhow::{anyhow, bail, Error, Result};
 use dcbor::prelude::*;
-use pqcrypto_dilithium::*;
+use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use crate::tags;
@@ -9,9 +9,9 @@ use super::Dilithium;
 
 #[derive(Clone)]
 pub enum DilithiumSignature {
-    Dilithium2(Box<dilithium2::DetachedSignature>),
-    Dilithium3(Box<dilithium3::DetachedSignature>),
-    Dilithium5(Box<dilithium5::DetachedSignature>),
+    Dilithium2(Box<mldsa44::DetachedSignature>),
+    Dilithium3(Box<mldsa65::DetachedSignature>),
+    Dilithium5(Box<mldsa87::DetachedSignature>),
 }
 
 impl PartialEq for DilithiumSignature {
@@ -43,9 +43,15 @@ impl DilithiumSignature {
 
     pub fn from_bytes(level: Dilithium, bytes: &[u8]) -> Result<Self> {
         match level {
-            Dilithium::Dilithium2 => Ok(DilithiumSignature::Dilithium2(Box::new(dilithium2::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Dilithium::Dilithium3 => Ok(DilithiumSignature::Dilithium3(Box::new(dilithium3::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Dilithium::Dilithium5 => Ok(DilithiumSignature::Dilithium5(Box::new(dilithium5::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Dilithium::Dilithium2 => Ok(DilithiumSignature::Dilithium2(Box::new(
+                mldsa44::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
+            Dilithium::Dilithium3 => Ok(DilithiumSignature::Dilithium3(Box::new(
+                mldsa65::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
+            Dilithium::Dilithium5 => Ok(DilithiumSignature::Dilithium5(Box::new(
+                mldsa87::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
         }
     }
 }
@@ -74,10 +80,7 @@ impl From<DilithiumSignature> for CBOR {
 
 impl CBORTaggedEncodable for DilithiumSignature {
     fn untagged_cbor(&self) -> CBOR {
-        vec![
-            self.level().into(),
-            CBOR::to_byte_string(self.as_bytes())
-        ].into()
+        vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
 }
 

@@ -1,6 +1,6 @@
 use anyhow::{Result, Error, anyhow, bail};
 use dcbor::prelude::*;
-use pqcrypto_dilithium::*;
+use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use crate::tags;
@@ -9,17 +9,17 @@ use super::{Dilithium, DilithiumSignature};
 
 #[derive(Clone, PartialEq)]
 pub enum DilithiumPrivateKey {
-    Dilithium2(Box<dilithium2::SecretKey>),
-    Dilithium3(Box<dilithium3::SecretKey>),
-    Dilithium5(Box<dilithium5::SecretKey>),
+    Dilithium2(Box<mldsa44::SecretKey>),
+    Dilithium3(Box<mldsa65::SecretKey>),
+    Dilithium5(Box<mldsa87::SecretKey>),
 }
 
 impl DilithiumPrivateKey {
     pub fn sign(&self, message: impl AsRef<[u8]>) -> DilithiumSignature {
         match self {
-            DilithiumPrivateKey::Dilithium2(sk) => DilithiumSignature::Dilithium2(Box::new(dilithium2::detached_sign(message.as_ref(), sk))),
-            DilithiumPrivateKey::Dilithium3(sk) => DilithiumSignature::Dilithium3(Box::new(dilithium3::detached_sign(message.as_ref(), sk))),
-            DilithiumPrivateKey::Dilithium5(sk) => DilithiumSignature::Dilithium5(Box::new(dilithium5::detached_sign(message.as_ref(), sk))),
+            DilithiumPrivateKey::Dilithium2(sk) => DilithiumSignature::Dilithium2(Box::new(mldsa44::detached_sign(message.as_ref(), sk))),
+            DilithiumPrivateKey::Dilithium3(sk) => DilithiumSignature::Dilithium3(Box::new(mldsa65::detached_sign(message.as_ref(), sk))),
+            DilithiumPrivateKey::Dilithium5(sk) => DilithiumSignature::Dilithium5(Box::new(mldsa87::detached_sign(message.as_ref(), sk))),
         }
     }
 
@@ -45,9 +45,9 @@ impl DilithiumPrivateKey {
 
     pub fn from_bytes(level: Dilithium, bytes: &[u8]) -> Result<Self> {
         match level {
-            Dilithium::Dilithium2 => Ok(DilithiumPrivateKey::Dilithium2(Box::new(dilithium2::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Dilithium::Dilithium3 => Ok(DilithiumPrivateKey::Dilithium3(Box::new(dilithium3::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Dilithium::Dilithium5 => Ok(DilithiumPrivateKey::Dilithium5(Box::new(dilithium5::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Dilithium::Dilithium2 => Ok(DilithiumPrivateKey::Dilithium2(Box::new(mldsa44::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Dilithium::Dilithium3 => Ok(DilithiumPrivateKey::Dilithium3(Box::new(mldsa65::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Dilithium::Dilithium5 => Ok(DilithiumPrivateKey::Dilithium5(Box::new(mldsa87::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
         }
     }
 }

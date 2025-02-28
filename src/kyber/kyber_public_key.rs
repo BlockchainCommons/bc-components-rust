@@ -1,6 +1,6 @@
-use anyhow::{Result, Error, anyhow, bail};
+use anyhow::{anyhow, bail, Error, Result};
 use dcbor::prelude::*;
-use pqcrypto_kyber::*;
+use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{PublicKey, SharedSecret};
 
 use crate::{tags, SymmetricKey};
@@ -9,9 +9,9 @@ use super::{Kyber, KyberCiphertext};
 
 #[derive(Clone)]
 pub enum KyberPublicKey {
-    Kyber512(Box<kyber512::PublicKey>),
-    Kyber768(Box<kyber768::PublicKey>),
-    Kyber1024(Box<kyber1024::PublicKey>),
+    Kyber512(Box<mlkem512::PublicKey>),
+    Kyber768(Box<mlkem768::PublicKey>),
+    Kyber1024(Box<mlkem1024::PublicKey>),
 }
 
 impl PartialEq for KyberPublicKey {
@@ -52,25 +52,40 @@ impl KyberPublicKey {
 
     pub fn from_bytes(level: Kyber, bytes: &[u8]) -> Result<Self> {
         match level {
-            Kyber::Kyber512 => Ok(KyberPublicKey::Kyber512(Box::new(kyber512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber768 => Ok(KyberPublicKey::Kyber768(Box::new(kyber768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber1024 => Ok(KyberPublicKey::Kyber1024(Box::new(kyber1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber512 => Ok(KyberPublicKey::Kyber512(Box::new(
+                mlkem512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
+            Kyber::Kyber768 => Ok(KyberPublicKey::Kyber768(Box::new(
+                mlkem768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
+            Kyber::Kyber1024 => Ok(KyberPublicKey::Kyber1024(Box::new(
+                mlkem1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
+            ))),
         }
     }
 
     pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, KyberCiphertext) {
         match self {
             KyberPublicKey::Kyber512(pk) => {
-                let (ss, ct) = kyber512::encapsulate(pk.as_ref());
-                (SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(), KyberCiphertext::Kyber512(ct.into()))
+                let (ss, ct) = mlkem512::encapsulate(pk.as_ref());
+                (
+                    SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
+                    KyberCiphertext::Kyber512(ct.into()),
+                )
             }
             KyberPublicKey::Kyber768(pk) => {
-                let (ss, ct) = kyber768::encapsulate(pk.as_ref());
-                (SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(), KyberCiphertext::Kyber768(ct.into()))
+                let (ss, ct) = mlkem768::encapsulate(pk.as_ref());
+                (
+                    SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
+                    KyberCiphertext::Kyber768(ct.into()),
+                )
             }
             KyberPublicKey::Kyber1024(pk) => {
-                let (ss, ct) = kyber1024::encapsulate(pk.as_ref());
-                (SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(), KyberCiphertext::Kyber1024(ct.into()))
+                let (ss, ct) = mlkem1024::encapsulate(pk.as_ref());
+                (
+                    SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
+                    KyberCiphertext::Kyber1024(ct.into()),
+                )
             }
         }
     }
@@ -100,10 +115,7 @@ impl From<KyberPublicKey> for CBOR {
 
 impl CBORTaggedEncodable for KyberPublicKey {
     fn untagged_cbor(&self) -> CBOR {
-        vec![
-            self.level().into(),
-            CBOR::to_byte_string(self.as_bytes())
-        ].into()
+        vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
 }
 

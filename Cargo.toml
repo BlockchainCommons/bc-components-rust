@@ -8,8 +8,8 @@ repository = "https://github.com/BlockchainCommons/bc-components-rust"
 readme = "README.md"
 license = "BSD-2-Clause-Patent"
 documentation = "https://docs.rs/bc-components"
-keywords = ["cryptography"] # Up to five
-categories = ["cryptography"] # https://crates.io/category_slugs
+keywords = ["cryptography"]                                            # Up to five
+categories = ["cryptography"]                                          # https://crates.io/category_slugs
 
 [dependencies]
 bc-crypto = "^0.6.0"
@@ -23,11 +23,20 @@ miniz_oxide = "^0.7.1"
 paste = "^1.0.12"
 anyhow = "^1.0.0"
 url = "^2.4.1"
-ssh-key = { version = "=0.6.6", default-features = false, features = ["dsa", "ecdsa", "rand_core", "std", "crypto"] }
-zeroize = { version = "1.8.1", default-features = false, features = ["alloc", "zeroize_derive"] }
+ssh-key = { version = "=0.6.6", default-features = false, features = [
+    "dsa",
+    "ecdsa",
+    "rand_core",
+    "std",
+    "crypto",
+] }
+zeroize = { version = "1.8.1", default-features = false, features = [
+    "alloc",
+    "zeroize_derive",
+] }
 rand_core = "0.6.4"
-pqcrypto-kyber = "^0.8.1"
-pqcrypto-dilithium = "^0.5.0"
+pqcrypto-mlkem = "^0.1.0"
+pqcrypto-mldsa = "^0.1.1"
 pqcrypto-traits = "^0.3.5"
 
 [dev-dependencies]

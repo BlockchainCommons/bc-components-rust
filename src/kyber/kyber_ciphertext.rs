@@ -1,6 +1,6 @@
 use anyhow::{Result, Error, anyhow, bail};
 use dcbor::prelude::*;
-use pqcrypto_kyber::*;
+use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
 
 use crate::tags;
@@ -9,9 +9,9 @@ use super::Kyber;
 
 #[derive(Clone, PartialEq)]
 pub enum KyberCiphertext {
-    Kyber512(Box<kyber512::Ciphertext>),
-    Kyber768(Box<kyber768::Ciphertext>),
-    Kyber1024(Box<kyber1024::Ciphertext>),
+    Kyber512(Box<mlkem512::Ciphertext>),
+    Kyber768(Box<mlkem768::Ciphertext>),
+    Kyber1024(Box<mlkem1024::Ciphertext>),
 }
 
 impl KyberCiphertext {
@@ -37,9 +37,9 @@ impl KyberCiphertext {
 
     pub fn from_bytes(level: Kyber, bytes: &[u8]) -> Result<Self> {
         match level {
-            Kyber::Kyber512 => Ok(KyberCiphertext::Kyber512(Box::new(kyber512::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber768 => Ok(KyberCiphertext::Kyber768(Box::new(kyber768::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber1024 => Ok(KyberCiphertext::Kyber1024(Box::new(kyber1024::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber512 => Ok(KyberCiphertext::Kyber512(Box::new(mlkem512::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber768 => Ok(KyberCiphertext::Kyber768(Box::new(mlkem768::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber1024 => Ok(KyberCiphertext::Kyber1024(Box::new(mlkem1024::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
         }
     }
 }

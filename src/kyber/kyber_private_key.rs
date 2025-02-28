@@ -1,6 +1,6 @@
 use anyhow::{Result, Error, anyhow, bail};
 use dcbor::prelude::*;
-use pqcrypto_kyber::*;
+use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{SecretKey, SharedSecret};
 
 use crate::{tags, Decrypter, EncapsulationPrivateKey, SymmetricKey};
@@ -9,9 +9,9 @@ use super::{Kyber, KyberCiphertext};
 
 #[derive(Clone, PartialEq)]
 pub enum KyberPrivateKey {
-    Kyber512(Box<kyber512::SecretKey>),
-    Kyber768(Box<kyber768::SecretKey>),
-    Kyber1024(Box<kyber1024::SecretKey>),
+    Kyber512(Box<mlkem512::SecretKey>),
+    Kyber768(Box<mlkem768::SecretKey>),
+    Kyber1024(Box<mlkem1024::SecretKey>),
 }
 
 impl Eq for KyberPrivateKey {}
@@ -49,24 +49,24 @@ impl KyberPrivateKey {
 
     pub fn from_bytes(level: Kyber, bytes: &[u8]) -> Result<Self> {
         match level {
-            Kyber::Kyber512 => Ok(KyberPrivateKey::Kyber512(Box::new(kyber512::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber768 => Ok(KyberPrivateKey::Kyber768(Box::new(kyber768::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
-            Kyber::Kyber1024 => Ok(KyberPrivateKey::Kyber1024(Box::new(kyber1024::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber512 => Ok(KyberPrivateKey::Kyber512(Box::new(mlkem512::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber768 => Ok(KyberPrivateKey::Kyber768(Box::new(mlkem768::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
+            Kyber::Kyber1024 => Ok(KyberPrivateKey::Kyber1024(Box::new(mlkem1024::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?))),
         }
     }
 
     pub fn decapsulate_shared_secret(&self, ciphertext: &KyberCiphertext) -> Result<SymmetricKey> {
         match (self, ciphertext) {
             (KyberPrivateKey::Kyber512(sk), KyberCiphertext::Kyber512(ct)) => {
-                let ss = kyber512::decapsulate(ct.as_ref(), sk.as_ref());
+                let ss = mlkem512::decapsulate(ct.as_ref(), sk.as_ref());
                 SymmetricKey::from_data_ref(ss.as_bytes())
             }
             (KyberPrivateKey::Kyber768(sk), KyberCiphertext::Kyber768(ct)) => {
-                let ss = kyber768::decapsulate(ct.as_ref(), sk.as_ref());
+                let ss = mlkem768::decapsulate(ct.as_ref(), sk.as_ref());
                 SymmetricKey::from_data_ref(ss.as_bytes())
             }
             (KyberPrivateKey::Kyber1024(sk), KyberCiphertext::Kyber1024(ct)) => {
-                let ss = kyber1024::decapsulate(ct.as_ref(), sk.as_ref());
+                let ss = mlkem1024::decapsulate(ct.as_ref(), sk.as_ref());
                 SymmetricKey::from_data_ref(ss.as_bytes())
             }
             _ => panic!("Kyber level mismatch"),
