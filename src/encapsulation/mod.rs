@@ -30,17 +30,17 @@ mod tests {
     }
 
     #[test]
-    fn test_kyber512() {
-        test_encapsulation(EncapsulationScheme::Kyber512);
+    fn test_mlkem512() {
+        test_encapsulation(EncapsulationScheme::MLKEM512);
     }
 
     #[test]
-    fn test_kyber768() {
-        test_encapsulation(EncapsulationScheme::Kyber768);
+    fn test_mlkem768() {
+        test_encapsulation(EncapsulationScheme::MLKEM768);
     }
 
     #[test]
-    fn test_kyber1024() {
-        test_encapsulation(EncapsulationScheme::Kyber1024);
+    fn test_mlkem1024() {
+        test_encapsulation(EncapsulationScheme::MLKEM1024);
     }
 }

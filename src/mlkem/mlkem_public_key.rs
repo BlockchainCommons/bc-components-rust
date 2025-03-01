@@ -5,36 +5,36 @@ use pqcrypto_traits::kem::{PublicKey, SharedSecret};
 
 use crate::{tags, SymmetricKey};
 
-use super::{Kyber, KyberCiphertext};
+use super::{MLKEMCiphertext, MLKEM};
 
 #[derive(Clone)]
-pub enum KyberPublicKey {
-    Kyber512(Box<mlkem512::PublicKey>),
-    Kyber768(Box<mlkem768::PublicKey>),
-    Kyber1024(Box<mlkem1024::PublicKey>),
+pub enum MLKEMPublicKey {
+    MLKEM512(Box<mlkem512::PublicKey>),
+    MLKEM768(Box<mlkem768::PublicKey>),
+    MLKEM1024(Box<mlkem1024::PublicKey>),
 }
 
-impl PartialEq for KyberPublicKey {
+impl PartialEq for MLKEMPublicKey {
     fn eq(&self, other: &Self) -> bool {
         self.level() == other.level() && self.as_bytes() == other.as_bytes()
     }
 }
 
-impl Eq for KyberPublicKey {}
+impl Eq for MLKEMPublicKey {}
 
-impl std::hash::Hash for KyberPublicKey {
+impl std::hash::Hash for MLKEMPublicKey {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.level().hash(state);
         self.as_bytes().hash(state);
     }
 }
 
-impl KyberPublicKey {
-    pub fn level(&self) -> Kyber {
+impl MLKEMPublicKey {
+    pub fn level(&self) -> MLKEM {
         match self {
-            KyberPublicKey::Kyber512(_) => Kyber::Kyber512,
-            KyberPublicKey::Kyber768(_) => Kyber::Kyber768,
-            KyberPublicKey::Kyber1024(_) => Kyber::Kyber1024,
+            MLKEMPublicKey::MLKEM512(_) => MLKEM::MLKEM512,
+            MLKEMPublicKey::MLKEM768(_) => MLKEM::MLKEM768,
+            MLKEMPublicKey::MLKEM1024(_) => MLKEM::MLKEM1024,
         }
     }
 
@@ -44,82 +44,82 @@ impl KyberPublicKey {
 
     pub fn as_bytes(&self) -> &[u8] {
         match self {
-            KyberPublicKey::Kyber512(pk) => pk.as_ref().as_bytes(),
-            KyberPublicKey::Kyber768(pk) => pk.as_ref().as_bytes(),
-            KyberPublicKey::Kyber1024(pk) => pk.as_ref().as_bytes(),
+            MLKEMPublicKey::MLKEM512(pk) => pk.as_ref().as_bytes(),
+            MLKEMPublicKey::MLKEM768(pk) => pk.as_ref().as_bytes(),
+            MLKEMPublicKey::MLKEM1024(pk) => pk.as_ref().as_bytes(),
         }
     }
 
-    pub fn from_bytes(level: Kyber, bytes: &[u8]) -> Result<Self> {
+    pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
-            Kyber::Kyber512 => Ok(KyberPublicKey::Kyber512(Box::new(
+            MLKEM::MLKEM512 => Ok(MLKEMPublicKey::MLKEM512(Box::new(
                 mlkem512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
             ))),
-            Kyber::Kyber768 => Ok(KyberPublicKey::Kyber768(Box::new(
+            MLKEM::MLKEM768 => Ok(MLKEMPublicKey::MLKEM768(Box::new(
                 mlkem768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
             ))),
-            Kyber::Kyber1024 => Ok(KyberPublicKey::Kyber1024(Box::new(
+            MLKEM::MLKEM1024 => Ok(MLKEMPublicKey::MLKEM1024(Box::new(
                 mlkem1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
             ))),
         }
     }
 
-    pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, KyberCiphertext) {
+    pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, MLKEMCiphertext) {
         match self {
-            KyberPublicKey::Kyber512(pk) => {
+            MLKEMPublicKey::MLKEM512(pk) => {
                 let (ss, ct) = mlkem512::encapsulate(pk.as_ref());
                 (
                     SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
-                    KyberCiphertext::Kyber512(ct.into()),
+                    MLKEMCiphertext::MLKEM512(ct.into()),
                 )
             }
-            KyberPublicKey::Kyber768(pk) => {
+            MLKEMPublicKey::MLKEM768(pk) => {
                 let (ss, ct) = mlkem768::encapsulate(pk.as_ref());
                 (
                     SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
-                    KyberCiphertext::Kyber768(ct.into()),
+                    MLKEMCiphertext::MLKEM768(ct.into()),
                 )
             }
-            KyberPublicKey::Kyber1024(pk) => {
+            MLKEMPublicKey::MLKEM1024(pk) => {
                 let (ss, ct) = mlkem1024::encapsulate(pk.as_ref());
                 (
                     SymmetricKey::from_data_ref(ss.as_bytes()).unwrap(),
-                    KyberCiphertext::Kyber1024(ct.into()),
+                    MLKEMCiphertext::MLKEM1024(ct.into()),
                 )
             }
         }
     }
 }
 
-impl std::fmt::Debug for KyberPublicKey {
+impl std::fmt::Debug for MLKEMPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            KyberPublicKey::Kyber512(_) => f.write_str("Kyber512PublicKey"),
-            KyberPublicKey::Kyber768(_) => f.write_str("Kyber768PublicKey"),
-            KyberPublicKey::Kyber1024(_) => f.write_str("Kyber1024PublicKey"),
+            MLKEMPublicKey::MLKEM512(_) => f.write_str("MLKEM512PublicKey"),
+            MLKEMPublicKey::MLKEM768(_) => f.write_str("MLKEM768PublicKey"),
+            MLKEMPublicKey::MLKEM1024(_) => f.write_str("MLKEM1024PublicKey"),
         }
     }
 }
 
-impl CBORTagged for KyberPublicKey {
+impl CBORTagged for MLKEMPublicKey {
     fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_KYBER_PUBLIC_KEY])
+        tags_for_values(&[tags::TAG_MLKEM_PUBLIC_KEY])
     }
 }
 
-impl From<KyberPublicKey> for CBOR {
-    fn from(value: KyberPublicKey) -> Self {
+impl From<MLKEMPublicKey> for CBOR {
+    fn from(value: MLKEMPublicKey) -> Self {
         value.tagged_cbor()
     }
 }
 
-impl CBORTaggedEncodable for KyberPublicKey {
+impl CBORTaggedEncodable for MLKEMPublicKey {
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
 }
 
-impl TryFrom<CBOR> for KyberPublicKey {
+impl TryFrom<CBOR> for MLKEMPublicKey {
     type Error = Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
@@ -127,19 +127,19 @@ impl TryFrom<CBOR> for KyberPublicKey {
     }
 }
 
-impl CBORTaggedDecodable for KyberPublicKey {
+impl CBORTaggedDecodable for MLKEMPublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("KyberPublicKey must have two elements");
+                    bail!("MLKEMPublicKey must have two elements");
                 }
 
-                let level = Kyber::try_from(elements[0].clone())?;
+                let level = MLKEM::try_from(elements[0].clone())?;
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
-                KyberPublicKey::from_bytes(level, &data)
+                MLKEMPublicKey::from_bytes(level, &data)
             }
-            _ => bail!("KyberPublicKey must be an array"),
+            _ => bail!("MLKEMPublicKey must be an array"),
         }
     }
 }

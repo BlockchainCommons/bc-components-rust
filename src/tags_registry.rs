@@ -33,12 +33,11 @@ use dcbor::prelude::*;
 pub use dcbor::TAG_DATE;
 
 use crate::{
-    Digest, EncapsulationScheme, Nonce, PrivateKeyBase, PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID
+    Digest, EncapsulationScheme, Nonce, PrivateKeyBase, PrivateKeys, PublicKeys, Reference,
+    SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID,
 };
 use ssh_key::{
-    private::PrivateKey as SSHPrivateKey,
-    public::PublicKey as SSHPublicKey,
-    SshSig as SSHSignature,
+    private::PrivateKey as SSHPrivateKey, public::PublicKey as SSHPublicKey, SshSig as SSHSignature,
 };
 
 pub const TAG_URI: TagValue = 32;
@@ -95,9 +94,9 @@ pub const TAG_XID: TagValue = 40024;
 pub const TAG_REFERENCE: TagValue = 40025;
 
 // Needs IANA registration
-pub const TAG_KYBER_PRIVATE_KEY: TagValue = 40100;
-pub const TAG_KYBER_PUBLIC_KEY: TagValue = 40101;
-pub const TAG_KYBER_CIPHERTEXT: TagValue = 40102;
+pub const TAG_MLKEM_PRIVATE_KEY: TagValue = 40100;
+pub const TAG_MLKEM_PUBLIC_KEY: TagValue = 40101;
+pub const TAG_MLKEM_CIPHERTEXT: TagValue = 40102;
 
 // Needs IANA registration
 pub const TAG_MLDSA_PRIVATE_KEY: TagValue = 40103;
@@ -109,7 +108,7 @@ pub const TAG_MLDSA_SIGNATURE: TagValue = 40105;
 pub const TAG_HDKEY_V1: TagValue = 303; // Fixed
 pub const TAG_DERIVATION_PATH_V1: TagValue = 304; // Fixed
 pub const TAG_USE_INFO_V1: TagValue = 305; // Fixed
-// pub const TAG_ADDRESS_V1: TagValue = 307; // Fixed
+                                           // pub const TAG_ADDRESS_V1: TagValue = 307; // Fixed
 pub const TAG_OUTPUT_DESCRIPTOR_V1: TagValue = 307; // Fixed
 pub const TAG_PSBT_V1: TagValue = 310; // Fixed
 pub const TAG_ACCOUNT_V1: TagValue = 311; // Fixed
@@ -146,17 +145,13 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     let tags = vec![
         (TAG_URI, "url"),
         (TAG_UUID, "uuid"),
-
         (TAG_ENCODED_CBOR, "encoded-cbor"),
-
         (TAG_ENVELOPE, "envelope"),
         (TAG_LEAF, "leaf"),
-
         (TAG_KNOWN_VALUE, "known-value"),
         (TAG_DIGEST, "digest"),
         (TAG_ENCRYPTED, "encrypted"),
         (TAG_COMPRESSED, "compressed"),
-
         (TAG_REQUEST, "request"),
         (TAG_RESPONSE, "response"),
         (TAG_FUNCTION, "function"),
@@ -164,15 +159,12 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_PLACEHOLDER, "placeholder"),
         (TAG_REPLACEMENT, "replacement"),
         (TAG_EVENT, "event"),
-
         (TAG_SEED_V1, "crypto-seed"),
         (TAG_EC_KEY_V1, "crypto-eckey"),
         (TAG_SSKR_SHARE_V1, "crypto-sskr"),
-
         (TAG_SEED, "seed"),
         (TAG_EC_KEY, "eckey"),
         (TAG_SSKR_SHARE, "sskr"),
-
         (TAG_X25519_PRIVATE_KEY, "agreement-private-key"),
         (TAG_X25519_PUBLIC_KEY, "agreement-public-key"),
         (TAG_ARID, "arid"),
@@ -188,17 +180,13 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_SIGNING_PUBLIC_KEY, "signing-public-key"),
         (TAG_SYMMETRIC_KEY, "crypto-key"),
         (TAG_XID, "xid"),
-
         (TAG_REFERENCE, "reference"),
-
-        (TAG_KYBER_PRIVATE_KEY, "kyber-private-key"),
-        (TAG_KYBER_PUBLIC_KEY, "kyber-public-key"),
-        (TAG_KYBER_CIPHERTEXT, "kyber-ciphertext"),
-
+        (TAG_MLKEM_PRIVATE_KEY, "mlkem-private-key"),
+        (TAG_MLKEM_PUBLIC_KEY, "mlkem-public-key"),
+        (TAG_MLKEM_CIPHERTEXT, "mlkem-ciphertext"),
         (TAG_MLDSA_PRIVATE_KEY, "mldsa-private-key"),
         (TAG_MLDSA_PUBLIC_KEY, "mldsa-public-key"),
         (TAG_MLDSA_SIGNATURE, "mldsa-signature"),
-
         (TAG_HDKEY_V1, "crypto-hdkey"),
         (TAG_DERIVATION_PATH_V1, "crypto-keypath"),
         (TAG_USE_INFO_V1, "crypto-coin-info"),
@@ -206,7 +194,6 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_OUTPUT_DESCRIPTOR_V1, "crypto-output"),
         (TAG_PSBT_V1, "crypto-psbt"),
         (TAG_ACCOUNT_V1, "crypto-account"),
-
         (TAG_HDKEY, "hdkey"),
         (TAG_DERIVATION_PATH, "keypath"),
         (TAG_USE_INFO, "coin-info"),
@@ -214,23 +201,24 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         (TAG_OUTPUT_DESCRIPTOR, "output-descriptor"),
         (TAG_PSBT, "psbt"),
         (TAG_ACCOUNT_DESCRIPTOR, "account-descriptor"),
-
         (TAG_SSH_TEXT_PRIVATE_KEY, "ssh-private"),
         (TAG_SSH_TEXT_PUBLIC_KEY, "ssh-public"),
         (TAG_SSH_TEXT_SIGNATURE, "ssh-signature"),
         (TAG_SSH_TEXT_CERTIFICATE, "ssh-certificate"),
-
         (TAG_OUTPUT_SCRIPT_HASH, "output-script-hash"),
         (TAG_OUTPUT_WITNESS_SCRIPT_HASH, "output-witness-script-hash"),
         (TAG_OUTPUT_PUBLIC_KEY, "output-public-key"),
         (TAG_OUTPUT_PUBLIC_KEY_HASH, "output-public-key-hash"),
-        (TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH, "output-witness-public-key-hash"),
+        (
+            TAG_OUTPUT_WITNESS_PUBLIC_KEY_HASH,
+            "output-witness-public-key-hash",
+        ),
         (TAG_OUTPUT_COMBO, "output-combo"),
         (TAG_OUTPUT_MULTISIG, "output-multisig"),
         (TAG_OUTPUT_SORTED_MULTISIG, "output-sorted-multisig"),
         (TAG_OUTPUT_RAW_SCRIPT, "output-raw-script"),
         (TAG_OUTPUT_TAPROOT, "output-taproot"),
-        (TAG_OUTPUT_COSIGNER, "output-cosigner")
+        (TAG_OUTPUT_COSIGNER, "output-cosigner"),
     ];
     for tag in tags.into_iter() {
         tags_store.insert(Tag::new(tag.0, tag.1));
@@ -241,7 +229,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let arid = Digest::from_untagged_cbor(untagged_cbor)?;
             Ok(arid.short_description().flanked_by("Digest(", ")"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -249,7 +237,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let arid = ARID::from_untagged_cbor(untagged_cbor)?;
             Ok(arid.short_description().flanked_by("ARID(", ")"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -257,7 +245,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let xid = XID::from_untagged_cbor(untagged_cbor)?;
             Ok(xid.short_description().flanked_by("XID(", ")"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -265,7 +253,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let uri = URI::from_untagged_cbor(untagged_cbor)?;
             Ok(uri.to_string().flanked_by("URI(", ")"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -273,7 +261,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let uuid = UUID::from_untagged_cbor(untagged_cbor)?;
             Ok(uuid.to_string().flanked_by("UUID(", ")"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -281,7 +269,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             Nonce::from_untagged_cbor(untagged_cbor)?;
             Ok("Nonce".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -289,7 +277,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             Salt::from_untagged_cbor(untagged_cbor)?;
             Ok("Salt".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -297,7 +285,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             Seed::from_untagged_cbor(untagged_cbor)?;
             Ok("Seed".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -305,7 +293,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let private_keys = PrivateKeys::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{private_keys}"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -313,7 +301,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let public_keys = PublicKeys::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{public_keys}"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -321,7 +309,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             let reference = Reference::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{reference}"))
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -329,7 +317,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             PrivateKeyBase::from_untagged_cbor(untagged_cbor)?;
             Ok("PrivateKeyBase".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -347,7 +335,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
                 "Signature(Unknown)".into()
             };
             Ok(summary)
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -361,7 +349,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
                 format!("SealedMessage({encapsulation_scheme:?})")
             };
             Ok(summary)
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -369,7 +357,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             SSKRShare::from_untagged_cbor(untagged_cbor)?;
             Ok("SSKRShare".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -377,7 +365,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             SSHPrivateKey::from_openssh(untagged_cbor.try_into_text()?)?;
             Ok("SSHPrivateKey".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -385,7 +373,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             SSHPublicKey::from_openssh(&untagged_cbor.try_into_text()?)?;
             Ok("SSHPublicKey".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -393,7 +381,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |untagged_cbor: CBOR| {
             SSHSignature::from_pem(untagged_cbor.try_into_text()?)?;
             Ok("SSHSignature".to_string())
-        })
+        }),
     );
 
     tags_store.set_summarizer(
@@ -401,7 +389,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         Arc::new(move |_untagged_cbor: CBOR| {
             // todo: validation
             Ok("SSHCertificate".to_string())
-        })
+        }),
     );
 }
 

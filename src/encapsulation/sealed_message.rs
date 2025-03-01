@@ -134,10 +134,10 @@ mod tests {
     }
 
     #[test]
-    fn test_sealed_message_kyber512() {
+    fn test_sealed_message_mlkem512() {
         let plaintext = b"Some mysteries aren't meant to be solved.";
 
-        let encapsulation = EncapsulationScheme::Kyber512;
+        let encapsulation = EncapsulationScheme::MLKEM512;
         let (alice_private_key, _) = encapsulation.keypair();
         let (bob_private_key, bob_public_key) = encapsulation.keypair();
         let (carol_private_key, _) = encapsulation.keypair();
