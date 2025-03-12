@@ -93,7 +93,7 @@ impl TryFrom<&str> for URI {
     type Error = Error;
 
     fn try_from(uri: &str) -> Result<Self, Self::Error> {
-        Self::new(uri).map_err(Into::into)
+        Self::new(uri)
     }
 }
 
