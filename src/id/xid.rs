@@ -4,7 +4,7 @@ use anyhow::{ bail, Result, Error };
 use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
 
 /// A XID (eXtensible IDentifier).
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct XID([u8; Self::XID_SIZE]);
 
 impl XID {
@@ -84,7 +84,7 @@ pub trait XIDProvider {
 
 impl XIDProvider for XID {
     fn xid(&self) -> XID {
-        self.clone()
+        *self
     }
 }
 
@@ -115,12 +115,6 @@ impl<'a> From<&'a XID> for &'a [u8] {
 impl AsRef<[u8]> for XID {
     fn as_ref(&self) -> &[u8] {
         &self.0
-    }
-}
-
-impl AsRef<XID> for XID {
-    fn as_ref(&self) -> &XID {
-        self
     }
 }
 
@@ -207,23 +201,9 @@ impl CBORTaggedDecodable for XID {
     }
 }
 
-// Convert from an instance reference to an instance.
-impl From<&XID> for XID {
-    fn from(xid: &XID) -> Self {
-        xid.clone()
-    }
-}
-
 // Convert from a byte vector to an instance.
 impl From<XID> for Vec<u8> {
     fn from(xid: XID) -> Self {
-        xid.0.to_vec()
-    }
-}
-
-// Convert a reference to an instance to a byte vector.
-impl From<&XID> for Vec<u8> {
-    fn from(xid: &XID) -> Self {
         xid.0.to_vec()
     }
 }

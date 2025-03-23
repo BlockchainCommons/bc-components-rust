@@ -5,7 +5,7 @@ use dcbor::prelude::*;
 use crate::tags;
 
 /// A UUID.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UUID([u8; Self::UUID_SIZE]);
 
 impl UUID {
@@ -60,12 +60,6 @@ impl AsRef<[u8]> for UUID {
     }
 }
 
-impl AsRef<UUID> for UUID {
-    fn as_ref(&self) -> &UUID {
-        self
-    }
-}
-
 impl CBORTagged for UUID {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_UUID])
@@ -113,15 +107,14 @@ impl std::fmt::Display for UUID {
 // Convert from a UUID to a string.
 impl From<UUID> for String {
     fn from(uuid: UUID) -> Self {
-        String::from(&uuid)
+        let hex = hex::encode(uuid.0);
+        format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32])
     }
 }
 
-// Convert from a UUID to a string.
 impl From<&UUID> for String {
     fn from(uuid: &UUID) -> Self {
-        let hex = hex::encode(uuid.0);
-        format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32])
+        String::from(*uuid)
     }
 }
 

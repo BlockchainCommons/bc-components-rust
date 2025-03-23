@@ -7,7 +7,7 @@ use anyhow::{ bail, Error, Result };
 /// An "Apparently Random Identifier" (ARID)
 ///
 /// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-arid.md).
-#[derive(Clone, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct ARID([u8; Self::ARID_SIZE]);
 
 impl ARID {
@@ -68,12 +68,6 @@ impl Default for ARID {
 impl<'a> From<&'a ARID> for &'a [u8] {
     fn from(value: &'a ARID) -> Self {
         &value.0
-    }
-}
-
-impl AsRef<ARID> for ARID {
-    fn as_ref(&self) -> &Self {
-        self
     }
 }
 
