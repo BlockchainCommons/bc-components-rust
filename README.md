@@ -21,40 +21,111 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.18.1"
+bc-components = "0.18.2"
 ```
 
 ## Types
 
+The library is organized into several categories of cryptographic primitives and utilities.
 
-| Name                    | Description                                                                              |
-| ------------------------- | ------------------------------------------------------------------------------------------ |
-| X25519PrivateKey        | A Curve25519 private key used for X25519 key agreement.                                  |
-| X25519PublicKey         | A Curve25519 public key used for X25519 key agreement.                                   |
-| AuthenticationTag       | The HMAC authentication tag produced by the encryption process.                          |
-| ARID                    | An “Apparently Random Identifier” (ARID)                                               |
-| Compressed              | A compressed binary object.                                                              |
-| Digest                  | A cryptographically secure digest, implemented with SHA-256.                             |
-| ECPrivateKey            | An elliptic curve digital signature algorithm (ECDSA) private key.                       |
-| ECPublicKey             | A compressed elliptic curve digital signature algorithm (ECDSA) compressed public key.   |
-| ECUncompressedPublicKey | A compressed elliptic curve digital signature algorithm (ECDSA) uncompressed public key. |
-| EncryptedMessage        | A secure encrypted message.                                                              |
-| Nonce                   | A random nonce (“number used once”).                                                   |
-| PrivateKeyBase          | Holds unique data from which keys for signing and encryption can be derived.             |
-| PublicKeys              | Holds information used to communicate cryptographically with a remote entity.            |
-| SSKRGroupSpec           | A specification for a group of shares within an SSKR split.                              |
-| SSKRSecret              | A secret to be split into shares.                                                        |
-| SSKRShare               | An SSKR share. Used with the functions`sskr_generate` and `sskr_combine`.                |
-| SSKRSpec                | A specification for an SSKR split.                                                       |
-| Salt                    | Random salt used to decorrelate other information.                                       |
-| SchnorrPublicKey        | A Schnorr (x-only) elliptic curve public key.                                            |
-| SealedMessage           | A sealed message can be sent to anyone, but only the intended recipient can decrypt it.  |
-| Signature               | A cryptographic signature. Supports Schnorr (BIP-340), ECDSA, and SSH.                   |
-| SigningPublicKey        | A public key that can be used for signing. Supports Schnorr, ECDSA, and SSH.             |
-| SigningPrivateKey       | A private Schnorr, ECDSA, or SSH key for signing.                                        |
-| SymmetricKey            | A symmetric encryption key.                                                              |
-| URI                     | A URI.                                                                                   |
-| UUID                    | A UUID.                                                                                  |
+### Core Cryptographic Primitives
+
+| Name             | Description                                                      |
+| ---------------- | ---------------------------------------------------------------- |
+| `Digest`         | A cryptographically secure digest, implemented with SHA-256      |
+| `DigestProvider` | A trait for types that can provide cryptographic digests         |
+| `Nonce`          | A random nonce ("number used once") for cryptographic operations |
+| `Salt`           | Random salt used to decorrelate other information                |
+| `Seed`           | Source of entropy for key generation with metadata               |
+
+### Identifiers
+
+| Name   | Description                                                    |
+| ------ | -------------------------------------------------------------- |
+| `ARID` | An "Apparently Random Identifier" using cryptographic hash     |
+| `UUID` | A Universally Unique Identifier for resources                  |
+| `XID`  | An eXtensible Identifier for extensible identification schemes |
+| `URI`  | A Uniform Resource Identifier for web resources                |
+
+### Symmetric Cryptography
+
+| Name                | Description                                        |
+| ------------------- | -------------------------------------------------- |
+| `SymmetricKey`      | A symmetric encryption key for AES-256-GCM         |
+| `AuthenticationTag` | The HMAC authentication tag produced by encryption |
+| `EncryptedMessage`  | A secure authenticated encrypted message           |
+
+### Elliptic Curve Cryptography
+
+| Name                      | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| `ECPrivateKey`            | An elliptic curve (secp256k1) private key for ECDSA and Schnorr |
+| `ECPublicKey`             | A compressed elliptic curve public key                          |
+| `ECUncompressedPublicKey` | An uncompressed elliptic curve public key                       |
+| `SchnorrPublicKey`        | A Schnorr (x-only) elliptic curve public key (BIP-340)          |
+| `Ed25519PrivateKey`       | An Edwards curve (Ed25519) private key for signatures           |
+| `Ed25519PublicKey`        | An Edwards curve (Ed25519) public key                           |
+| `X25519PrivateKey`        | A Curve25519 private key used for key agreement                 |
+| `X25519PublicKey`         | A Curve25519 public key used for key agreement                  |
+
+### Post-Quantum Cryptography
+
+| Name              | Description                                                    |
+| ----------------- | -------------------------------------------------------------- |
+| `MLDSAPrivateKey` | A Module Lattice-based Digital Signature Algorithm private key |
+| `MLDSAPublicKey`  | A Module Lattice-based Digital Signature Algorithm public key  |
+| `MLDSASignature`  | A Module Lattice-based digital signature                       |
+| `MLKEMPrivateKey` | A Module Lattice-based Key Encapsulation Mechanism private key |
+| `MLKEMPublicKey`  | A Module Lattice-based Key Encapsulation Mechanism public key  |
+| `MLKEMCiphertext` | Ciphertext produced by ML-KEM encapsulation                    |
+
+### Digital Signatures
+
+| Name                | Description                                                                   |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `SigningPrivateKey` | A private key for digital signatures (Schnorr, ECDSA, Ed25519, MLDSA, or SSH) |
+| `SigningPublicKey`  | A public key for signature verification                                       |
+| `Signature`         | A digital signature supporting multiple algorithms                            |
+| `SignatureScheme`   | Enumeration of supported signature schemes                                    |
+| `Signer`            | A trait for types that can create signatures                                  |
+| `Verifier`          | A trait for types that can verify signatures                                  |
+
+### Key Encapsulation and Encryption
+
+| Name                      | Description                                                       |
+| ------------------------- | ----------------------------------------------------------------- |
+| `EncapsulationPrivateKey` | A private key for key encapsulation (X25519 or ML-KEM)            |
+| `EncapsulationPublicKey`  | A public key for key encapsulation                                |
+| `EncapsulationCiphertext` | Ciphertext produced by key encapsulation                          |
+| `SealedMessage`           | A message sealed for a specific recipient using key encapsulation |
+| `EncapsulationScheme`     | Enumeration of supported key encapsulation schemes                |
+| `Encrypter`               | A trait for types that can encrypt using public key               |
+| `Decrypter`               | A trait for types that can decrypt using private key              |
+
+### Secret Sharing
+
+| Name            | Description                                                           |
+| --------------- | --------------------------------------------------------------------- |
+| `SSKRGroupSpec` | A specification for a group of shares within an SSKR split            |
+| `SSKRSpec`      | A specification for an SSKR (Sharded Secret Key Reconstruction) split |
+| `SSKRSecret`    | A secret to be split into shares                                      |
+| `SSKRShare`     | An SSKR share used with `sskr_generate` and `sskr_combine` functions  |
+
+### Key Management
+
+| Name             | Description                                              |
+| ---------------- | -------------------------------------------------------- |
+| `PrivateKeyBase` | Holds unique data from which various keys can be derived |
+| `PrivateKeys`    | Container for signing and encapsulation private keys     |
+| `PublicKeys`     | Container for signing and encapsulation public keys      |
+| `HKDFRng`        | A deterministic random number generator based on HKDF    |
+
+### Utilities
+
+| Name         | Description                                            |
+| ------------ | ------------------------------------------------------ |
+| `Compressed` | A compressed binary object with integrity verification |
+| `Reference`  | A reference to a uniquely identified object            |
 
 ## Version History
 
@@ -99,11 +170,10 @@ If your company requires support to use our projects, please feel free to contac
 
 The following people directly contributed to this repository. You can add your name here by getting involved. The first step is learning how to contribute from our [CONTRIBUTING.md](./CONTRIBUTING.md) documentation.
 
-
-| Name              | Role                     | Github                                           | Email                                 | GPG Fingerprint                                              |
-| ------------------- | -------------------------- | -------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------- |
-| Christopher Allen | Principal Architect      | [@ChristopherA](https://github.com/ChristopherA) | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED           |
-| Wolf McNally      | Lead Researcher/Engineer | [@WolfMcNally](https://github.com/wolfmcnally)   | \<Wolf@WolfMcNally.com\>              | 9436 52EE 3844 1760 C3DC  3536 4B6C 2FCF 8947 80AE |
+| Name              | Role                     | Github                                           | Email                                 | GPG Fingerprint                                   |
+| ----------------- | ------------------------ | ------------------------------------------------ | ------------------------------------- | ------------------------------------------------- |
+| Christopher Allen | Principal Architect      | [@ChristopherA](https://github.com/ChristopherA) | \<ChristopherA@LifeWithAlacrity.com\> | FDFE 14A5 4ECB 30FC 5D22 74EF F8D3 6C91 3574 05ED |
+| Wolf McNally      | Lead Researcher/Engineer | [@WolfMcNally](https://github.com/wolfmcnally)   | \<Wolf@WolfMcNally.com\>              | 9436 52EE 3844 1760 C3DC 3536 4B6C 2FCF 8947 80AE |
 
 ## Responsible Disclosure
 
@@ -117,9 +187,8 @@ Please report suspected security vulnerabilities in private via email to Christo
 
 The following keys may be used to communicate sensitive information to developers:
 
+| Name              | Fingerprint                                       |
+| ----------------- | ------------------------------------------------- |
+| Christopher Allen | FDFE 14A5 4ECB 30FC 5D22 74EF F8D3 6C91 3574 05ED |
 
-| Name              | Fingerprint                                        |
-| ------------------- | ---------------------------------------------------- |
-| Christopher Allen | FDFE 14A5 4ECB 30FC 5D22  74EF F8D3 6C91 3574 05ED |
-
-You can import a key by running the following command with that individual’s fingerprint: `gpg --recv-keys "<fingerprint>"` Ensure that you put quotes around fingerprints that contain spaces.
+You can import a key by running the following command with that individual's fingerprint: `gpg --recv-keys "<fingerprint>"` Ensure that you put quotes around fingerprints that contain spaces.

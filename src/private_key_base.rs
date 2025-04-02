@@ -16,7 +16,48 @@ use crate::{
     tags, Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
 };
 
-/// Holds unique data from which keys for signing and encryption can be derived.
+/// A secure foundation for deriving multiple cryptographic keys.
+///
+/// `PrivateKeyBase` serves as a root of cryptographic material from which various
+/// types of keys can be deterministically derived. It securely manages the underlying
+/// key material and provides methods to derive specific cryptographic keys for different
+/// purposes.
+///
+/// It supports:
+/// - Deterministic derivation of signing keys (Schnorr, ECDSA, Ed25519)
+/// - Deterministic derivation of encryption keys (X25519)
+/// - SSH key generation for various algorithms (Ed25519, ECDSA, DSA, RSA)
+/// - Key pair generation for both signing and encryption
+///
+/// This design allows a single master seed to generate multiple secure keys
+/// for different cryptographic operations, similar to the concept of an
+/// HD wallet in cryptocurrency systems.
+///
+/// # Security
+///
+/// `PrivateKeyBase` implements `ZeroizeOnDrop` to securely erase the sensitive key
+/// material from memory when the object is dropped, reducing the risk of key
+/// extraction via memory attacks.
+///
+/// # Examples
+///
+/// Creating and using a PrivateKeyBase:
+///
+/// ```
+/// use bc_components::PrivateKeyBase;
+/// use bc_components::Signer;
+/// use bc_components::{PrivateKeysProvider, PublicKeysProvider};
+///
+/// // Create a new random PrivateKeyBase
+/// let key_base = PrivateKeyBase::new();
+///
+/// // Sign a message using the derived Schnorr key
+/// let message = b"Hello, world!";
+/// let signature = key_base.sign(message).unwrap();
+///
+/// // Generate a key pair for public/private key operations
+/// let (private_keys, public_keys) = (key_base.private_keys(), key_base.public_keys());
+/// ```
 #[derive(Clone, Eq, PartialEq, ZeroizeOnDrop)]
 pub struct PrivateKeyBase(Vec<u8>);
 

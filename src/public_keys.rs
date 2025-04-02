@@ -12,11 +12,48 @@ use crate::{
     Verifier,
 };
 
-/// Holds information used to communicate cryptographically with a remote
-/// entity.
+/// A container for an entity's public cryptographic keys.
 ///
-/// Includes the entity's public signing key for verifying signatures, and the
-/// entity's public encapsulation key used encrypting messages.
+/// `PublicKeys` combines a verification key for checking digital signatures with an
+/// encapsulation key for encrypting messages, providing a complete public key
+/// package for secure communication with an entity.
+///
+/// This type is designed to be freely shared across networks and systems, allowing
+/// others to securely communicate with the key owner, who holds the corresponding
+/// `PrivateKeys` instance.
+///
+/// # Components
+///
+/// * `signing_public_key` - A public key used for verifying digital signatures.
+///   Can verify signatures created by the corresponding private key, which may be
+///   Schnorr, ECDSA, Ed25519, or SSH-based.
+///
+/// * `encapsulation_public_key` - A public key used for encrypting messages that
+///   can only be decrypted by the holder of the corresponding private key.
+///   Can be X25519 or ML-KEM based.
+///
+/// # Use Cases
+///
+/// * Verifying the authenticity of signed messages or content
+/// * Encrypting data for secure transmission to the key owner
+/// * Identity verification in distributed systems
+/// * Establishing secure communication channels
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::{keypair, EncapsulationPublicKey};
+///
+/// // Generate a key pair
+/// let (private_keys, public_keys) = keypair();
+///
+/// // Get the encapsulation public key
+/// let enc_pub_key = public_keys.enapsulation_public_key();
+///
+/// // The public key can be used for key encapsulation
+/// // The resulting shared secret is only accessible to the 
+/// // holder of the corresponding private key
+/// ```
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
 pub struct PublicKeys {
     signing_public_key: SigningPublicKey,
@@ -46,7 +83,37 @@ impl PublicKeys {
     }
 }
 
+/// A trait for types that can provide a complete set of public cryptographic keys.
+///
+/// Types implementing this trait can be used as a source of `PublicKeys`,
+/// which contain both verification and encryption public keys. This trait is
+/// particularly useful for key management systems, wallets, identity systems,
+/// or any component that needs to provide public keys for cryptographic operations.
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::{PrivateKeyBase, PublicKeysProvider};
+///
+/// // Create a provider of public keys (in this case, a private key base
+/// // that can derive the corresponding public keys)
+/// let key_base = PrivateKeyBase::new();
+///
+/// // Get the public keys from the provider
+/// let public_keys = key_base.public_keys();
+/// 
+/// // These public keys can be shared with others for secure communication
+/// ```
 pub trait PublicKeysProvider {
+    /// Returns a complete set of public keys for cryptographic operations.
+    ///
+    /// The returned `PublicKeys` instance contains both verification and encryption
+    /// public keys that can be used by other parties to securely communicate with
+    /// the key owner.
+    ///
+    /// # Returns
+    ///
+    /// A `PublicKeys` instance containing the complete set of public keys.
     fn public_keys(&self) -> PublicKeys;
 }
 

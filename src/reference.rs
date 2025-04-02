@@ -4,36 +4,84 @@ use crate::{ digest_provider::DigestProvider, tags, Digest };
 use anyhow::{ bail, Result, Error };
 
 /// Implementers of this trait provide a globally unique reference to themselves.
+///
+/// The `ReferenceProvider` trait is used to create a unique, cryptographic reference
+/// to an object. This is particularly useful for distributed systems where objects need
+/// to be uniquely identified across networks or storage systems.
+///
+/// The reference is derived from a cryptographic digest of the object's serialized form,
+/// ensuring that the reference uniquely identifies the object's contents.
 pub trait ReferenceProvider {
+    /// Returns a cryptographic reference that uniquely identifies this object.
+    ///
+    /// The reference is derived from a digest of the object's serialized form,
+    /// ensuring that it uniquely identifies the object's contents.
     fn reference(&self) -> Reference;
 
-    /// The data as a hexadecimal string.
+    /// Returns the reference data as a hexadecimal string.
+    ///
+    /// This is a convenience method that returns the full 32-byte reference
+    /// as a 64-character hexadecimal string.
     fn ref_hex(&self) -> String {
         self.reference().ref_hex()
     }
 
-    /// The first four bytes of the reference
+    /// Returns the first four bytes of the reference.
+    ///
+    /// This is a convenience method for when a shorter, more user-friendly
+    /// representation is needed, such as for display or comparison purposes.
     fn ref_data_short(&self) -> [u8; 4] {
         self.reference().ref_data_short()
     }
 
-    /// The first four bytes of the reference as a hexadecimal string.
+    /// Returns the first four bytes of the reference as a hexadecimal string.
+    ///
+    /// This produces an 8-character string that is useful for display purposes,
+    /// such as in debug output or logs.
     fn ref_hex_short(&self) -> String {
         self.reference().ref_hex_short()
     }
 
-    /// The first four bytes of the reference as upper-case ByteWords.
+    /// Returns the first four bytes of the reference as upper-case ByteWords.
+    ///
+    /// ByteWords is a human-readable encoding format that uses common English words
+    /// to represent binary data, making it easier to communicate verbally or in text.
+    ///
+    /// # Parameters
+    ///
+    /// * `prefix` - An optional prefix to add before the ByteWords representation
     fn ref_bytewords(&self, prefix: Option<&str>) -> String {
         self.reference().bytewords_identifier(prefix)
     }
 
-    /// The first four bytes of the reference as Bytemoji.
+    /// Returns the first four bytes of the reference as Bytemoji.
+    ///
+    /// Bytemoji is an emoji-based encoding that represents binary data using
+    /// emoji characters, which can be more visually distinctive and memorable.
+    ///
+    /// # Parameters
+    ///
+    /// * `prefix` - An optional prefix to add before the Bytemoji representation
     fn ref_bytemoji(&self, prefix: Option<&str>) -> String {
         self.reference().bytemoji_identifier(prefix)
     }
 }
 
-/// A globally unique reference to a globally unique object
+/// A globally unique reference to a globally unique object.
+///
+/// `Reference` provides a cryptographically secure way to uniquely identify
+/// objects based on their content. It is a fixed-size (32 bytes) identifier,
+/// typically derived from the SHA-256 hash of the object's serialized form.
+///
+/// References are useful in distributed systems for:
+/// - Unique identification of objects across networks
+/// - Verification that an object hasn't been modified
+/// - Content-addressable storage systems
+/// - Linking between objects in a content-addressed way
+///
+/// A `Reference` can be displayed in various formats, including hexadecimal,
+/// ByteWords (a human-readable partial hash as words), and Bytemoji (a
+/// human-readable partial hash based on emojis).
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Reference([u8; Self::REFERENCE_SIZE]);
 

@@ -12,11 +12,49 @@ use crate::{
     SigningPrivateKey,
 };
 
-/// Holds information used to communicate cryptographically with a remote
-/// entity.
+/// A container for an entity's private cryptographic keys.
 ///
-/// Includes the entity's private signing key for making signatures, and the
-/// entity's private encapsulation key used to decrypt messages.
+/// `PrivateKeys` combines a signing key for creating digital signatures with an
+/// encapsulation key for decrypting messages, providing a complete private key
+/// package for cryptographic operations.
+///
+/// This type is typically used in conjunction with its public counterpart, `PublicKeys`,
+/// to enable secure communication between entities. The private keys remain with
+/// the owner, while the corresponding public keys can be freely shared.
+///
+/// # Components
+///
+/// * `signing_private_key` - A private key used for creating digital signatures.
+///   Can be Schnorr, ECDSA, Ed25519, or SSH-based, depending on the security needs.
+///
+/// * `encapsulation_private_key` - A private key used for decrypting messages that
+///   were encrypted using the corresponding public key. Can be X25519 or ML-KEM based.
+///
+/// # Security
+///
+/// This struct contains highly sensitive cryptographic material and should be handled
+/// with appropriate security measures:
+///
+/// - Minimize serialization and storage of private keys
+/// - Ensure secure memory handling and proper zeroization
+/// - Apply access controls and encryption when at rest
+/// - Consider using hardware security modules for production systems
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::{keypair, Signer, Verifier};
+///
+/// // Generate a new key pair with default schemes
+/// let (private_keys, public_keys) = keypair();
+///
+/// // Sign a message using the private keys
+/// let message = b"Hello, world!";
+/// let signature = private_keys.sign(message).unwrap();
+///
+/// // Verify the signature using the corresponding public keys
+/// assert!(public_keys.verify(&signature, message));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PrivateKeys {
     signing_private_key: SigningPrivateKey,
@@ -46,7 +84,33 @@ impl PrivateKeys {
     }
 }
 
+/// A trait for types that can provide a complete set of private cryptographic keys.
+///
+/// Types implementing this trait can be used as a source of `PrivateKeys`,
+/// which contain both signing and encryption private keys. This trait is
+/// particularly useful for key management systems, wallets, or other components
+/// that need to generate or access cryptographic key material.
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::{PrivateKeyBase, PrivateKeysProvider};
+///
+/// // Create a provider of private keys
+/// let key_base = PrivateKeyBase::new();
+///
+/// // Get the private keys from the provider
+/// let private_keys = key_base.private_keys();
+/// ```
 pub trait PrivateKeysProvider {
+    /// Returns a complete set of private keys for cryptographic operations.
+    ///
+    /// The returned `PrivateKeys` instance contains both signing and encryption
+    /// private keys that can be used for various cryptographic operations.
+    ///
+    /// # Returns
+    ///
+    /// A `PrivateKeys` instance containing the complete set of private keys.
     fn private_keys(&self) -> PrivateKeys;
 }
 
