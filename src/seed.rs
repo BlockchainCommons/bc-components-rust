@@ -3,6 +3,80 @@ use bc_ur::prelude::*;
 use crate::{ tags, PrivateKeyDataProvider };
 use anyhow::{ bail, Result, Error };
 
+/// A cryptographic seed for deterministic key generation.
+///
+/// A `Seed` is a source of entropy used to generate cryptographic keys in a deterministic manner.
+/// Unlike randomly generated keys, seed-derived keys can be recreated if you have the original seed,
+/// making them useful for backup and recovery scenarios.
+///
+/// This implementation of `Seed` includes the random seed data as well as optional metadata:
+/// - A name (for identifying the seed)
+/// - A note (for storing additional information)
+/// - A creation date
+///
+/// The minimum seed length is 16 bytes to ensure sufficient security and entropy.
+///
+/// # CBOR Serialization
+///
+/// `Seed` implements the `CBORTaggedCodable` trait, which means it can be serialized to and
+/// deserialized from CBOR with specific tags. The tags used are `TAG_SEED` and the older 
+/// `TAG_SEED_V1` for backward compatibility.
+///
+/// When serialized to CBOR, a `Seed` is represented as a map with the following keys:
+/// - 1: The seed data (required)
+/// - 2: The creation date (optional)
+/// - 3: The name (optional, omitted if empty)
+/// - 4: The note (optional, omitted if empty)
+///
+/// # UR Serialization
+///
+/// When serialized as a Uniform Resource (UR), a `Seed` is represented with the type "seed".
+///
+/// # Key Derivation
+///
+/// A `Seed` implements the `PrivateKeyDataProvider` trait, which means it can be used as a source
+/// of entropy for deriving private keys in various cryptographic schemes.
+///
+/// # Examples
+///
+/// Creating a new random seed:
+///
+/// ```
+/// use bc_components::Seed;
+///
+/// // Create a new random seed with default length (16 bytes)
+/// let seed = Seed::new();
+/// ```
+///
+/// Creating a seed with a specific length:
+///
+/// ```
+/// use bc_components::Seed;
+///
+/// // Create a seed with 32 bytes of entropy
+/// let seed = Seed::new_with_len(32).unwrap();
+/// ```
+///
+/// Creating a seed with metadata:
+///
+/// ```
+/// use bc_components::Seed;
+/// use dcbor::Date;
+///
+/// // Create seed data
+/// let data = vec![0u8; 16];
+/// 
+/// // Create a seed with name, note, and creation date
+/// let mut seed = Seed::new_opt(
+///     data,
+///     Some("Wallet Backup".to_string()),
+///     Some("Cold storage backup for main wallet".to_string()),
+///     Some(Date::now())
+/// ).unwrap();
+///
+/// // Modify metadata
+/// seed.set_name("Updated Wallet Backup");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Seed {
     data: Vec<u8>,
@@ -97,42 +171,49 @@ impl Seed {
     }
 }
 
+/// Provides a default implementation that creates a new random seed with the minimum length.
 impl Default for Seed {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Allows using a Seed as a reference to a byte slice.
 impl AsRef<[u8]> for Seed {
     fn as_ref(&self) -> &[u8] {
         self.data()
     }
 }
 
+/// Provides a self-reference, enabling API consistency with other types.
 impl AsRef<Seed> for Seed {
     fn as_ref(&self) -> &Seed {
         self
     }
 }
 
+/// Implements PrivateKeyDataProvider to use seed data for key derivation.
 impl PrivateKeyDataProvider for Seed {
     fn private_key_data(&self) -> Vec<u8> {
         self.data().clone()
     }
 }
 
+/// Identifies the CBOR tags used for Seed serialization, including the legacy tag.
 impl CBORTagged for Seed {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_SEED, tags::TAG_SEED_V1])
     }
 }
 
+/// Enables conversion of a Seed into a tagged CBOR value.
 impl From<Seed> for CBOR {
     fn from(value: Seed) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Defines how a Seed is encoded as CBOR (as a map with data and metadata).
 impl CBORTaggedEncodable for Seed {
     fn untagged_cbor(&self) -> CBOR {
         let mut map = dcbor::Map::new();
@@ -150,6 +231,7 @@ impl CBORTaggedEncodable for Seed {
     }
 }
 
+/// Enables conversion from CBOR to Seed, with proper error handling.
 impl TryFrom<CBOR> for Seed {
     type Error = Error;
 
@@ -158,6 +240,7 @@ impl TryFrom<CBOR> for Seed {
     }
 }
 
+/// Defines how a Seed is decoded from CBOR.
 impl CBORTaggedDecodable for Seed {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let map = cbor.try_into_map()?;

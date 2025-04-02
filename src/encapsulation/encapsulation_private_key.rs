@@ -4,13 +4,41 @@ use dcbor::prelude::*;
 
 use crate::{tags, EncapsulationCiphertext, EncapsulationScheme, SymmetricKey, X25519PrivateKey};
 
+/// A private key used for key encapsulation mechanisms (KEM).
+///
+/// `EncapsulationPrivateKey` is an enum representing different types of private keys
+/// that can be used for key encapsulation, including:
+///
+/// - X25519: Curve25519-based key exchange
+/// - ML-KEM: Module Lattice-based Key Encapsulation Mechanism at various security levels
+///
+/// These private keys are used to decrypt (decapsulate) shared secrets that have been
+/// encapsulated with the corresponding public keys.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPrivateKey {
+    /// An X25519 private key
     X25519(X25519PrivateKey),
+    /// An ML-KEM private key (post-quantum)
     MLKEM(MLKEMPrivateKey),
 }
 
 impl EncapsulationPrivateKey {
+    /// Returns the encapsulation scheme associated with this private key.
+    ///
+    /// # Returns
+    ///
+    /// The encapsulation scheme (X25519, MLKEM512, MLKEM768, or MLKEM1024)
+    /// that corresponds to this private key.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::{EncapsulationScheme, X25519PrivateKey, EncapsulationPrivateKey};
+    ///
+    /// let x25519_private_key = X25519PrivateKey::new();
+    /// let encapsulation_private_key = EncapsulationPrivateKey::X25519(x25519_private_key);
+    /// assert_eq!(encapsulation_private_key.encapsulation_scheme(), EncapsulationScheme::X25519);
+    /// ```
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
             Self::X25519(_) => EncapsulationScheme::X25519,
@@ -22,6 +50,45 @@ impl EncapsulationPrivateKey {
         }
     }
 
+    /// Decapsulates a shared secret from a ciphertext using this private key.
+    ///
+    /// This method performs the decapsulation operation for key exchange. It takes
+    /// an `EncapsulationCiphertext` and extracts the shared secret that was encapsulated
+    /// using the corresponding public key.
+    ///
+    /// # Parameters
+    ///
+    /// * `ciphertext` - The encapsulation ciphertext containing the encapsulated shared secret
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the decapsulated `SymmetricKey` if successful,
+    /// or an error if the decapsulation fails or if the ciphertext type doesn't match
+    /// the private key type.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The ciphertext type doesn't match the private key type
+    /// - The decapsulation operation fails
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::EncapsulationScheme;
+    ///
+    /// // Generate a key pair
+    /// let (private_key, public_key) = EncapsulationScheme::default().keypair();
+    ///
+    /// // Encapsulate a new shared secret using the public key
+    /// let (secret1, ciphertext) = public_key.encapsulate_new_shared_secret();
+    ///
+    /// // Decapsulate the shared secret using the private key
+    /// let secret2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+    ///
+    /// // The original and decapsulated secrets should match
+    /// assert_eq!(secret1, secret2);
+    /// ```
     pub fn decapsulate_shared_secret(
         &self,
         ciphertext: &EncapsulationCiphertext,
@@ -44,6 +111,10 @@ impl EncapsulationPrivateKey {
     }
 }
 
+/// Implementation of the `Decrypter` trait for `EncapsulationPrivateKey`.
+///
+/// This allows `EncapsulationPrivateKey` to be used with the generic decryption
+/// interface defined by the `Decrypter` trait.
 impl Decrypter for EncapsulationPrivateKey {
     fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
         self.clone()
@@ -57,15 +128,17 @@ impl Decrypter for EncapsulationPrivateKey {
     }
 }
 
+/// Conversion from `EncapsulationPrivateKey` to CBOR for serialization.
 impl From<EncapsulationPrivateKey> for CBOR {
-    fn from(ciphertext: EncapsulationPrivateKey) -> Self {
-        match ciphertext {
-            EncapsulationPrivateKey::X25519(public_key) => public_key.into(),
-            EncapsulationPrivateKey::MLKEM(ciphertext) => ciphertext.into(),
+    fn from(private_key: EncapsulationPrivateKey) -> Self {
+        match private_key {
+            EncapsulationPrivateKey::X25519(private_key) => private_key.into(),
+            EncapsulationPrivateKey::MLKEM(private_key) => private_key.into(),
         }
     }
 }
 
+/// Conversion from CBOR to `EncapsulationPrivateKey` for deserialization.
 impl TryFrom<CBOR> for EncapsulationPrivateKey {
     type Error = anyhow::Error;
 

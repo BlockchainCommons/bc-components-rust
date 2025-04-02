@@ -5,32 +5,80 @@ use miniz_oxide::{ inflate::decompress_to_vec, deflate::compress_to_vec };
 use crate::{ digest::Digest, DigestProvider, tags };
 use anyhow::{ anyhow, bail, Error, Result };
 
-/// A compressed binary object.
+/// A compressed binary object with integrity verification.
 ///
-/// Implemented using the raw DEFLATE format as described in
-/// [IETF RFC 1951](https://www.ietf.org/rfc/rfc1951.txt).
+/// `Compressed` provides a way to efficiently store and transmit binary data using
+/// the DEFLATE compression algorithm. It includes built-in integrity verification
+/// through a CRC32 checksum and optional cryptographic digest.
 ///
-/// The following obtains the equivalent configuration of the encoder:
+/// The compression is implemented using the raw DEFLATE format as described in
+/// [IETF RFC 1951](https://www.ietf.org/rfc/rfc1951.txt) with the following
+/// configuration equivalent to:
 ///
-/// `deflateInit2(zstream,5,Z_DEFLATED,-15,8,Z_DEFAULT_STRATEGY)`
+/// `deflateInit2(zstream, 5, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY)`
 ///
-/// If the payload is too small to compress, the uncompressed payload is placed in
-/// the `compressedData` field and the size of that field will be the same as the
-/// `uncompressedSize` field.
+/// Features:
+/// - Automatic compression with configurable compression level
+/// - Integrity verification via CRC32 checksum
+/// - Optional cryptographic digest for content identification
+/// - Smart behavior for small data (stores uncompressed if compression would increase size)
+/// - CBOR serialization/deserialization support
 #[derive(Clone, Eq, PartialEq)]
 pub struct Compressed {
+    /// CRC32 checksum of the uncompressed data for integrity verification
     checksum: u32,
+    /// Size of the original uncompressed data in bytes
     uncompressed_size: usize,
+    /// The compressed data (or original data if compression is ineffective)
     compressed_data: Vec<u8>,
+    /// Optional cryptographic digest of the content
     digest: Option<Digest>,
 }
 
 impl Compressed {
-    /// Creates a new `Compressed` object with the given checksum, uncompressed size, compressed data, and digest.
+    /// Creates a new `Compressed` object with the specified parameters.
     ///
-    /// This is a low-level function that does not check the validity of the compressed data.
+    /// This is a low-level constructor that allows direct creation of a `Compressed`
+    /// object without performing compression. It's primarily intended for deserialization
+    /// or when working with pre-compressed data.
     ///
-    /// Returns `None` if the compressed data is larger than the uncompressed size.
+    /// # Parameters
+    ///
+    /// * `checksum` - CRC32 checksum of the uncompressed data
+    /// * `uncompressed_size` - Size of the original uncompressed data in bytes
+    /// * `compressed_data` - The compressed data bytes
+    /// * `digest` - Optional cryptographic digest of the content
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the new `Compressed` object if successful,
+    /// or an error if the parameters are invalid.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the compressed data is larger than the uncompressed size,
+    /// which would indicate a logical inconsistency.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::Compressed;
+    /// use bc_crypto::hash::crc32;
+    ///
+    /// let data = b"hello world";
+    /// let checksum = crc32(data);
+    /// let uncompressed_size = data.len();
+    /// 
+    /// // In a real scenario, this would be actually compressed data
+    /// let compressed_data = data.to_vec();
+    /// 
+    /// let compressed = Compressed::new(
+    ///     checksum,
+    ///     uncompressed_size,
+    ///     compressed_data,
+    ///     None
+    /// ).unwrap();
+    /// ```
     pub fn new(
         checksum: u32,
         uncompressed_size: usize,
@@ -48,12 +96,40 @@ impl Compressed {
         })
     }
 
-    /// Creates a new `Compressed` object from the given uncompressed data and digest.
+    /// Creates a new `Compressed` object by compressing the provided data.
     ///
-    /// The uncompressed data is compressed using the DEFLATE format with a compression level of 6.
+    /// This is the primary method for creating compressed data. It automatically
+    /// handles compression using the DEFLATE algorithm with a compression level of 6.
     ///
-    /// If the compressed data is smaller than the uncompressed data, the compressed data is stored in the `compressed_data` field.
-    /// Otherwise, the uncompressed data is stored in the `compressed_data` field.
+    /// If the compressed data would be larger than the original data (which can happen
+    /// with small or already compressed inputs), the original data is stored instead.
+    ///
+    /// # Parameters
+    ///
+    /// * `uncompressed_data` - The original data to compress
+    /// * `digest` - Optional cryptographic digest of the content
+    ///
+    /// # Returns
+    ///
+    /// A new `Compressed` object containing the compressed (or original) data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::Compressed;
+    ///
+    /// // Compress a string
+    /// let data = "This is a longer string that should compress well with repeated patterns. \
+    ///            This is a longer string that should compress well with repeated patterns.";
+    /// let compressed = Compressed::from_uncompressed_data(data.as_bytes(), None);
+    ///
+    /// // The compressed size should be smaller than the original
+    /// assert!(compressed.compressed_size() < data.len());
+    ///
+    /// // We can recover the original data
+    /// let uncompressed = compressed.uncompress().unwrap();
+    /// assert_eq!(uncompressed, data.as_bytes());
+    /// ```
     pub fn from_uncompressed_data(
         uncompressed_data: impl Into<Vec<u8>>,
         digest: Option<Digest>
@@ -80,9 +156,38 @@ impl Compressed {
         }
     }
 
-    /// Uncompresses the compressed data and returns the uncompressed data.
+    /// Decompresses and returns the original uncompressed data.
     ///
-    /// Returns an error if the compressed data is corrupt or the checksum does not match the uncompressed data.
+    /// This method performs the reverse of the compression process, restoring
+    /// the original data. It also verifies the integrity of the data using the
+    /// stored checksum.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the uncompressed data if successful,
+    /// or an error if decompression fails or the checksum doesn't match.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if:
+    /// - The compressed data is corrupt and cannot be decompressed
+    /// - The checksum of the decompressed data doesn't match the stored checksum
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::Compressed;
+    ///
+    /// // Original data
+    /// let original = b"This is some example data to compress";
+    ///
+    /// // Compress it
+    /// let compressed = Compressed::from_uncompressed_data(original, None);
+    ///
+    /// // Uncompress to get the original data back
+    /// let uncompressed = compressed.uncompress().unwrap();
+    /// assert_eq!(uncompressed, original);
+    /// ```
     pub fn uncompress(&self) -> Result<Vec<u8>> {
         let compressed_size = self.compressed_data.len();
         if compressed_size >= self.uncompressed_size {
@@ -99,33 +204,128 @@ impl Compressed {
         Ok(uncompressed_data)
     }
 
-    /// Returns the size of the compressed data.
+    /// Returns the size of the compressed data in bytes.
+    ///
+    /// # Returns
+    ///
+    /// The size of the compressed data in bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::Compressed;
+    ///
+    /// let data = b"Hello world!";
+    /// let compressed = Compressed::from_uncompressed_data(data, None);
+    ///
+    /// // For small inputs like this, compression might not be effective
+    /// // so the compressed_size might equal the original size
+    /// println!("Compressed size: {}", compressed.compressed_size());
+    /// ```
     pub fn compressed_size(&self) -> usize {
         self.compressed_data.len()
     }
 
-    /// Returns the compression ratio of the compressed data.
+    /// Returns the compression ratio of the data.
+    ///
+    /// The compression ratio is calculated as (compressed size) / (uncompressed size),
+    /// so lower values indicate better compression.
+    ///
+    /// # Returns
+    ///
+    /// A floating-point value representing the compression ratio.
+    /// - Values less than 1.0 indicate effective compression
+    /// - Values equal to 1.0 indicate no compression was applied
+    /// - Values of NaN can occur if the uncompressed size is zero
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::Compressed;
+    ///
+    /// // A string with a lot of repetition should compress well
+    /// let data = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+    /// let compressed = Compressed::from_uncompressed_data(data.as_bytes(), None);
+    ///
+    /// // Should have a good compression ratio (much less than 1.0)
+    /// let ratio = compressed.compression_ratio();
+    /// assert!(ratio < 0.5);
+    /// ```
     pub fn compression_ratio(&self) -> f64 {
         (self.compressed_size() as f64) / (self.uncompressed_size as f64)
     }
 
-    /// Returns a reference to the digest of the compressed data, if it exists.
+    /// Returns a reference to the digest of the compressed data, if available.
+    ///
+    /// # Returns
+    ///
+    /// An optional reference to the `Digest` associated with this compressed data.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::{Compressed, Digest};
+    ///
+    /// let data = b"Hello world!";
+    /// let digest = Digest::from_image(data);
+    /// let compressed = Compressed::from_uncompressed_data(data, Some(digest.clone()));
+    ///
+    /// // We can retrieve the digest we associated with the compressed data
+    /// assert_eq!(compressed.digest_ref_opt(), Some(&digest));
+    /// ```
     pub fn digest_ref_opt(&self) -> Option<&Digest> {
         self.digest.as_ref()
     }
 
-    /// Returns `true` if the compressed data has a digest.
+    /// Returns whether this compressed data has an associated digest.
+    ///
+    /// # Returns
+    ///
+    /// `true` if this compressed data has a digest, `false` otherwise.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::{Compressed, Digest};
+    ///
+    /// // Create compressed data without a digest
+    /// let compressed1 = Compressed::from_uncompressed_data(b"Hello", None);
+    /// assert!(!compressed1.has_digest());
+    ///
+    /// // Create compressed data with a digest
+    /// let digest = Digest::from_image(b"Hello");
+    /// let compressed2 = Compressed::from_uncompressed_data(b"Hello", Some(digest));
+    /// assert!(compressed2.has_digest());
+    /// ```
     pub fn has_digest(&self) -> bool {
         self.digest.is_some()
     }
 }
 
+/// Implementation of the `DigestProvider` trait for `Compressed`.
+///
+/// Allows `Compressed` objects with digests to be used with APIs that accept
+/// `DigestProvider` implementations.
 impl DigestProvider for Compressed {
+    /// Returns the cryptographic digest associated with this compressed data.
+    ///
+    /// # Returns
+    ///
+    /// A `Cow<'_, Digest>` containing the digest.
+    ///
+    /// # Panics
+    ///
+    /// Panics if there is no digest associated with this compressed data.
+    /// Use `has_digest()` or `digest_ref_opt()` to check before calling this method.
     fn digest(&self) -> Cow<'_, Digest> {
         Cow::Owned(self.digest.as_ref().unwrap().clone())
     }
 }
 
+/// Implementation of the `Debug` trait for `Compressed`.
+///
+/// Provides a human-readable debug representation of a `Compressed` object
+/// showing its key properties: checksum, sizes, compression ratio, and digest.
 impl std::fmt::Debug for Compressed {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -143,24 +343,44 @@ impl std::fmt::Debug for Compressed {
     }
 }
 
+/// Implementation of `AsRef<Compressed>` for `Compressed`.
+///
+/// This allows passing a `Compressed` instance to functions that take
+/// `AsRef<Compressed>` parameters.
 impl AsRef<Compressed> for Compressed {
     fn as_ref(&self) -> &Compressed {
         self
     }
 }
 
+/// Implementation of the `CBORTagged` trait for `Compressed`.
+///
+/// Defines the CBOR tag(s) used when serializing a `Compressed` object.
 impl CBORTagged for Compressed {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_COMPRESSED])
     }
 }
 
+/// Conversion from `Compressed` to CBOR for serialization.
 impl From<Compressed> for CBOR {
     fn from(value: Compressed) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implementation of CBOR encoding for `Compressed`.
+///
+/// Defines how a `Compressed` object is serialized to untagged CBOR.
+/// The format is:
+/// ```text
+/// [
+///   checksum: uint, 
+///   uncompressed_size: uint, 
+///   compressed_data: bytes,
+///   digest?: Digest  // Optional
+/// ]
+/// ```
 impl CBORTaggedEncodable for Compressed {
     fn untagged_cbor(&self) -> CBOR {
         let mut elements = vec![
@@ -175,6 +395,7 @@ impl CBORTaggedEncodable for Compressed {
     }
 }
 
+/// Conversion from CBOR to `Compressed` for deserialization.
 impl TryFrom<CBOR> for Compressed {
     type Error = Error;
 
@@ -183,6 +404,9 @@ impl TryFrom<CBOR> for Compressed {
     }
 }
 
+/// Implementation of CBOR decoding for `Compressed`.
+///
+/// Defines how to create a `Compressed` object from untagged CBOR.
 impl CBORTaggedDecodable for Compressed {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let elements = cbor.try_into_array()?;

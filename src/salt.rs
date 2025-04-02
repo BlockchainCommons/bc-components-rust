@@ -5,6 +5,72 @@ use crate::tags;
 use anyhow::{ bail, Result, Error };
 
 /// Random salt used to decorrelate other information.
+///
+/// A `Salt` is a cryptographic primitive consisting of random data that is used to modify the
+/// output of a cryptographic function. Salts are primarily used in password hashing to defend
+/// against dictionary attacks, rainbow table attacks, and pre-computation attacks. They are also
+/// used in other cryptographic contexts to ensure uniqueness and prevent correlation between
+/// different parts of a cryptosystem.
+///
+/// Unlike a [`Nonce`](crate::Nonce) which has a fixed size, a `Salt` in this implementation can
+/// have a variable length (minimum 8 bytes). Different salt creation methods are provided to
+/// generate salts of appropriate sizes for different use cases.
+///
+/// # Minimum Size Requirement
+///
+/// For security reasons, salts must be at least 8 bytes long. Attempting to create a salt
+/// with fewer than 8 bytes will result in an error.
+///
+/// # CBOR Serialization
+///
+/// `Salt` implements the `CBORTaggedCodable` trait, which means it can be serialized to and
+/// deserialized from CBOR with a specific tag. The tag used is `TAG_SALT` defined in the `tags` module.
+///
+/// # UR Serialization
+///
+/// When serialized as a Uniform Resource (UR), a `Salt` is represented as a binary blob with the type "salt".
+///
+/// # Common Uses
+///
+/// - Password hashing and key derivation functions
+/// - Preventing correlation in cryptographic protocols
+/// - Randomizing data before encryption to prevent pattern recognition
+/// - Adding entropy to improve security in various cryptographic functions
+///
+/// # Examples
+///
+/// Creating a salt with a specific length:
+///
+/// ```
+/// use bc_components::Salt;
+///
+/// // Generate a salt with 16 bytes
+/// let salt = Salt::new_with_len(16).unwrap();
+/// assert_eq!(salt.len(), 16);
+/// ```
+///
+/// Creating a salt with a length proportional to data size:
+///
+/// ```
+/// use bc_components::Salt;
+///
+/// // Generate a salt proportional to 100 bytes of data
+/// let salt = Salt::new_for_size(100);
+/// 
+/// // Salts for larger data will be larger (but still efficient)
+/// let big_salt = Salt::new_for_size(1000);
+/// assert!(big_salt.len() > salt.len());
+/// ```
+///
+/// Creating a salt with a length in a specific range:
+///
+/// ```
+/// use bc_components::Salt;
+///
+/// // Generate a salt with length between 16 and 32 bytes
+/// let salt = Salt::new_in_range(16..=32).unwrap();
+/// assert!(salt.len() >= 16 && salt.len() <= 32);
+/// ```
 #[derive(Clone, Eq, PartialEq)]
 pub struct Salt(Vec<u8>);
 
@@ -97,42 +163,49 @@ impl Salt {
     }
 }
 
+/// Allows accessing the underlying data as a byte slice reference.
 impl<'a> From<&'a Salt> for &'a [u8] {
     fn from(value: &'a Salt) -> Self {
         value.data()
     }
 }
 
+/// Allows using a Salt as a reference to a byte slice.
 impl AsRef<[u8]> for Salt {
     fn as_ref(&self) -> &[u8] {
         self.data()
     }
 }
 
+/// Provides a self-reference, enabling API consistency with other types.
 impl AsRef<Salt> for Salt {
     fn as_ref(&self) -> &Salt {
         self
     }
 }
 
+/// Identifies the CBOR tags used for Salt serialization.
 impl CBORTagged for Salt {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_SALT])
     }
 }
 
+/// Enables conversion of a Salt into a tagged CBOR value.
 impl From<Salt> for CBOR {
     fn from(value: Salt) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Defines how a Salt is encoded as CBOR (as a byte string).
 impl CBORTaggedEncodable for Salt {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.data())
     }
 }
 
+/// Enables conversion from CBOR to Salt, with proper error handling.
 impl TryFrom<CBOR> for Salt {
     type Error = Error;
 
@@ -141,6 +214,7 @@ impl TryFrom<CBOR> for Salt {
     }
 }
 
+/// Defines how a Salt is decoded from CBOR.
 impl CBORTaggedDecodable for Salt {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
@@ -149,27 +223,28 @@ impl CBORTaggedDecodable for Salt {
     }
 }
 
+/// Provides a debug representation showing the salt's length.
 impl std::fmt::Debug for Salt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Salt({})", self.len())
     }
 }
 
-// Convert from a reference to a byte vector to a Salt.
+/// Enables cloning a Salt from a reference using From trait.
 impl From<&Salt> for Salt {
     fn from(salt: &Salt) -> Self {
         salt.clone()
     }
 }
 
-// Convert from a byte vector to a Salt.
+/// Converts a Salt into a `Vec<u8>` containing the salt bytes.
 impl From<Salt> for Vec<u8> {
     fn from(salt: Salt) -> Self {
         salt.0.to_vec()
     }
 }
 
-// Convert from a reference to a byte vector to a Salt.
+/// Converts a Salt reference into a `Vec<u8>` containing the salt bytes.
 impl From<&Salt> for Vec<u8> {
     fn from(salt: &Salt) -> Self {
         salt.0.to_vec()

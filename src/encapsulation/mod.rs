@@ -1,3 +1,63 @@
+//! Key Encapsulation Mechanisms (KEM) for public key cryptography.
+//!
+//! This module provides a unified interface for key encapsulation mechanisms, which are
+//! cryptographic algorithms used to securely exchange symmetric keys using public key 
+//! cryptography. The module supports both traditional (X25519) and post-quantum (ML-KEM)
+//! encapsulation schemes.
+//!
+//! Key encapsulation mechanisms are used in hybrid cryptographic protocols where:
+//! - A shared secret is generated and encapsulated using a recipient's public key
+//! - The recipient uses their private key to decapsulate (recover) the shared secret
+//! - The shared secret is then used for symmetric encryption of the actual data
+//!
+//! ## Key Components
+//!
+//! - **EncapsulationScheme**: Enumeration of supported key encapsulation algorithms
+//! - **EncapsulationPrivateKey**: Private keys for decapsulating shared secrets
+//! - **EncapsulationPublicKey**: Public keys for encapsulating shared secrets
+//! - **EncapsulationCiphertext**: Ciphertexts produced by the encapsulation process
+//! - **SealedMessage**: A message encrypted using a key encapsulation mechanism
+//!
+//! ## Supported Schemes
+//!
+//! - **X25519**: Elliptic curve Diffie-Hellman key exchange using Curve25519
+//! - **ML-KEM**: Module Lattice-based Key Encapsulation Mechanism (post-quantum) 
+//!   at different security levels (512, 768, 1024)
+//!
+//! ## Example Usage
+//!
+//! ```
+//! use bc_components::{EncapsulationScheme, SealedMessage};
+//!
+//! // Generate keypair for the recipient (using default X25519 scheme)
+//! let (recipient_private_key, recipient_public_key) = EncapsulationScheme::default().keypair();
+//!
+//! // Create a sealed message that only the recipient can decrypt
+//! let plaintext = b"This message is for your eyes only";
+//! let sealed_message = SealedMessage::new(plaintext, &recipient_public_key);
+//!
+//! // Recipient decrypts the message
+//! let decrypted = sealed_message.decrypt(&recipient_private_key).unwrap();
+//! assert_eq!(decrypted, plaintext);
+//! ```
+//!
+//! For post-quantum security, use one of the ML-KEM schemes:
+//!
+//! ```
+//! use bc_components::{EncapsulationScheme, SealedMessage};
+//!
+//! // Generate post-quantum keypair for the recipient
+//! let (recipient_private_key, recipient_public_key) = EncapsulationScheme::MLKEM768.keypair();
+//!
+//! // Create a quantum-resistant sealed message
+//! let plaintext = b"Protected against quantum computers";
+//! let sealed_message = SealedMessage::new(plaintext, &recipient_public_key);
+//!
+//! // Recipient decrypts the message
+//! let decrypted = sealed_message.decrypt(&recipient_private_key).unwrap();
+//! assert_eq!(decrypted, plaintext);
+//! ```
+
 mod encapsulation_scheme;
 pub use encapsulation_scheme::EncapsulationScheme;
 

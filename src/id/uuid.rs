@@ -4,7 +4,21 @@ use anyhow::{ bail, Result, Error };
 use dcbor::prelude::*;
 use crate::tags;
 
-/// A UUID.
+/// A Universally Unique Identifier (UUID).
+///
+/// UUIDs are 128-bit (16-byte) identifiers that are designed to be unique across space and time.
+/// This implementation creates type 4 (random) UUIDs, following the UUID specification:
+///
+/// - Version field (bits 48-51) is set to 4, indicating a random UUID
+/// - Variant field (bits 64-65) is set to 2, indicating RFC 4122/DCE 1.1 UUID variant
+///
+/// Unlike ARIDs, UUIDs:
+/// - Are shorter (128 bits vs 256 bits)
+/// - Contain version and variant metadata within the identifier
+/// - Have a canonical string representation with 5 groups separated by hyphens
+///
+/// The canonical textual representation of a UUID takes the form:
+/// `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` where each `x` is a hexadecimal digit.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UUID([u8; Self::UUID_SIZE]);
 
@@ -42,42 +56,49 @@ impl UUID {
     }
 }
 
+/// Implements Default for UUID to create a new random UUID.
 impl Default for UUID {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Implements conversion from a UUID reference to a byte array reference.
 impl<'a> From<&'a UUID> for &'a [u8; UUID::UUID_SIZE] {
     fn from(value: &'a UUID) -> Self {
         &value.0
     }
 }
 
+/// Implements AsRef<[u8]> to allow UUID to be treated as a byte slice.
 impl AsRef<[u8]> for UUID {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+/// Implements CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for UUID {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_UUID])
     }
 }
 
+/// Implements conversion from UUID to CBOR for serialization.
 impl From<UUID> for CBOR {
     fn from(value: UUID) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for UUID {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.0)
     }
 }
 
+/// Implements `TryFrom<CBOR>` for UUID to support conversion from CBOR data.
 impl TryFrom<CBOR> for UUID {
     type Error = Error;
 
@@ -86,6 +107,7 @@ impl TryFrom<CBOR> for UUID {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for UUID {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
@@ -98,13 +120,14 @@ impl CBORTaggedDecodable for UUID {
     }
 }
 
+/// Implements Display for UUID to format it in the standard UUID string format.
 impl std::fmt::Display for UUID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", String::from(self))
     }
 }
 
-// Convert from a UUID to a string.
+/// Implements conversion from UUID to String in the standard format with dashes.
 impl From<UUID> for String {
     fn from(uuid: UUID) -> Self {
         let hex = hex::encode(uuid.0);
@@ -112,12 +135,14 @@ impl From<UUID> for String {
     }
 }
 
+/// Implements conversion from UUID reference to String.
 impl From<&UUID> for String {
     fn from(uuid: &UUID) -> Self {
         String::from(*uuid)
     }
 }
 
+/// Implements string parsing to create a UUID.
 impl FromStr for UUID {
     type Err = Error;
 

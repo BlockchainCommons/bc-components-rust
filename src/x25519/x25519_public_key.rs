@@ -3,9 +3,22 @@ use bc_ur::prelude::*;
 use crate::{tags, EncapsulationPublicKey, Encrypter};
 use anyhow::{ bail, Error, Result };
 
-/// A Curve25519 public key used for X25519 key agreement.
+/// A public key for X25519 key agreement operations.
 ///
-/// <https://datatracker.ietf.org/doc/html/rfc7748>
+/// X25519 is an elliptic-curve Diffie-Hellman key exchange protocol based on Curve25519
+/// as defined in [RFC 7748](https://datatracker.ietf.org/doc/html/rfc7748). It allows
+/// two parties to establish a shared secret key over an insecure channel.
+///
+/// The X25519 public key is generated from a corresponding private key and is designed to be:
+/// - Compact (32 bytes)
+/// - Fast to use in key agreement operations
+/// - Resistant to various cryptographic attacks
+///
+/// This implementation provides:
+/// - Creation of X25519 public keys from raw data
+/// - CBOR serialization and deserialization
+/// - Support for the Encrypter trait for key encapsulation
+/// - Various utility and conversion methods
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct X25519PublicKey([u8; Self::KEY_SIZE]);
 
@@ -48,42 +61,49 @@ impl X25519PublicKey {
     }
 }
 
+/// Implements conversion from a reference-counted X25519PublicKey to an owned X25519PublicKey.
 impl From<Rc<X25519PublicKey>> for X25519PublicKey {
     fn from(value: Rc<X25519PublicKey>) -> Self {
         value.as_ref().clone()
     }
 }
 
+/// Implements conversion from an X25519PublicKey reference to a byte array reference.
 impl<'a> From<&'a X25519PublicKey> for &'a [u8; X25519PublicKey::KEY_SIZE] {
     fn from(value: &'a X25519PublicKey) -> Self {
         &value.0
     }
 }
 
+/// Implements `AsRef<X25519PublicKey>` to allow self-reference.
 impl AsRef<X25519PublicKey> for X25519PublicKey {
     fn as_ref(&self) -> &X25519PublicKey {
         self
     }
 }
 
+/// Implements the CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for X25519PublicKey {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_X25519_PUBLIC_KEY])
     }
 }
 
+/// Implements conversion from X25519PublicKey to CBOR for serialization.
 impl From<X25519PublicKey> for CBOR {
     fn from(value: X25519PublicKey) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for X25519PublicKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.data())
     }
 }
 
+/// Implements `TryFrom<CBOR>` for X25519PublicKey to support conversion from CBOR data.
 impl TryFrom<CBOR> for X25519PublicKey {
     type Error = Error;
 
@@ -92,6 +112,7 @@ impl TryFrom<CBOR> for X25519PublicKey {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for X25519PublicKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
@@ -99,33 +120,35 @@ impl CBORTaggedDecodable for X25519PublicKey {
     }
 }
 
+/// Implements Debug to output the key with a type label.
 impl std::fmt::Debug for X25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "X25519PublicKey({})", self.hex())
     }
 }
 
-// Convert from a reference to a byte vector to a X25519PublicKey.
+/// Implements conversion from an X25519PublicKey reference to an owned X25519PublicKey.
 impl From<&X25519PublicKey> for X25519PublicKey {
     fn from(key: &X25519PublicKey) -> Self {
         key.clone()
     }
 }
 
-// Convert from a byte vector to a X25519PublicKey.
+/// Implements conversion from an X25519PublicKey to a byte vector.
 impl From<X25519PublicKey> for Vec<u8> {
     fn from(key: X25519PublicKey) -> Self {
         key.0.to_vec()
     }
 }
 
-// Convert from a reference to a byte vector to a X25519PublicKey.
+/// Implements conversion from an X25519PublicKey reference to a byte vector.
 impl From<&X25519PublicKey> for Vec<u8> {
     fn from(key: &X25519PublicKey) -> Self {
         key.0.to_vec()
     }
 }
 
+/// Implements the Encrypter trait to support key encapsulation mechanisms.
 impl Encrypter for X25519PublicKey {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
         EncapsulationPublicKey::X25519(self.clone())

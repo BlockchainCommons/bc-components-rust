@@ -4,6 +4,21 @@ use anyhow::{ bail, Result, Error };
 use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
 
 /// A XID (eXtensible IDentifier).
+///
+/// A XID is a unique 32-byte identifier for a subject entity (person, organization, device, or any other entity).
+/// XIDs have the following characteristics:
+///
+/// - They're cryptographically tied to a public key at inception (the "inception key")
+/// - They remain stable throughout their lifecycle even as their keys and permissions change
+/// - They can be extended to XID documents containing keys, endpoints, permissions, and delegation info
+/// - They support key rotation and multiple verification schemes
+/// - They allow for delegation of specific permissions to other entities
+/// - They can include resolution methods to locate and verify the XID document
+/// 
+/// A XID is created by taking the SHA-256 hash of the CBOR encoding of a public signing key.
+/// This ensures the XID is cryptographically tied to the key.
+///
+/// As defined in [BCR-2024-010](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-010-xid.md).
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct XID([u8; Self::XID_SIZE]);
 
@@ -78,88 +93,104 @@ impl XID {
     }
 }
 
+/// A provider trait for obtaining XIDs from various objects.
 pub trait XIDProvider {
+    /// Returns the XID for this object.
     fn xid(&self) -> XID;
 }
 
+/// Implements XIDProvider for XID to return itself.
 impl XIDProvider for XID {
     fn xid(&self) -> XID {
         *self
     }
 }
 
+/// Implements XIDProvider for SigningPublicKey to generate an XID from the key.
 impl XIDProvider for SigningPublicKey {
     fn xid(&self) -> XID {
         XID::new(self)
     }
 }
 
+/// Implements ReferenceProvider for XID to generate a Reference from the XID.
 impl ReferenceProvider for XID {
     fn reference(&self) -> Reference {
         Reference::from_data(*self.data())
     }
 }
 
+/// Implements conversion from a XID reference to a byte array reference.
 impl<'a> From<&'a XID> for &'a [u8; XID::XID_SIZE] {
     fn from(value: &'a XID) -> Self {
         &value.0
     }
 }
 
+/// Implements conversion from a XID reference to a byte slice reference.
 impl<'a> From<&'a XID> for &'a [u8] {
     fn from(value: &'a XID) -> Self {
         &value.0
     }
 }
 
+/// Implements AsRef<[u8]> to allow XID to be treated as a byte slice.
 impl AsRef<[u8]> for XID {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+/// Implements PartialOrd to allow XIDs to be compared and partially ordered.
 impl std::cmp::PartialOrd for XID {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
     }
 }
 
+/// Implements Ord to allow XIDs to be fully ordered.
 impl std::cmp::Ord for XID {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.cmp(&other.0)
     }
 }
 
+/// Implements Debug formatting for XID showing the full hex representation.
 impl std::fmt::Debug for XID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "XID({})", hex::encode(self.0))
     }
 }
 
+/// Implements Display formatting for XID showing a shortened hex representation.
 impl std::fmt::Display for XID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "XID({})", self.short_description())
     }
 }
 
+/// Implements CBORTagged trait to provide CBOR tag information for XID.
 impl CBORTagged for XID {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_XID])
     }
 }
 
+/// Implements conversion from XID to CBOR for serialization.
 impl From<XID> for CBOR {
     fn from(value: XID) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements conversion from SigningPublicKey reference to XID.
 impl From<&SigningPublicKey> for XID {
     fn from(key: &SigningPublicKey) -> Self {
         Self::new(key)
     }
 }
 
+/// Implements conversion from SigningPrivateKey reference to XID via the public key.
 impl TryFrom<&SigningPrivateKey> for XID {
     type Error = Error;
 
@@ -168,24 +199,28 @@ impl TryFrom<&SigningPrivateKey> for XID {
     }
 }
 
+/// Implements conversion from PublicKeys reference to XID via the signing public key.
 impl From<&PublicKeys> for XID {
     fn from(key: &PublicKeys) -> Self {
         Self::new(key.signing_public_key())
     }
 }
 
+/// Implements conversion from PrivateKeyBase reference to XID via the Schnorr signing key.
 impl From<&PrivateKeyBase> for XID {
     fn from(key: &PrivateKeyBase) -> Self {
         Self::new(key.schnorr_signing_private_key().public_key().unwrap())
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality for XID.
 impl CBORTaggedEncodable for XID {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.0)
     }
 }
 
+/// Implements conversion from CBOR to XID for deserialization.
 impl TryFrom<CBOR> for XID {
     type Error = Error;
 
@@ -194,6 +229,7 @@ impl TryFrom<CBOR> for XID {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality for XID.
 impl CBORTaggedDecodable for XID {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
@@ -201,7 +237,7 @@ impl CBORTaggedDecodable for XID {
     }
 }
 
-// Convert from a byte vector to an instance.
+/// Implements conversion from XID to `Vec<u8>` to allow access to the raw bytes.
 impl From<XID> for Vec<u8> {
     fn from(xid: XID) -> Self {
         xid.0.to_vec()

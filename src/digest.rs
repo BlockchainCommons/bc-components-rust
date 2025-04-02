@@ -5,6 +5,47 @@ use crate::{ digest_provider::DigestProvider, tags };
 use anyhow::{ bail, Result, Error };
 
 /// A cryptographically secure digest, implemented with SHA-256.
+///
+/// A `Digest` represents the cryptographic hash of some data. In this implementation, SHA-256 is used,
+/// which produces a 32-byte hash value. Digests are used throughout the crate for data verification
+/// and as unique identifiers derived from data.
+///
+/// # CBOR Serialization
+///
+/// `Digest` implements the `CBORTaggedCodable` trait, which means it can be serialized to and
+/// deserialized from CBOR with a specific tag. The tag used is `TAG_DIGEST` defined in the `tags` module.
+///
+/// # UR Serialization
+///
+/// When serialized as a Uniform Resource (UR), a `Digest` is represented as a binary blob with the type "digest".
+///
+/// # Examples
+///
+/// Creating a digest from data:
+///
+/// ```
+/// use bc_components::Digest;
+///
+/// // Create a digest from a string
+/// let data = "hello world";
+/// let digest = Digest::from_image(data.as_bytes());
+///
+/// // Validate that the digest matches the original data
+/// assert!(digest.validate(data.as_bytes()));
+/// ```
+///
+/// Creating and using a digest with hexadecimal representation:
+///
+/// ```
+/// use bc_components::Digest;
+///
+/// // Create a digest from a hex string
+/// let hex_string = "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9";
+/// let digest = Digest::from_hex(hex_string);
+///
+/// // Retrieve the digest as hex
+/// assert_eq!(digest.hex(), hex_string);
+/// ```
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Digest([u8; Self::DIGEST_SIZE]);
 
@@ -101,78 +142,91 @@ impl Digest {
     }
 }
 
+/// Allows accessing the underlying data as a fixed-size byte array reference.
 impl<'a> From<&'a Digest> for &'a [u8; Digest::DIGEST_SIZE] {
     fn from(value: &'a Digest) -> Self {
         &value.0
     }
 }
 
+/// Allows accessing the underlying data as a byte slice reference.
 impl<'a> From<&'a Digest> for &'a [u8] {
     fn from(value: &'a Digest) -> Self {
         &value.0
     }
 }
 
+/// Allows using a Digest as a reference to a byte slice.
 impl AsRef<[u8]> for Digest {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+/// Provides a self-reference, enabling API consistency with other types.
 impl AsRef<Digest> for Digest {
     fn as_ref(&self) -> &Digest {
         self
     }
 }
 
+/// Enables partial ordering of Digests by comparing their underlying bytes.
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))
     }
 }
 
+/// Enables total ordering of Digests by comparing their underlying bytes lexicographically.
 impl std::cmp::Ord for Digest {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.cmp(&other.0)
     }
 }
 
+/// Implements DigestProvider to return itself without copying, as a Digest is already a digest.
 impl DigestProvider for Digest {
     fn digest(&self) -> Cow<'_, Digest> {
         Cow::Borrowed(self)
     }
 }
 
+/// Provides a debug representation showing the digest's hexadecimal value.
 impl std::fmt::Debug for Digest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Digest({})", self.hex())
     }
 }
 
+/// Provides a string representation showing the digest's hexadecimal value.
 impl std::fmt::Display for Digest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Digest({})", self.hex())
     }
 }
 
+/// Identifies the CBOR tags used for Digest serialization.
 impl CBORTagged for Digest {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_DIGEST])
     }
 }
 
+/// Enables conversion of a Digest into a tagged CBOR value.
 impl From<Digest> for CBOR {
     fn from(value: Digest) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Defines how a Digest is encoded as CBOR (as a byte string).
 impl CBORTaggedEncodable for Digest {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.0)
     }
 }
 
+/// Enables conversion from CBOR to Digest, with proper error handling.
 impl TryFrom<CBOR> for Digest {
     type Error = Error;
 
@@ -181,6 +235,7 @@ impl TryFrom<CBOR> for Digest {
     }
 }
 
+/// Defines how a Digest is decoded from CBOR.
 impl CBORTaggedDecodable for Digest {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
@@ -188,21 +243,21 @@ impl CBORTaggedDecodable for Digest {
     }
 }
 
-// Convert from an instance reference to an instance.
+/// Enables cloning a Digest from a reference using From trait.
 impl From<&Digest> for Digest {
     fn from(digest: &Digest) -> Self {
         digest.clone()
     }
 }
 
-// Convert from a byte vector to an instance.
+/// Converts a Digest into a `Vec<u8>` containing the digest bytes.
 impl From<Digest> for Vec<u8> {
     fn from(digest: Digest) -> Self {
         digest.0.to_vec()
     }
 }
 
-// Convert a reference to an instance to a byte vector.
+/// Converts a Digest reference into a `Vec<u8>` containing the digest bytes.
 impl From<&Digest> for Vec<u8> {
     fn from(digest: &Digest) -> Self {
         digest.0.to_vec()

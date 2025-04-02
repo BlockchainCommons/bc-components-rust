@@ -3,11 +3,21 @@ use bc_ur::prelude::*;
 use crate::{ Nonce, Digest, DigestProvider, tags, AuthenticationTag };
 use anyhow::{ bail, Result, Error };
 
-/// A secure encrypted message.
+/// A secure encrypted message using IETF ChaCha20-Poly1305 authenticated encryption.
 ///
-/// Implemented using the IETF ChaCha20-Poly1305 encryption.
+/// `EncryptedMessage` represents data that has been encrypted using a symmetric key with the 
+/// ChaCha20-Poly1305 AEAD (Authenticated Encryption with Associated Data) construction as 
+/// specified in [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
 ///
-/// <https://datatracker.ietf.org/doc/html/rfc8439>
+/// An `EncryptedMessage` contains:
+/// - `ciphertext`: The encrypted data (same length as the original plaintext)
+/// - `aad`: Additional Authenticated Data that is not encrypted but is authenticated (optional)
+/// - `nonce`: A 12-byte number used once for this specific encryption operation
+/// - `auth`: A 16-byte authentication tag that verifies the integrity of the message
+///
+/// The `aad` field is often used to include the `Digest` of the plaintext, which allows 
+/// verification of the plaintext after decryption and preserves the unique identity of 
+/// the data when used with structures like Gordian Envelope.
 ///
 /// To facilitate decoding, it is recommended that the plaintext of an `EncryptedMessage` be
 /// tagged CBOR.
@@ -70,6 +80,7 @@ impl EncryptedMessage {
     }
 }
 
+/// Implements Debug formatting to display the message contents in a structured format.
 impl std::fmt::Debug for EncryptedMessage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EncryptedMessage")
@@ -81,12 +92,14 @@ impl std::fmt::Debug for EncryptedMessage {
     }
 }
 
+/// Implements `AsRef<EncryptedMessage>` to allow self-reference.
 impl AsRef<EncryptedMessage> for EncryptedMessage {
     fn as_ref(&self) -> &EncryptedMessage {
         self
     }
 }
 
+/// Implements DigestProvider to provide the digest stored in the AAD field.
 impl DigestProvider for EncryptedMessage {
     fn digest(&self) -> Cow<'_, Digest> {
         let a = self.opt_digest().unwrap();
@@ -94,18 +107,21 @@ impl DigestProvider for EncryptedMessage {
     }
 }
 
+/// Implements CBORTagged to provide the CBOR tag for the EncryptedMessage.
 impl CBORTagged for EncryptedMessage {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_ENCRYPTED])
     }
 }
 
+/// Implements conversion from EncryptedMessage to CBOR for serialization.
 impl From<EncryptedMessage> for CBOR {
     fn from(value: EncryptedMessage) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements `TryFrom<CBOR>` for EncryptedMessage to support conversion from CBOR data.
 impl TryFrom<CBOR> for EncryptedMessage {
     type Error = Error;
 
@@ -114,6 +130,7 @@ impl TryFrom<CBOR> for EncryptedMessage {
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for EncryptedMessage {
     fn untagged_cbor(&self) -> CBOR {
         let mut a = vec![
@@ -130,6 +147,7 @@ impl CBORTaggedEncodable for EncryptedMessage {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for EncryptedMessage {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         match cbor.as_case() {

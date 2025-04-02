@@ -2,7 +2,19 @@ use anyhow::{bail, Result};
 
 pub const ED25519_PUBLIC_KEY_SIZE: usize = bc_crypto::ED25519_PUBLIC_KEY_SIZE;
 
-/// An Ed25519 public key.
+/// An Ed25519 public key for verifying digital signatures.
+///
+/// Ed25519 public keys are used to verify signatures created with the corresponding
+/// private key. The Ed25519 signature system provides:
+///
+/// - Fast signature verification
+/// - Small public keys (32 bytes)
+/// - High security with resistance to various attacks
+///
+/// This implementation allows:
+/// - Creating Ed25519 public keys from raw data
+/// - Verifying signatures against messages
+/// - Converting between various formats
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Ed25519PublicKey([u8; ED25519_PUBLIC_KEY_SIZE]);
 
@@ -44,30 +56,35 @@ impl Ed25519PublicKey {
     }
 }
 
+/// Implements Display to output the key as a hex string.
 impl std::fmt::Display for Ed25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.hex())
     }
 }
 
+/// Implements Debug to output the key with a type label.
 impl std::fmt::Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Ed25519PublicKey({})", self.hex())
     }
 }
 
+/// Implements conversion from an Ed25519PublicKey reference to a byte array reference.
 impl<'a> From<&'a Ed25519PublicKey> for &'a [u8; ED25519_PUBLIC_KEY_SIZE] {
     fn from(value: &'a Ed25519PublicKey) -> Self {
         &value.0
     }
 }
 
+/// Implements conversion from a byte array to an Ed25519PublicKey.
 impl From<[u8; ED25519_PUBLIC_KEY_SIZE]> for Ed25519PublicKey {
     fn from(value: [u8; ED25519_PUBLIC_KEY_SIZE]) -> Self {
         Self::from_data(value)
     }
 }
 
+/// Implements conversion from an Ed25519PublicKey reference to a byte slice.
 impl<'a> From<&'a Ed25519PublicKey> for &'a [u8] {
     fn from(value: &'a Ed25519PublicKey) -> Self {
         &value.0

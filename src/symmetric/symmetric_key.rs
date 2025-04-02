@@ -3,7 +3,20 @@ use bc_crypto::{ aead_chacha20_poly1305_encrypt_with_aad, aead_chacha20_poly1305
 use bc_ur::prelude::*;
 use anyhow::{ bail, Result, Error };
 
-/// A symmetric encryption key.
+/// A symmetric encryption key used for both encryption and decryption.
+///
+/// `SymmetricKey` is a 32-byte cryptographic key used with ChaCha20-Poly1305 AEAD
+/// (Authenticated Encryption with Associated Data) encryption. This implementation follows
+/// the IETF ChaCha20-Poly1305 specification as defined in [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
+///
+/// Symmetric encryption uses the same key for both encryption and decryption, unlike
+/// asymmetric encryption where different keys are used for each operation.
+///
+/// `SymmetricKey` can be used to encrypt plaintext into an `EncryptedMessage` that includes:
+/// - Ciphertext (the encrypted data)
+/// - Nonce (a unique number used once for each encryption)
+/// - Authentication tag (to verify message integrity)
+/// - Optional additional authenticated data (AAD)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct SymmetricKey([u8; Self::SYMMETRIC_KEY_SIZE]);
 
@@ -100,69 +113,77 @@ impl SymmetricKey {
     }
 }
 
+/// Implements Default to create a new random symmetric key.
 impl Default for SymmetricKey {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Implements `AsRef<SymmetricKey>` to allow self-reference.
 impl AsRef<SymmetricKey> for SymmetricKey {
     fn as_ref(&self) -> &SymmetricKey {
         self
     }
 }
 
+/// Implements conversion from a SymmetricKey reference to a byte array reference.
 impl<'a> From<&'a SymmetricKey> for &'a [u8; SymmetricKey::SYMMETRIC_KEY_SIZE] {
-    fn from(digest: &'a SymmetricKey) -> Self {
-        &digest.0
+    fn from(key: &'a SymmetricKey) -> Self {
+        &key.0
     }
 }
 
-// Convert from a reference to a byte vector to an instance.
+/// Implements conversion from a SymmetricKey reference to a SymmetricKey.
 impl From<&SymmetricKey> for SymmetricKey {
-    fn from(digest: &SymmetricKey) -> Self {
-        digest.clone()
+    fn from(key: &SymmetricKey) -> Self {
+        key.clone()
     }
 }
 
-// Convert from a byte vector to an instance.
+/// Implements conversion from a SymmetricKey to a `Vec<u8>`.
 impl From<SymmetricKey> for Vec<u8> {
-    fn from(digest: SymmetricKey) -> Self {
-        digest.0.to_vec()
+    fn from(key: SymmetricKey) -> Self {
+        key.0.to_vec()
     }
 }
 
-// Convert a reference to an instance to a byte vector.
+/// Implements conversion from a SymmetricKey reference to a `Vec<u8>`.
 impl From<&SymmetricKey> for Vec<u8> {
-    fn from(digest: &SymmetricKey) -> Self {
-        digest.0.to_vec()
+    fn from(key: &SymmetricKey) -> Self {
+        key.0.to_vec()
     }
 }
 
+/// Implements Debug formatting to display the key in hexadecimal format.
 impl std::fmt::Debug for SymmetricKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "SymmetricKey({})", self.hex())
     }
 }
 
+/// Implements CBORTagged to provide the CBOR tag for the SymmetricKey.
 impl CBORTagged for SymmetricKey {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_SYMMETRIC_KEY])
     }
 }
 
+/// Implements conversion from SymmetricKey to CBOR for serialization.
 impl From<SymmetricKey> for CBOR {
     fn from(value: SymmetricKey) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for SymmetricKey {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.0)
     }
 }
 
+/// Implements `TryFrom<CBOR>` for SymmetricKey to support conversion from CBOR data.
 impl TryFrom<CBOR> for SymmetricKey {
     type Error = Error;
 
@@ -171,6 +192,7 @@ impl TryFrom<CBOR> for SymmetricKey {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for SymmetricKey {
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;

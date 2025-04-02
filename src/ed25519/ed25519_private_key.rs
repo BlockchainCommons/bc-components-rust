@@ -5,7 +5,23 @@ use crate::Ed25519PublicKey;
 
 pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 
-/// An Ed25519 private key.
+/// An Ed25519 private key for creating digital signatures.
+///
+/// Ed25519 is a public-key signature system based on the Edwards curve over the finite field
+/// GF(2^255 - 19). It provides the following features:
+///
+/// - Fast single-signature verification
+/// - Fast key generation
+/// - High security level (equivalent to 128 bits of symmetric security)
+/// - Collision resilience - hash function collisions don't break security
+/// - Protection against side-channel attacks
+/// - Small signatures (64 bytes) and small keys (32 bytes)
+///
+/// This implementation allows:
+/// - Creating random Ed25519 private keys
+/// - Deriving the corresponding public key 
+/// - Signing messages
+/// - Converting between various formats
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Ed25519PrivateKey([u8; ED25519_PRIVATE_KEY_SIZE]);
 
@@ -70,42 +86,49 @@ impl Ed25519PrivateKey {
     }
 }
 
+/// Implements conversion from a byte array to an Ed25519PrivateKey.
 impl From<[u8; ED25519_PRIVATE_KEY_SIZE]> for Ed25519PrivateKey {
     fn from(data: [u8; ED25519_PRIVATE_KEY_SIZE]) -> Self {
         Self::from_data(data)
     }
 }
 
+/// Implements AsRef<[u8]> to allow Ed25519PrivateKey to be treated as a byte slice.
 impl AsRef<[u8]> for Ed25519PrivateKey {
     fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }
 
+/// Implements Display to output the key as a hex string.
 impl std::fmt::Display for Ed25519PrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.hex())
     }
 }
 
+/// Implements Debug to output the key with a type label.
 impl std::fmt::Debug for Ed25519PrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Ed25519PrivateKey({})", self.hex())
     }
 }
 
+/// Implements Default to create a new random Ed25519PrivateKey.
 impl Default for Ed25519PrivateKey {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Implements conversion from an Ed25519PrivateKey reference to a byte array reference.
 impl<'a> From<&'a Ed25519PrivateKey> for &'a [u8; ED25519_PRIVATE_KEY_SIZE] {
     fn from(value: &'a Ed25519PrivateKey) -> Self {
         &value.0
     }
 }
 
+/// Implements conversion from an Ed25519PrivateKey reference to a byte slice.
 impl<'a> From<&'a Ed25519PrivateKey> for &'a [u8] {
     fn from(value: &'a Ed25519PrivateKey) -> Self {
         &value.0

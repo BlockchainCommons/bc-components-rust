@@ -7,14 +7,43 @@ use crate::{tags, SymmetricKey};
 
 use super::{MLKEMCiphertext, MLKEM};
 
+/// A public key for the ML-KEM post-quantum key encapsulation mechanism.
+///
+/// `MLKEMPublicKey` represents a public key that can be used to encapsulate shared secrets
+/// using the ML-KEM (Module Lattice-based Key Encapsulation Mechanism) post-quantum algorithm.
+/// It supports multiple security levels through the variants:
+///
+/// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128), 800 bytes
+/// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192), 1184 bytes
+/// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256), 1568 bytes
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::MLKEM;
+///
+/// // Generate a keypair
+/// let (private_key, public_key) = MLKEM::MLKEM512.keypair();
+///
+/// // Encapsulate a shared secret using the public key
+/// let (shared_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+/// ```
 #[derive(Clone)]
 pub enum MLKEMPublicKey {
+    /// An ML-KEM-512 public key (NIST security level 1)
     MLKEM512(Box<mlkem512::PublicKey>),
+    /// An ML-KEM-768 public key (NIST security level 3)
     MLKEM768(Box<mlkem768::PublicKey>),
+    /// An ML-KEM-1024 public key (NIST security level 5)
     MLKEM1024(Box<mlkem1024::PublicKey>),
 }
 
+/// Implements equality comparison for ML-KEM public keys.
 impl PartialEq for MLKEMPublicKey {
+    /// Compares two ML-KEM public keys for equality.
+    ///
+    /// Two ML-KEM public keys are equal if they have the same security level
+    /// and the same raw byte representation.
     fn eq(&self, other: &Self) -> bool {
         self.level() == other.level() && self.as_bytes() == other.as_bytes()
     }
@@ -22,7 +51,9 @@ impl PartialEq for MLKEMPublicKey {
 
 impl Eq for MLKEMPublicKey {}
 
+/// Implements hashing for ML-KEM public keys.
 impl std::hash::Hash for MLKEMPublicKey {
+    /// Hashes both the security level and the raw bytes of the public key.
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.level().hash(state);
         self.as_bytes().hash(state);
@@ -30,6 +61,7 @@ impl std::hash::Hash for MLKEMPublicKey {
 }
 
 impl MLKEMPublicKey {
+    /// Returns the security level of this ML-KEM public key.
     pub fn level(&self) -> MLKEM {
         match self {
             MLKEMPublicKey::MLKEM512(_) => MLKEM::MLKEM512,
@@ -38,10 +70,12 @@ impl MLKEMPublicKey {
         }
     }
 
+    /// Returns the size of this ML-KEM public key in bytes.
     pub fn size(&self) -> usize {
         self.level().public_key_size()
     }
 
+    /// Returns the raw bytes of this ML-KEM public key.
     pub fn as_bytes(&self) -> &[u8] {
         match self {
             MLKEMPublicKey::MLKEM512(pk) => pk.as_ref().as_bytes(),
@@ -50,6 +84,22 @@ impl MLKEMPublicKey {
         }
     }
 
+    /// Creates an ML-KEM public key from raw bytes and a security level.
+    ///
+    /// # Parameters
+    ///
+    /// * `level` - The security level of the key.
+    /// * `bytes` - The raw bytes of the key.
+    ///
+    /// # Returns
+    ///
+    /// An `MLKEMPublicKey` if the bytes represent a valid key for the given level,
+    /// or an error otherwise.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the bytes do not represent a valid ML-KEM public key
+    /// for the specified security level.
     pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
             MLKEM::MLKEM512 => Ok(MLKEMPublicKey::MLKEM512(Box::new(
@@ -64,6 +114,33 @@ impl MLKEMPublicKey {
         }
     }
 
+    /// Encapsulates a new shared secret using this public key.
+    ///
+    /// This method generates a random shared secret and encapsulates it using
+    /// this public key, producing a ciphertext that can only be decapsulated
+    /// by the corresponding private key.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - A `SymmetricKey` with the shared secret (32 bytes)
+    /// - An `MLKEMCiphertext` with the encapsulated shared secret
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::MLKEM;
+    ///
+    /// // Generate a keypair
+    /// let (private_key, public_key) = MLKEM::MLKEM512.keypair();
+    ///
+    /// // Encapsulate a shared secret
+    /// let (shared_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+    ///
+    /// // The private key holder can decapsulate the same shared secret
+    /// let decapsulated_secret = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+    /// assert_eq!(shared_secret, decapsulated_secret);
+    /// ```
     pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, MLKEMCiphertext) {
         match self {
             MLKEMPublicKey::MLKEM512(pk) => {
@@ -91,7 +168,9 @@ impl MLKEMPublicKey {
     }
 }
 
+/// Provides debug formatting for ML-KEM public keys.
 impl std::fmt::Debug for MLKEMPublicKey {
+    /// Formats the public key as a string for debugging purposes.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             MLKEMPublicKey::MLKEM512(_) => f.write_str("MLKEM512PublicKey"),
@@ -101,33 +180,46 @@ impl std::fmt::Debug for MLKEMPublicKey {
     }
 }
 
+/// Defines CBOR tags for ML-KEM public keys.
 impl CBORTagged for MLKEMPublicKey {
+    /// Returns the CBOR tag for ML-KEM public keys.
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_MLKEM_PUBLIC_KEY])
     }
 }
 
+/// Converts an `MLKEMPublicKey` to CBOR.
 impl From<MLKEMPublicKey> for CBOR {
+    /// Converts to tagged CBOR.
     fn from(value: MLKEMPublicKey) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBOR encoding for ML-KEM public keys.
 impl CBORTaggedEncodable for MLKEMPublicKey {
+    /// Creates the untagged CBOR representation as an array with level and key bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
 }
 
+/// Attempts to convert CBOR to an `MLKEMPublicKey`.
 impl TryFrom<CBOR> for MLKEMPublicKey {
     type Error = Error;
 
+    /// Converts from tagged CBOR.
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
+/// Implements CBOR decoding for ML-KEM public keys.
 impl CBORTaggedDecodable for MLKEMPublicKey {
+    /// Creates an `MLKEMPublicKey` from untagged CBOR.
+    ///
+    /// # Errors
+    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM public key.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {

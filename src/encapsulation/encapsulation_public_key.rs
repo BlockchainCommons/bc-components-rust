@@ -7,13 +7,47 @@ use crate::{
     X25519PublicKey,
 };
 
+/// A public key used for key encapsulation mechanisms (KEM).
+///
+/// `EncapsulationPublicKey` is an enum representing different types of public keys
+/// that can be used for key encapsulation, including:
+///
+/// - X25519: Curve25519-based key exchange
+/// - ML-KEM: Module Lattice-based Key Encapsulation Mechanism at various security levels
+///
+/// These public keys are used to encrypt (encapsulate) shared secrets that can only be
+/// decrypted (decapsulated) by the corresponding private key holder.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPublicKey {
+    /// An X25519 public key
     X25519(X25519PublicKey),
+    /// An ML-KEM public key (post-quantum)
     MLKEM(MLKEMPublicKey),
 }
 
 impl EncapsulationPublicKey {
+    /// Returns the encapsulation scheme associated with this public key.
+    ///
+    /// # Returns
+    ///
+    /// The encapsulation scheme (X25519, MLKEM512, MLKEM768, or MLKEM1024)
+    /// that corresponds to this public key.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::{EncapsulationScheme, X25519PrivateKey};
+    ///
+    /// // Generate a keypair
+    /// let private_key = X25519PrivateKey::new();
+    /// let public_key = private_key.public_key();
+    ///
+    /// // Convert to encapsulation public key
+    /// let encapsulation_public_key = bc_components::EncapsulationPublicKey::X25519(public_key);
+    ///
+    /// // Check the scheme
+    /// assert_eq!(encapsulation_public_key.encapsulation_scheme(), EncapsulationScheme::X25519);
+    /// ```
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
             Self::X25519(_) => EncapsulationScheme::X25519,
@@ -25,6 +59,38 @@ impl EncapsulationPublicKey {
         }
     }
 
+    /// Encapsulates a new shared secret using this public key.
+    ///
+    /// This method performs the encapsulation operation for key exchange. It generates
+    /// a new shared secret and encapsulates it using this public key.
+    ///
+    /// The encapsulation process differs based on the key type:
+    /// - For X25519: Generates an ephemeral private/public key pair, derives a shared secret
+    ///   using Diffie-Hellman, and returns the shared secret along with the ephemeral public key
+    /// - For ML-KEM: Uses the KEM encapsulation algorithm to generate and encapsulate
+    ///   a random shared secret
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - The generated shared secret as a `SymmetricKey`
+    /// - The encapsulation ciphertext that can be sent to the private key holder
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bc_components::EncapsulationScheme;
+    ///
+    /// // Generate a key pair using the default scheme (X25519)
+    /// let (private_key, public_key) = EncapsulationScheme::default().keypair();
+    ///
+    /// // Encapsulate a new shared secret
+    /// let (shared_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+    ///
+    /// // The private key holder can recover the same shared secret
+    /// let recovered_secret = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+    /// assert_eq!(shared_secret, recovered_secret);
+    /// ```
     pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, EncapsulationCiphertext) {
         match self {
             EncapsulationPublicKey::X25519(public_key) => {
@@ -45,6 +111,10 @@ impl EncapsulationPublicKey {
     }
 }
 
+/// Implementation of the `Encrypter` trait for `EncapsulationPublicKey`.
+///
+/// This allows `EncapsulationPublicKey` to be used with the generic encryption
+/// interface defined by the `Encrypter` trait.
 impl Encrypter for EncapsulationPublicKey {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
         self.clone()
@@ -55,15 +125,17 @@ impl Encrypter for EncapsulationPublicKey {
     }
 }
 
+/// Conversion from `EncapsulationPublicKey` to CBOR for serialization.
 impl From<EncapsulationPublicKey> for CBOR {
-    fn from(ciphertext: EncapsulationPublicKey) -> Self {
-        match ciphertext {
+    fn from(public_key: EncapsulationPublicKey) -> Self {
+        match public_key {
             EncapsulationPublicKey::X25519(public_key) => public_key.into(),
-            EncapsulationPublicKey::MLKEM(ciphertext) => ciphertext.into(),
+            EncapsulationPublicKey::MLKEM(public_key) => public_key.into(),
         }
     }
 }
 
+/// Conversion from CBOR to `EncapsulationPublicKey` for deserialization.
 impl TryFrom<CBOR> for EncapsulationPublicKey {
     type Error = anyhow::Error;
 

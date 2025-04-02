@@ -1,3 +1,17 @@
+//! Symmetric cryptography types and operations.
+//!
+//! This module provides types and operations for symmetric encryption, where the same key is 
+//! used for both encryption and decryption. It implements the ChaCha20-Poly1305 AEAD
+//! (Authenticated Encryption with Associated Data) construction as specified in 
+//! [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
+//!
+//! The main components are:
+//!
+//! - `SymmetricKey`: A 32-byte key used for both encryption and decryption
+//! - `AuthenticationTag`: A 16-byte value that verifies message integrity
+//! - `EncryptedMessage`: A complete encrypted message containing ciphertext, nonce, 
+//!   authentication tag, and optional additional authenticated data (AAD)
+
 mod encrypted_message;
 pub use encrypted_message::EncryptedMessage;
 

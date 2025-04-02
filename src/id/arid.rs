@@ -6,6 +6,19 @@ use anyhow::{ bail, Error, Result };
 
 /// An "Apparently Random Identifier" (ARID)
 ///
+/// An ARID is a cryptographically strong, universally unique identifier with the following properties:
+/// - Non-correlatability: The sequence of bits cannot be correlated with its referent or any other ARID
+/// - Neutral semantics: Contains no inherent type information
+/// - Open generation: Any method of generation is allowed as long as it produces statistically random bits
+/// - Minimum strength: Must be 256 bits (32 bytes) in length
+/// - Cryptographic suitability: Can be used as inputs to cryptographic constructs
+///
+/// Unlike digests/hashes which identify a fixed, immutable state of data, ARIDs can serve as stable
+/// identifiers for mutable data structures.
+///
+/// ARIDs should not be confused with or cast to/from other identifier types (like UUIDs),
+/// used as nonces, keys, or cryptographic seeds.
+///
 /// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-arid.md).
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct ARID([u8; Self::ARID_SIZE]);
@@ -59,36 +72,42 @@ impl ARID {
     }
 }
 
+/// Implements the Default trait to create a new random ARID.
 impl Default for ARID {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Implements conversion from an ARID reference to a byte slice reference.
 impl<'a> From<&'a ARID> for &'a [u8] {
     fn from(value: &'a ARID) -> Self {
         &value.0
     }
 }
 
+/// Implements the CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for ARID {
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_ARID])
     }
 }
 
+/// Implements conversion from ARID to CBOR for serialization.
 impl From<ARID> for CBOR {
     fn from(value: ARID) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for ARID {
     fn untagged_cbor(&self) -> CBOR {
         CBOR::to_byte_string(self.data())
     }
 }
 
+/// Implements `TryFrom<CBOR>` for ARID to support conversion from CBOR data.
 impl TryFrom<CBOR> for ARID {
     type Error = Error;
 
@@ -97,6 +116,7 @@ impl TryFrom<CBOR> for ARID {
     }
 }
 
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for ARID {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
@@ -104,18 +124,21 @@ impl CBORTaggedDecodable for ARID {
     }
 }
 
+/// Implements Debug formatting for ARID showing the full hex representation.
 impl std::fmt::Debug for ARID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ARID({})", self.hex())
     }
 }
 
+/// Implements Display formatting for ARID showing the hex representation.
 impl std::fmt::Display for ARID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "ARID({})", self.hex())
     }
 }
 
+/// Implements PartialOrd to allow ARIDs to be compared and ordered.
 impl PartialOrd for ARID {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.0.cmp(&other.0))

@@ -6,17 +6,79 @@ use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
 
-/// A cryptographic signature. Supports ECDSA and Schnorr.
+/// A digital signature created with various signature algorithms.
+///
+/// `Signature` is an enum representing different types of digital signatures:
+/// 
+/// - `Schnorr`: A BIP-340 Schnorr signature (64 bytes)
+/// - `ECDSA`: An ECDSA signature using the secp256k1 curve (64 bytes)
+/// - `Ed25519`: An Ed25519 signature (64 bytes)
+/// - `SSH`: An SSH signature in various formats
+/// - `MLDSA`: A post-quantum ML-DSA signature
+///
+/// Signatures can be serialized to and from CBOR with appropriate tags.
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::{SignatureScheme, Signer, Verifier};
+///
+/// // Create a key pair using Schnorr
+/// let (private_key, public_key) = SignatureScheme::Schnorr.keypair();
+///
+/// // Sign a message
+/// let message = b"Hello, world!";
+/// let signature = private_key.sign(&message).unwrap();
+///
+/// // The signature can be verified with the corresponding public key
+/// assert!(public_key.verify(&signature, &message));
+/// ```
+///
+/// Converting to and from CBOR:
+///
+/// ```
+/// use bc_components::{SignatureScheme, Signer};
+/// use dcbor::prelude::*;
+///
+/// // Create a signature
+/// let (private_key, _) = SignatureScheme::Schnorr.keypair();
+/// let message = b"Hello, world!";
+/// let signature = private_key.sign(&message).unwrap();
+///
+/// // Convert to CBOR
+/// let cbor: CBOR = signature.clone().into();
+/// let data = cbor.to_cbor_data();
+///
+/// // Convert back from CBOR
+/// let recovered = bc_components::Signature::from_tagged_cbor_data(&data).unwrap();
+///
+/// // The signatures should be identical
+/// assert_eq!(signature, recovered);
+/// ```
 #[derive(Clone)]
 pub enum Signature {
+    /// A BIP-340 Schnorr signature (64 bytes)
     Schnorr([u8; SCHNORR_SIGNATURE_SIZE]),
+    
+    /// An ECDSA signature using the secp256k1 curve (64 bytes)
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
+    
+    /// An Ed25519 signature (64 bytes)
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
+    
+    /// An SSH signature
     SSH(SshSig),
+    
+    /// A post-quantum ML-DSA signature
     MLDSA(MLDSASignature),
 }
 
+/// Implementation of equality comparison for Signature
 impl PartialEq for Signature {
+    /// Compares two signatures for equality.
+    ///
+    /// Signatures are equal if they have the same type and the same signature data.
+    /// Signatures of different types (e.g., Schnorr vs ECDSA) are never equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Schnorr(a), Self::Schnorr(b)) => a == b,
@@ -30,12 +92,47 @@ impl PartialEq for Signature {
 }
 
 impl Signature {
-    /// Restores a Schnorr signature from an array of bytes.
+    /// Creates a Schnorr signature from a 64-byte array.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The 64-byte signature data
+    ///
+    /// # Returns
+    ///
+    /// A new Schnorr signature
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::schnorr_from_data(data);
+    /// ```
     pub fn schnorr_from_data(data: [u8; SCHNORR_SIGNATURE_SIZE]) -> Self {
         Self::Schnorr(data)
     }
 
-    /// Restores a Schnorr signature from an array of bytes.
+    /// Creates a Schnorr signature from a byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A byte slice containing the signature data
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the signature or an error if the data is not
+    /// exactly 64 bytes in length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::schnorr_from_data_ref(&data).unwrap();
+    /// ```
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
@@ -46,12 +143,47 @@ impl Signature {
         Ok(Self::schnorr_from_data(arr))
     }
 
-    /// Restores an ECDSA signature from an array of bytes.
+    /// Creates an ECDSA signature from a 64-byte array.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The 64-byte signature data
+    ///
+    /// # Returns
+    ///
+    /// A new ECDSA signature
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::ecdsa_from_data(data);
+    /// ```
     pub fn ecdsa_from_data(data: [u8; ECDSA_SIGNATURE_SIZE]) -> Self {
         Self::ECDSA(data)
     }
 
-    /// Restores an ECDSA signature from an array of bytes.
+    /// Creates an ECDSA signature from a byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A byte slice containing the signature data
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the signature or an error if the data is not
+    /// exactly 64 bytes in length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::ecdsa_from_data_ref(&data).unwrap();
+    /// ```
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
@@ -62,10 +194,47 @@ impl Signature {
         Ok(Self::ecdsa_from_data(arr))
     }
 
+    /// Creates an Ed25519 signature from a 64-byte array.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The 64-byte signature data
+    ///
+    /// # Returns
+    ///
+    /// A new Ed25519 signature
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::ed25519_from_data(data);
+    /// ```
     pub fn ed25519_from_data(data: [u8; ED25519_SIGNATURE_SIZE]) -> Self {
         Self::Ed25519(data)
     }
 
+    /// Creates an Ed25519 signature from a byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A byte slice containing the signature data
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the signature or an error if the data is not
+    /// exactly 64 bytes in length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::Signature;
+    ///
+    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let signature = Signature::ed25519_from_data_ref(&data).unwrap();
+    /// ```
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_SIGNATURE_SIZE {
@@ -76,11 +245,46 @@ impl Signature {
         Ok(Self::Ed25519(arr))
     }
 
-    /// Restores an SSH signature from a `SshSig`.
+    /// Creates an SSH signature from an `SshSig` object.
+    ///
+    /// # Arguments
+    ///
+    /// * `sig` - The SSH signature object
+    ///
+    /// # Returns
+    ///
+    /// A new SSH signature
     pub fn from_ssh(sig: SshSig) -> Self {
         Self::SSH(sig)
     }
 
+    /// Returns the Schnorr signature data if this is a Schnorr signature.
+    ///
+    /// # Returns
+    ///
+    /// Some reference to the 64-byte signature data if this is a Schnorr signature,
+    /// or None if it's a different signature type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::{SignatureScheme, Signer};
+    ///
+    /// // Create a Schnorr signature
+    /// let (private_key, _) = SignatureScheme::Schnorr.keypair();
+    /// let message = b"Hello, world!";
+    /// let signature = private_key.sign(&message).unwrap();
+    ///
+    /// // We can access the Schnorr signature data
+    /// assert!(signature.to_schnorr().is_some());
+    ///
+    /// // Create an ECDSA signature
+    /// let (ecdsa_key, _) = SignatureScheme::Ecdsa.keypair();
+    /// let ecdsa_sig = ecdsa_key.sign(&message).unwrap();
+    ///
+    /// // This will return None since it's not a Schnorr signature
+    /// assert!(ecdsa_sig.to_schnorr().is_none());
+    /// ```
     pub fn to_schnorr(&self) -> Option<&[u8; SCHNORR_SIGNATURE_SIZE]> {
         match self {
             Self::Schnorr(sig) => Some(sig),
@@ -88,6 +292,12 @@ impl Signature {
         }
     }
 
+    /// Returns the ECDSA signature data if this is an ECDSA signature.
+    ///
+    /// # Returns
+    ///
+    /// Some reference to the 64-byte signature data if this is an ECDSA signature,
+    /// or None if it's a different signature type.
     pub fn to_ecdsa(&self) -> Option<&[u8; ECDSA_SIGNATURE_SIZE]> {
         match self {
             Self::ECDSA(sig) => Some(sig),
@@ -95,6 +305,12 @@ impl Signature {
         }
     }
 
+    /// Returns the SSH signature if this is an SSH signature.
+    ///
+    /// # Returns
+    ///
+    /// Some reference to the SSH signature if this is an SSH signature,
+    /// or None if it's a different signature type.
     pub fn to_ssh(&self) -> Option<&SshSig> {
         match self {
             Self::SSH(sig) => Some(sig),
@@ -102,6 +318,27 @@ impl Signature {
         }
     }
 
+    /// Determines the signature scheme used to create this signature.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the signature scheme, or an error if the
+    /// signature scheme cannot be determined (e.g., for unsupported SSH algorithms).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::{SignatureScheme, Signer};
+    ///
+    /// // Create a signature with ECDSA
+    /// let (private_key, _) = SignatureScheme::Ecdsa.keypair();
+    /// let message = b"Hello, world!";
+    /// let signature = private_key.sign(&message).unwrap();
+    ///
+    /// // Get the signature scheme
+    /// let scheme = signature.scheme().unwrap();
+    /// assert_eq!(scheme, SignatureScheme::Ecdsa);
+    /// ```
     pub fn scheme(&self) -> Result<SignatureScheme> {
         match self {
             Self::Schnorr(_) => Ok(SignatureScheme::Schnorr),
@@ -126,7 +363,12 @@ impl Signature {
     }
 }
 
+/// Debug implementation for Signature
 impl std::fmt::Debug for Signature {
+    /// Formats the signature for display.
+    ///
+    /// For binary signatures (Schnorr, ECDSA, Ed25519), displays the hex-encoded signature data.
+    /// For SSH and ML-DSA signatures, displays the signature object.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Signature::Schnorr(data) => f
@@ -147,25 +389,43 @@ impl std::fmt::Debug for Signature {
     }
 }
 
+/// Implementation of AsRef for Signature
 impl AsRef<Signature> for Signature {
+    /// Returns a reference to self.
     fn as_ref(&self) -> &Signature {
         self
     }
 }
 
+/// Implementation of the CBORTagged trait for Signature
 impl CBORTagged for Signature {
+    /// Returns the CBOR tags used for this type.
+    ///
+    /// For Signature, the tag is 40020.
     fn cbor_tags() -> Vec<dcbor::Tag> {
         tags_for_values(&[tags::TAG_SIGNATURE])
     }
 }
 
+/// Conversion from Signature to CBOR
 impl From<Signature> for CBOR {
+    /// Converts a Signature to a tagged CBOR value.
     fn from(value: Signature) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implementation of the CBORTaggedEncodable trait for Signature
 impl CBORTaggedEncodable for Signature {
+    /// Converts the Signature to an untagged CBOR value.
+    ///
+    /// The CBOR encoding depends on the signature type:
+    ///
+    /// - Schnorr: A byte string containing the 64-byte signature
+    /// - ECDSA: An array containing the discriminator 1 and the 64-byte signature
+    /// - Ed25519: An array containing the discriminator 2 and the 64-byte signature
+    /// - SSH: A tagged text string containing the PEM-encoded signature
+    /// - ML-DSA: Delegates to the MLDSASignature implementation
     fn untagged_cbor(&self) -> CBOR {
         match self {
             Signature::Schnorr(data) => CBOR::to_byte_string(data),
@@ -180,15 +440,37 @@ impl CBORTaggedEncodable for Signature {
     }
 }
 
+/// TryFrom implementation for converting CBOR to Signature
 impl TryFrom<CBOR> for Signature {
     type Error = Error;
 
+    /// Tries to convert a CBOR value to a Signature.
+    ///
+    /// This is a convenience method that calls from_tagged_cbor.
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
+/// Implementation of the CBORTaggedDecodable trait for Signature
 impl CBORTaggedDecodable for Signature {
+    /// Creates a Signature from an untagged CBOR value.
+    ///
+    /// # Arguments
+    ///
+    /// * `cbor` - The CBOR value to decode
+    ///
+    /// # Returns
+    ///
+    /// A Result containing the decoded Signature or an error if decoding fails.
+    ///
+    /// # Format
+    ///
+    /// The CBOR value must be one of:
+    /// - A byte string (interpreted as a Schnorr signature)
+    /// - An array of length 2, where the first element is 1 (ECDSA) or 2 (Ed25519)
+    ///   and the second element is a byte string containing the signature data
+    /// - A tagged value with a tag for MLDSA or SSH signatures
     fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
         match cbor.clone().into_case() {
             CBORCase::ByteString(bytes) => Self::schnorr_from_data_ref(bytes),

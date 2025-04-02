@@ -1,3 +1,62 @@
+//! Digital signatures for various cryptographic schemes.
+//!
+//! This module provides a unified interface for creating and verifying digital signatures
+//! using different cryptographic algorithms, including:
+//!
+//! - **Elliptic Curve Schemes**: ECDSA and Schnorr signatures using the secp256k1 curve
+//! - **Edwards Curve Schemes**: Ed25519 signatures
+//! - **Post-Quantum Schemes**: ML-DSA (Module Lattice-based Digital Signature Algorithm)
+//! - **SSH Schemes**: Various SSH signature algorithms
+//!
+//! The key types include:
+//!
+//! - [`SigningPrivateKey`] - Private keys for creating signatures
+//! - [`SigningPublicKey`] - Public keys for verifying signatures
+//! - [`Signature`] - The digital signatures themselves
+//!
+//! All types share a common interface through the [`Signer`] and [`Verifier`] traits,
+//! and can be serialized to and from CBOR with appropriate tags.
+//!
+//! # Examples
+//!
+//! Creating and verifying a signature:
+//!
+//! ```
+//! use bc_components::{SignatureScheme, Signer, Verifier};
+//!
+//! // Create a key pair using the Schnorr signature scheme
+//! let (private_key, public_key) = SignatureScheme::Schnorr.keypair();
+//!
+//! // Sign a message
+//! let message = b"Hello, world!";
+//! let signature = private_key.sign(&message).unwrap();
+//!
+//! // Verify the signature
+//! assert!(public_key.verify(&signature, &message));
+//!
+//! // Verification should fail for a different message
+//! assert!(!public_key.verify(&signature, &b"Different message"));
+//! ```
+//!
+//! Different signature schemes:
+//!
+//! ```
+//! use bc_components::{SignatureScheme, Signer};
+//!
+//! // Create key pairs for different signature schemes
+//! let (schnorr_key, _) = SignatureScheme::Schnorr.keypair();
+//! let (ecdsa_key, _) = SignatureScheme::Ecdsa.keypair();
+//! let (ed25519_key, _) = SignatureScheme::Ed25519.keypair();
+//! let (mldsa_key, _) = SignatureScheme::MLDSA65.keypair();
+//!
+//! // Sign a message with each key
+//! let message = b"Hello, world!";
+//! let schnorr_sig = schnorr_key.sign(&message).unwrap();
+//! let ecdsa_sig = ecdsa_key.sign(&message).unwrap();
+//! let ed25519_sig = ed25519_key.sign(&message).unwrap();
+//! let mldsa_sig = mldsa_key.sign(&message).unwrap();
+//! ```
+
 mod signing_private_key;
 pub use signing_private_key::{SigningOptions, SigningPrivateKey};
 

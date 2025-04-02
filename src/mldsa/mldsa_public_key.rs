@@ -7,14 +7,47 @@ use crate::tags;
 
 use super::{MLDSASignature, MLDSA};
 
+/// A public key for the ML-DSA post-quantum digital signature algorithm.
+///
+/// `MLDSAPublicKey` represents a public key that can be used to verify digital 
+/// signatures created with the ML-DSA (Module Lattice-based Digital Signature Algorithm) 
+/// post-quantum algorithm. It supports multiple security levels through the variants:
+///
+/// - `MLDSA44`: NIST security level 2 (roughly equivalent to AES-128)
+/// - `MLDSA65`: NIST security level 3 (roughly equivalent to AES-192)
+/// - `MLDSA87`: NIST security level 5 (roughly equivalent to AES-256)
+///
+/// # Examples
+///
+/// ```
+/// use bc_components::MLDSA;
+///
+/// // Generate a keypair
+/// let (private_key, public_key) = MLDSA::MLDSA44.keypair();
+///
+/// // Sign a message
+/// let message = b"Hello, post-quantum world!";
+/// let signature = private_key.sign(message);
+///
+/// // Verify the signature
+/// assert!(public_key.verify(&signature, message).unwrap());
+/// ```
 #[derive(Clone)]
 pub enum MLDSAPublicKey {
+    /// An ML-DSA44 public key (NIST security level 2)
     MLDSA44(Box<mldsa44::PublicKey>),
+    /// An ML-DSA65 public key (NIST security level 3)
     MLDSA65(Box<mldsa65::PublicKey>),
+    /// An ML-DSA87 public key (NIST security level 5)
     MLDSA87(Box<mldsa87::PublicKey>),
 }
 
+/// Implements equality comparison for ML-DSA public keys.
 impl PartialEq for MLDSAPublicKey {
+    /// Compares two ML-DSA public keys for equality.
+    ///
+    /// Two ML-DSA public keys are equal if they have the same security level
+    /// and the same raw byte representation.
     fn eq(&self, other: &Self) -> bool {
         self.level() == other.level() && self.as_bytes() == other.as_bytes()
     }
@@ -22,7 +55,9 @@ impl PartialEq for MLDSAPublicKey {
 
 impl Eq for MLDSAPublicKey {}
 
+/// Implements hashing for ML-DSA public keys.
 impl std::hash::Hash for MLDSAPublicKey {
+    /// Hashes both the security level and the raw bytes of the public key.
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.level().hash(state);
         self.as_bytes().hash(state);
@@ -30,6 +65,35 @@ impl std::hash::Hash for MLDSAPublicKey {
 }
 
 impl MLDSAPublicKey {
+    /// Verifies an ML-DSA signature for a message using this public key.
+    ///
+    /// # Parameters
+    ///
+    /// * `signature` - The signature to verify.
+    /// * `message` - The message that was signed.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(true)` if the signature is valid for the message and this public key,
+    /// `Ok(false)` if the signature is invalid, or an error if the security levels
+    /// of the signature and public key don't match.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the security level of the signature doesn't match the
+    /// security level of this public key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bc_components::MLDSA;
+    ///
+    /// let (private_key, public_key) = MLDSA::MLDSA44.keypair();
+    /// let message = b"Hello, world!";
+    /// let signature = private_key.sign(message);
+    ///
+    /// assert!(public_key.verify(&signature, message).unwrap());
+    /// ```
     pub fn verify(&self, signature: &MLDSASignature, message: impl AsRef<[u8]>) -> Result<bool> {
         if signature.level() != self.level() {
             bail!("Signature level does not match public key level");
@@ -51,6 +115,7 @@ impl MLDSAPublicKey {
         Ok(verifies)
     }
 
+    /// Returns the security level of this ML-DSA public key.
     pub fn level(&self) -> MLDSA {
         match self {
             MLDSAPublicKey::MLDSA44(_) => MLDSA::MLDSA44,
@@ -59,10 +124,12 @@ impl MLDSAPublicKey {
         }
     }
 
+    /// Returns the size of this ML-DSA public key in bytes.
     pub fn size(&self) -> usize {
         self.level().public_key_size()
     }
 
+    /// Returns the raw bytes of this ML-DSA public key.
     pub fn as_bytes(&self) -> &[u8] {
         match self {
             MLDSAPublicKey::MLDSA44(key) => key.as_bytes(),
@@ -71,6 +138,22 @@ impl MLDSAPublicKey {
         }
     }
 
+    /// Creates an ML-DSA public key from raw bytes and a security level.
+    ///
+    /// # Parameters
+    ///
+    /// * `level` - The security level of the key.
+    /// * `bytes` - The raw bytes of the key.
+    ///
+    /// # Returns
+    ///
+    /// An `MLDSAPublicKey` if the bytes represent a valid key for the given level,
+    /// or an error otherwise.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the bytes do not represent a valid ML-DSA public key
+    /// for the specified security level.
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
             MLDSA::MLDSA44 => Ok(MLDSAPublicKey::MLDSA44(Box::new(
@@ -86,7 +169,9 @@ impl MLDSAPublicKey {
     }
 }
 
+/// Provides debug formatting for ML-DSA public keys.
 impl std::fmt::Debug for MLDSAPublicKey {
+    /// Formats the public key as a string for debugging purposes.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             MLDSAPublicKey::MLDSA44(_) => f.write_str("MLDSA442PublicKey"),
@@ -96,33 +181,46 @@ impl std::fmt::Debug for MLDSAPublicKey {
     }
 }
 
+/// Defines CBOR tags for ML-DSA public keys.
 impl CBORTagged for MLDSAPublicKey {
+    /// Returns the CBOR tag for ML-DSA public keys.
     fn cbor_tags() -> Vec<Tag> {
         tags_for_values(&[tags::TAG_MLDSA_PUBLIC_KEY])
     }
 }
 
+/// Converts an `MLDSAPublicKey` to CBOR.
 impl From<MLDSAPublicKey> for CBOR {
+    /// Converts to tagged CBOR.
     fn from(value: MLDSAPublicKey) -> Self {
         value.tagged_cbor()
     }
 }
 
+/// Implements CBOR encoding for ML-DSA public keys.
 impl CBORTaggedEncodable for MLDSAPublicKey {
+    /// Creates the untagged CBOR representation as an array with level and key bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
 }
 
+/// Attempts to convert CBOR to an `MLDSAPublicKey`.
 impl TryFrom<CBOR> for MLDSAPublicKey {
     type Error = Error;
 
+    /// Converts from tagged CBOR.
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
+/// Implements CBOR decoding for ML-DSA public keys.
 impl CBORTaggedDecodable for MLDSAPublicKey {
+    /// Creates an `MLDSAPublicKey` from untagged CBOR.
+    ///
+    /// # Errors
+    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA public key.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
