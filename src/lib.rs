@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.18.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.18.1")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.18.0"
+//! bc-components = "0.18.1"
 //! ```
 
 mod digest;
@@ -109,6 +109,8 @@ pub use keypair::{keypair, keypair_opt, keypair_opt_using, keypair_using};
 
 #[cfg(test)]
 mod tests {
+    use std::ops::Deref;
+
     use crate::{
         ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey,
         SigningPublicKey, Verifier, X25519PrivateKey, X25519PublicKey,
@@ -119,7 +121,6 @@ mod tests {
     };
     use bc_rand::make_fake_random_number_generator;
     use bc_ur::{URDecodable, UREncodable};
-    use dcbor::Deref;
     use hex_literal::hex;
     use indoc::indoc;
     use ssh_key::{
