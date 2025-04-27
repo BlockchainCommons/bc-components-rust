@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 use bc_ur::prelude::*;
 use crate::{ Nonce, Digest, DigestProvider, tags, AuthenticationTag };
-use anyhow::{ bail, Result, Error };
 
 /// A secure encrypted message using IETF ChaCha20-Poly1305 authenticated encryption.
 ///
-/// `EncryptedMessage` represents data that has been encrypted using a symmetric key with the 
-/// ChaCha20-Poly1305 AEAD (Authenticated Encryption with Associated Data) construction as 
+/// `EncryptedMessage` represents data that has been encrypted using a symmetric key with the
+/// ChaCha20-Poly1305 AEAD (Authenticated Encryption with Associated Data) construction as
 /// specified in [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
 ///
 /// An `EncryptedMessage` contains:
@@ -15,12 +14,18 @@ use anyhow::{ bail, Result, Error };
 /// - `nonce`: A 12-byte number used once for this specific encryption operation
 /// - `auth`: A 16-byte authentication tag that verifies the integrity of the message
 ///
-/// The `aad` field is often used to include the `Digest` of the plaintext, which allows 
-/// verification of the plaintext after decryption and preserves the unique identity of 
+/// The `aad` field is often used to include the `Digest` of the plaintext, which allows
+/// verification of the plaintext after decryption and preserves the unique identity of
 /// the data when used with structures like Gordian Envelope.
 ///
 /// To facilitate decoding, it is recommended that the plaintext of an `EncryptedMessage` be
 /// tagged CBOR.
+///
+/// CDDL:
+/// ```cddl
+/// EncryptedMessage =
+///     #6.40002([ ciphertext: bstr, nonce: bstr, auth: bstr, ? aad: bstr ]) ; TAG_ENCRYPTED
+/// ```
 #[derive(Clone, Eq, PartialEq)]
 pub struct EncryptedMessage {
     ciphertext: Vec<u8>,
@@ -123,9 +128,9 @@ impl From<EncryptedMessage> for CBOR {
 
 /// Implements `TryFrom<CBOR>` for EncryptedMessage to support conversion from CBOR data.
 impl TryFrom<CBOR> for EncryptedMessage {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -149,11 +154,11 @@ impl CBORTaggedEncodable for EncryptedMessage {
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for EncryptedMessage {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() < 3 {
-                    bail!("EncryptedMessage must have at least 3 elements");
+                    return Err("EncryptedMessage must have at least 3 elements".into());
                 }
                 let ciphertext = CBOR::try_into_byte_string(elements[0].clone())?;
                 let nonce_data = CBOR::try_into_byte_string(elements[1].clone())?;
@@ -167,7 +172,7 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 };
                 Ok(Self::new(ciphertext, aad, nonce, auth))
             }
-            _ => bail!("EncryptedMessage must be an array"),
+            _ => return Err("EncryptedMessage must be an array".into()),
         }
     }
 }

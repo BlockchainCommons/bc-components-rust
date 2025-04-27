@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use dcbor::prelude::*;
+use dcbor::{tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
 use url::Url;
 use anyhow::{ bail, Result, Error };
 
@@ -85,18 +85,18 @@ impl CBORTaggedEncodable for URI {
 
 /// Implements `TryFrom<CBOR>` for URI to support conversion from CBOR data.
 impl TryFrom<CBOR> for URI {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for URI {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let uri: String = cbor.try_into()?;
-        Self::new(uri)
+        Ok(Self::new(uri)?)
     }
 }
 

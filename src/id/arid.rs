@@ -2,7 +2,7 @@ use bc_rand::random_data;
 use bc_ur::prelude::*;
 
 use crate::tags;
-use anyhow::{ bail, Error, Result };
+use anyhow::{ bail, Result };
 
 /// An "Apparently Random Identifier" (ARID)
 ///
@@ -109,18 +109,18 @@ impl CBORTaggedEncodable for ARID {
 
 /// Implements `TryFrom<CBOR>` for ARID to support conversion from CBOR data.
 impl TryFrom<CBOR> for ARID {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for ARID {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

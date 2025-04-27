@@ -1,5 +1,5 @@
-use dcbor::prelude::*;
 use anyhow::{ bail, Result, Error };
+use dcbor::{tags_for_values, CBOREncodable, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
 
 use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
 
@@ -14,7 +14,7 @@ use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvid
 /// - They support key rotation and multiple verification schemes
 /// - They allow for delegation of specific permissions to other entities
 /// - They can include resolution methods to locate and verify the XID document
-/// 
+///
 /// A XID is created by taking the SHA-256 hash of the CBOR encoding of a public signing key.
 /// This ensures the XID is cryptographically tied to the key.
 ///
@@ -222,18 +222,18 @@ impl CBORTaggedEncodable for XID {
 
 /// Implements conversion from CBOR to XID for deserialization.
 impl TryFrom<CBOR> for XID {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality for XID.
 impl CBORTaggedDecodable for XID {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

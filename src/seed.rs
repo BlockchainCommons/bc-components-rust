@@ -1,7 +1,7 @@
 use bc_rand::{rng_random_data, RandomNumberGenerator};
 use bc_ur::prelude::*;
 use crate::{ tags, PrivateKeyDataProvider };
-use anyhow::{ bail, Result, Error };
+use anyhow::{ bail, Result };
 
 /// A cryptographic seed for deterministic key generation.
 ///
@@ -19,7 +19,7 @@ use anyhow::{ bail, Result, Error };
 /// # CBOR Serialization
 ///
 /// `Seed` implements the `CBORTaggedCodable` trait, which means it can be serialized to and
-/// deserialized from CBOR with specific tags. The tags used are `TAG_SEED` and the older 
+/// deserialized from CBOR with specific tags. The tags used are `TAG_SEED` and the older
 /// `TAG_SEED_V1` for backward compatibility.
 ///
 /// When serialized to CBOR, a `Seed` is represented as a map with the following keys:
@@ -65,7 +65,7 @@ use anyhow::{ bail, Result, Error };
 ///
 /// // Create seed data
 /// let data = vec![0u8; 16];
-/// 
+///
 /// // Create a seed with name, note, and creation date
 /// let mut seed = Seed::new_opt(
 ///     data,
@@ -233,24 +233,24 @@ impl CBORTaggedEncodable for Seed {
 
 /// Enables conversion from CBOR to Seed, with proper error handling.
 impl TryFrom<CBOR> for Seed {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Defines how a Seed is decoded from CBOR.
 impl CBORTaggedDecodable for Seed {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let map = cbor.try_into_map()?;
         let data = map.extract::<i32, CBOR>(1)?.try_into_byte_string()?.to_vec();
         if data.is_empty() {
-            bail!("Seed data is empty");
+            return Err("Seed data is empty".into());
         }
         let creation_date = map.get::<i32, dcbor::Date>(2);
         let name = map.get::<i32, String>(3);
         let note = map.get::<i32, String>(4);
-        Self::new_opt(data, name, note, creation_date)
+        Ok(Self::new_opt(data, name, note, creation_date)?)
     }
 }

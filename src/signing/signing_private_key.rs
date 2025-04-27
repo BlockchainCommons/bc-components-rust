@@ -1,13 +1,19 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{ cell::RefCell, rc::Rc };
 
 use crate::{
-    tags, ECKey, ECPrivateKey, Ed25519PrivateKey, MLDSAPrivateKey, Signature, Signer,
+    tags,
+    ECKey,
+    ECPrivateKey,
+    Ed25519PrivateKey,
+    MLDSAPrivateKey,
+    Signature,
+    Signer,
     SigningPublicKey,
 };
-use anyhow::{bail, Error, Result};
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use anyhow::{ bail, Result };
+use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use bc_ur::prelude::*;
-use ssh_key::{private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding};
+use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
 
 use super::Verifier;
 
@@ -414,7 +420,7 @@ impl SigningPrivateKey {
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
-        rng: Rc<RefCell<dyn RandomNumberGenerator>>,
+        rng: Rc<RefCell<dyn RandomNumberGenerator>>
     ) -> Result<Signature> {
         if let Some(private_key) = self.to_schnorr() {
             let sig = private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
@@ -474,7 +480,7 @@ impl SigningPrivateKey {
         &self,
         message: impl AsRef<[u8]>,
         namespace: impl AsRef<str>,
-        hash_alg: HashAlg,
+        hash_alg: HashAlg
     ) -> Result<Signature> {
         if let Some(private) = self.to_ssh() {
             let sig = private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
@@ -542,7 +548,7 @@ impl Signer for SigningPrivateKey {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>,
+        options: Option<SigningOptions>
     ) -> Result<Signature> {
         match self {
             Self::Schnorr(_) => {
@@ -645,12 +651,12 @@ impl CBORTaggedEncodable for SigningPrivateKey {
 
 /// TryFrom implementation for converting CBOR to SigningPrivateKey
 impl TryFrom<CBOR> for SigningPrivateKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Tries to convert a CBOR value to a SigningPrivateKey.
     ///
     /// This is a convenience method that calls from_tagged_cbor.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -674,7 +680,7 @@ impl CBORTaggedDecodable for SigningPrivateKey {
     /// - An array where the first element is a discriminator (1 for ECDSA, 2 for Ed25519)
     ///   and the second element is a byte string containing the key data
     /// - A tagged value with a tag for ML-DSA or SSH keys
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.into_case() {
             CBORCase::ByteString(data) => Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)),
             CBORCase::Array(mut elements) => {
@@ -690,10 +696,11 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                         let key = Ed25519PrivateKey::from_data_ref(data)?;
                         Ok(Self::Ed25519(key))
                     }
-                    _ => bail!(
-                        "Invalid discriminator for SigningPrivateKey: {}",
-                        discriminator
-                    ),
+                    _ => {
+                        return Err(
+                            format!("Invalid discriminator for SigningPrivateKey: {}", discriminator).into()
+                        );
+                    }
                 }
             }
             CBORCase::Tagged(tag, item) => {
@@ -701,18 +708,19 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                 match value {
                     tags::TAG_SSH_TEXT_PRIVATE_KEY => {
                         let string = item.try_into_text()?;
-                        let key = SSHPrivateKey::from_openssh(string)?;
+                        let key = SSHPrivateKey::from_openssh(string)
+                            .map_err(|_| dcbor::Error::Custom("Invalid SSH private key".into()))?;
                         Ok(Self::SSH(Box::new(key)))
                     }
                     tags::TAG_MLDSA_PRIVATE_KEY => {
                         let key = MLDSAPrivateKey::from_untagged_cbor(item)?;
                         Ok(Self::MLDSA(key))
                     }
-                    _ => bail!("Invalid CBOR tag for SigningPrivateKey: {}", value),
+                    _ => return Err(format!("Invalid CBOR tag for SigningPrivateKey: {value}").into()),
                 }
             }
             _ => {
-                bail!("Invalid CBOR case for SigningPrivateKey");
+                return Err("Invalid CBOR case for SigningPrivateKey".into());
             }
         }
     }

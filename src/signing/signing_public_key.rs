@@ -2,7 +2,6 @@ use crate::{
     tags, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, SchnorrPublicKey, Signature,
     Verifier,
 };
-use anyhow::{bail, Error, Result};
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
@@ -58,16 +57,16 @@ use ssh_key::public::PublicKey as SSHPublicKey;
 pub enum SigningPublicKey {
     /// A Schnorr public key (BIP-340, x-only)
     Schnorr(SchnorrPublicKey),
-    
+
     /// An ECDSA public key (compressed, 33 bytes)
     ECDSA(ECPublicKey),
-    
+
     /// An Ed25519 public key
     Ed25519(Ed25519PublicKey),
-    
+
     /// An SSH public key
     SSH(SSHPublicKey),
-    
+
     /// A post-quantum ML-DSA public key
     MLDSA(MLDSAPublicKey),
 }
@@ -341,12 +340,12 @@ impl CBORTaggedEncodable for SigningPublicKey {
 
 /// TryFrom implementation for converting CBOR to SigningPublicKey
 impl TryFrom<CBOR> for SigningPublicKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Tries to convert a CBOR value to a SigningPublicKey.
     ///
     /// This is a convenience method that calls from_tagged_cbor.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -370,7 +369,7 @@ impl CBORTaggedDecodable for SigningPublicKey {
     /// - An array of length 2, where the first element is a discriminator (1 for ECDSA, 2 for Ed25519)
     ///   and the second element is a byte string containing the key data
     /// - A tagged value with a tag for ML-DSA or SSH keys
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.clone().into_case() {
             CBORCase::ByteString(data) => Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?)),
             CBORCase::Array(mut elements) => {
@@ -388,21 +387,22 @@ impl CBORTaggedDecodable for SigningPublicKey {
                         }
                     }
                 }
-                bail!("invalid signing public key");
+                return Err("invalid signing public key".into());
             }
             CBORCase::Tagged(tag, item) => match tag.value() {
                 tags::TAG_SSH_TEXT_PUBLIC_KEY => {
                     let string = item.try_into_text()?;
-                    let key = SSHPublicKey::from_openssh(&string)?;
+                    let key = SSHPublicKey::from_openssh(&string)
+                        .map_err(|_| "invalid SSH public key")?;
                     Ok(Self::SSH(key))
                 }
                 tags::TAG_MLDSA_PUBLIC_KEY => {
                     let key = MLDSAPublicKey::from_tagged_cbor(untagged_cbor)?;
                     Ok(Self::MLDSA(key))
                 }
-                _ => bail!("invalid signing public key"),
+                _ => return Err("invalid signing public key".into()),
             },
-            _ => bail!("invalid signing public key"),
+            _ => return Err("invalid signing public key".into()),
         }
     }
 }

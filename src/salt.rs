@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 use bc_ur::prelude::*;
 use bc_rand::{ rng_next_in_closed_range, rng_random_data, RandomNumberGenerator, SecureRandomNumberGenerator };
 use crate::tags;
-use anyhow::{ bail, Result, Error };
+use anyhow::{ bail, Result };
 
 /// Random salt used to decorrelate other information.
 ///
@@ -56,7 +56,7 @@ use anyhow::{ bail, Result, Error };
 ///
 /// // Generate a salt proportional to 100 bytes of data
 /// let salt = Salt::new_for_size(100);
-/// 
+///
 /// // Salts for larger data will be larger (but still efficient)
 /// let big_salt = Salt::new_for_size(1000);
 /// assert!(big_salt.len() > salt.len());
@@ -207,16 +207,16 @@ impl CBORTaggedEncodable for Salt {
 
 /// Enables conversion from CBOR to Salt, with proper error handling.
 impl TryFrom<CBOR> for Salt {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Defines how a Salt is decoded from CBOR.
 impl CBORTaggedDecodable for Salt {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)

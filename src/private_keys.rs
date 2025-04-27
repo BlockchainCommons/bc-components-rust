@@ -1,4 +1,4 @@
-use anyhow::{ bail, Error, Result };
+use anyhow::Result;
 use bc_ur::prelude::*;
 use crate::{
     tags,
@@ -165,19 +165,19 @@ impl CBORTaggedEncodable for PrivateKeys {
 }
 
 impl TryFrom<CBOR> for PrivateKeys {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PrivateKeys {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("PrivateKeys must have two elements");
+                    return Err("PrivateKeys must have two elements".into());
                 }
 
                 let signing_private_key = SigningPrivateKey::try_from(elements[0].clone())?;
@@ -186,7 +186,7 @@ impl CBORTaggedDecodable for PrivateKeys {
                 )?;
                 Ok(Self::with_keys(signing_private_key, encapsulation_private_key))
             }
-            _ => bail!("PrivateKeys must be an array"),
+            _ => return Err("PrivateKeys must be an array".into()),
         }
     }
 }

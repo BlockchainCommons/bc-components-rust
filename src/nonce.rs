@@ -1,8 +1,8 @@
 use std::rc::Rc;
+use anyhow::bail;
 use bc_rand::fill_random_data;
-use bc_ur::prelude::*;
+use dcbor::{ tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR };
 use crate::tags;
-use anyhow::{ bail, Error, Result };
 
 /// A random nonce ("number used once").
 ///
@@ -86,7 +86,7 @@ impl Nonce {
     }
 
     /// Restores a nonce from data.
-    pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
+    pub fn from_data_ref(data: impl AsRef<[u8]>) -> anyhow::Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::NONCE_SIZE {
             bail!("Invalid nonce size");
@@ -166,18 +166,18 @@ impl CBORTaggedEncodable for Nonce {
 
 /// Enables conversion from CBOR to Nonce, with proper error handling.
 impl TryFrom<CBOR> for Nonce {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Defines how a Nonce is decoded from CBOR.
 impl CBORTaggedDecodable for Nonce {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

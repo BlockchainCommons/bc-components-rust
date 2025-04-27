@@ -1,16 +1,24 @@
-use anyhow::{anyhow, bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ anyhow, Result };
+use dcbor::{
+    tags_for_values,
+    CBORCase,
+    CBORTagged,
+    CBORTaggedDecodable,
+    CBORTaggedEncodable,
+    Tag,
+    CBOR,
+};
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use crate::tags;
 
-use super::{MLDSASignature, MLDSA};
+use super::{ MLDSASignature, MLDSA };
 
 /// A private key for the ML-DSA post-quantum digital signature algorithm.
 ///
-/// `MLDSAPrivateKey` represents a private key that can be used to create digital 
-/// signatures using the ML-DSA (Module Lattice-based Digital Signature Algorithm) 
+/// `MLDSAPrivateKey` represents a private key that can be used to create digital
+/// signatures using the ML-DSA (Module Lattice-based Digital Signature Algorithm)
 /// post-quantum algorithm. It supports multiple security levels through the variants:
 ///
 /// - `MLDSA44`: NIST security level 2 (roughly equivalent to AES-128)
@@ -19,7 +27,7 @@ use super::{MLDSASignature, MLDSA};
 ///
 /// # Security
 ///
-/// ML-DSA private keys should be kept secure and never exposed. They provide 
+/// ML-DSA private keys should be kept secure and never exposed. They provide
 /// resistance against attacks from both classical and quantum computers.
 ///
 /// # Examples
@@ -119,15 +127,24 @@ impl MLDSAPrivateKey {
     /// for the specified security level.
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLDSA::MLDSA44 => Ok(MLDSAPrivateKey::MLDSA44(Box::new(
-                mldsa44::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLDSA::MLDSA65 => Ok(MLDSAPrivateKey::MLDSA65(Box::new(
-                mldsa65::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLDSA::MLDSA87 => Ok(MLDSAPrivateKey::MLDSA87(Box::new(
-                mldsa87::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
+            MLDSA::MLDSA44 =>
+                Ok(
+                    MLDSAPrivateKey::MLDSA44(
+                        Box::new(mldsa44::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLDSA::MLDSA65 =>
+                Ok(
+                    MLDSAPrivateKey::MLDSA65(
+                        Box::new(mldsa65::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLDSA::MLDSA87 =>
+                Ok(
+                    MLDSAPrivateKey::MLDSA87(
+                        Box::new(mldsa87::SecretKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
         }
     }
 }
@@ -170,10 +187,10 @@ impl CBORTaggedEncodable for MLDSAPrivateKey {
 
 /// Attempts to convert CBOR to an `MLDSAPrivateKey`.
 impl TryFrom<CBOR> for MLDSAPrivateKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Converts from tagged CBOR.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -184,18 +201,20 @@ impl CBORTaggedDecodable for MLDSAPrivateKey {
     ///
     /// # Errors
     /// Returns an error if the CBOR value doesn't represent a valid ML-DSA private key.
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("MLDSAPrivateKey must have two elements");
+                    return Err("MLDSAPrivateKey must have two elements".into());
                 }
 
                 let level = MLDSA::try_from(elements[0].clone())?;
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
-                MLDSAPrivateKey::from_bytes(level, &data)
+                Ok(MLDSAPrivateKey::from_bytes(level, &data)?)
             }
-            _ => bail!("MLDSAPrivateKey must be an array"),
+            _ => {
+                return Err("MLDSAPrivateKey must be an array".into());
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use bc_crypto::hash::sha256;
-use dcbor::prelude::*;
 use crate::{ digest_provider::DigestProvider, tags };
-use anyhow::{ bail, Result, Error };
+use anyhow::{ bail, Result };
+use dcbor::{ tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR };
 
 /// A cryptographically secure digest, implemented with SHA-256.
 ///
@@ -228,7 +228,7 @@ impl CBORTaggedEncodable for Digest {
 
 /// Enables conversion from CBOR to Digest, with proper error handling.
 impl TryFrom<CBOR> for Digest {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -237,9 +237,9 @@ impl TryFrom<CBOR> for Digest {
 
 /// Defines how a Digest is decoded from CBOR.
 impl CBORTaggedDecodable for Digest {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

@@ -1,4 +1,3 @@
-use anyhow::{ bail, Error, Result };
 use bc_ur::prelude::*;
 use crate::{
     tags,
@@ -51,7 +50,7 @@ use crate::{
 /// let enc_pub_key = public_keys.enapsulation_public_key();
 ///
 /// // The public key can be used for key encapsulation
-/// // The resulting shared secret is only accessible to the 
+/// // The resulting shared secret is only accessible to the
 /// // holder of the corresponding private key
 /// ```
 #[derive(Clone, PartialEq, Eq, Debug, Hash)]
@@ -101,7 +100,7 @@ impl PublicKeys {
 ///
 /// // Get the public keys from the provider
 /// let public_keys = key_base.public_keys();
-/// 
+///
 /// // These public keys can be shared with others for secure communication
 /// ```
 pub trait PublicKeysProvider {
@@ -168,19 +167,19 @@ impl CBORTaggedEncodable for PublicKeys {
 }
 
 impl TryFrom<CBOR> for PublicKeys {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for PublicKeys {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("PublicKeys must have two elements");
+                    return Err("PublicKeys must have two elements".into());
                 }
 
                 let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
@@ -189,7 +188,7 @@ impl CBORTaggedDecodable for PublicKeys {
                 )?;
                 Ok(Self::new(signing_public_key, encapsulation_public_key))
             }
-            _ => bail!("PublicKeys must be an array"),
+            _ => return Err("PublicKeys must be an array".into()),
         }
     }
 }

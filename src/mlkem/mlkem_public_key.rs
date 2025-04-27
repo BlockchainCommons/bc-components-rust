@@ -1,11 +1,19 @@
-use anyhow::{anyhow, bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ anyhow, Result };
 use pqcrypto_mlkem::*;
-use pqcrypto_traits::kem::{PublicKey, SharedSecret};
+use pqcrypto_traits::kem::{ PublicKey, SharedSecret };
+use dcbor::{
+    tags_for_values,
+    CBORCase,
+    CBORTagged,
+    CBORTaggedDecodable,
+    CBORTaggedEncodable,
+    Tag,
+    CBOR,
+};
 
-use crate::{tags, SymmetricKey};
+use crate::{ tags, SymmetricKey };
 
-use super::{MLKEMCiphertext, MLKEM};
+use super::{ MLKEMCiphertext, MLKEM };
 
 /// A public key for the ML-KEM post-quantum key encapsulation mechanism.
 ///
@@ -102,15 +110,24 @@ impl MLKEMPublicKey {
     /// for the specified security level.
     pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLKEM::MLKEM512 => Ok(MLKEMPublicKey::MLKEM512(Box::new(
-                mlkem512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLKEM::MLKEM768 => Ok(MLKEMPublicKey::MLKEM768(Box::new(
-                mlkem768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLKEM::MLKEM1024 => Ok(MLKEMPublicKey::MLKEM1024(Box::new(
-                mlkem1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
+            MLKEM::MLKEM512 =>
+                Ok(
+                    MLKEMPublicKey::MLKEM512(
+                        Box::new(mlkem512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLKEM::MLKEM768 =>
+                Ok(
+                    MLKEMPublicKey::MLKEM768(
+                        Box::new(mlkem768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLKEM::MLKEM1024 =>
+                Ok(
+                    MLKEMPublicKey::MLKEM1024(
+                        Box::new(mlkem1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
         }
     }
 
@@ -206,10 +223,10 @@ impl CBORTaggedEncodable for MLKEMPublicKey {
 
 /// Attempts to convert CBOR to an `MLKEMPublicKey`.
 impl TryFrom<CBOR> for MLKEMPublicKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Converts from tagged CBOR.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -220,18 +237,20 @@ impl CBORTaggedDecodable for MLKEMPublicKey {
     ///
     /// # Errors
     /// Returns an error if the CBOR value doesn't represent a valid ML-KEM public key.
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("MLKEMPublicKey must have two elements");
+                    return Err("MLKEMPublicKey must have two elements".into());
                 }
 
                 let level = MLKEM::try_from(elements[0].clone())?;
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
-                MLKEMPublicKey::from_bytes(level, &data)
+                Ok(MLKEMPublicKey::from_bytes(level, &data)?)
             }
-            _ => bail!("MLKEMPublicKey must be an array"),
+            _ => {
+                return Err("MLKEMPublicKey must be an array".into());
+            }
         }
     }
 }

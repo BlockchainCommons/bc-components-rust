@@ -1,13 +1,13 @@
 use crate::{ tags, Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypter, Nonce };
 use bc_ur::prelude::*;
-use anyhow::{ bail, Result, Error };
+use anyhow::Result;
 
 use super::EncapsulationScheme;
 
 /// A sealed message that can only be decrypted by the intended recipient.
 ///
 /// `SealedMessage` provides a public key encryption mechanism where a message is
-/// encrypted with a symmetric key, and that key is then encapsulated using the 
+/// encrypted with a symmetric key, and that key is then encapsulated using the
 /// recipient's public key. This ensures that only the recipient can decrypt the
 /// message by first decapsulating the shared secret using their private key.
 ///
@@ -229,9 +229,9 @@ impl From<SealedMessage> for CBOR {
 
 /// Conversion from CBOR to `SealedMessage` for deserialization.
 impl TryFrom<CBOR> for SealedMessage {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -247,11 +247,11 @@ impl CBORTaggedEncodable for SealedMessage {
 
 /// Implementation of CBOR decoding for `SealedMessage`.
 impl CBORTaggedDecodable for SealedMessage {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("SealedMessage must have two elements");
+                    return Err("SealedMessage must have two elements".into());
                 }
                 let message = elements[0].clone().try_into()?;
                 let ephemeral_public_key = elements[1].clone().try_into()?;
@@ -260,7 +260,7 @@ impl CBORTaggedDecodable for SealedMessage {
                     encapsulated_key: ephemeral_public_key,
                 })
             }
-            _ => bail!("SealedMessage must be an array"),
+            _ => return Err("SealedMessage must be an array".into()),
         }
     }
 }

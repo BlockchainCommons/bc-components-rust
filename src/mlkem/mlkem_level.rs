@@ -1,16 +1,16 @@
-use anyhow::{bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ bail, Error, Result };
 use pqcrypto_mlkem::*;
+use dcbor::CBOR;
 
-use super::{MLKEMPrivateKey, MLKEMPublicKey};
+use super::{ MLKEMPrivateKey, MLKEMPublicKey };
 
 /// Security levels for the ML-KEM post-quantum key encapsulation mechanism.
 ///
-/// ML-KEM (Module Lattice-based Key Encapsulation Mechanism) is a post-quantum 
-/// key encapsulation mechanism standardized by NIST. It provides resistance 
+/// ML-KEM (Module Lattice-based Key Encapsulation Mechanism) is a post-quantum
+/// key encapsulation mechanism standardized by NIST. It provides resistance
 /// against attacks from both classical and quantum computers.
 ///
-/// Each security level offers different trade-offs between security, performance, 
+/// Each security level offers different trade-offs between security, performance,
 /// and key/ciphertext sizes:
 ///
 /// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128)
@@ -50,24 +50,15 @@ impl MLKEM {
         match self {
             MLKEM::MLKEM512 => {
                 let (pk, sk) = mlkem512::keypair();
-                (
-                    MLKEMPrivateKey::MLKEM512(sk.into()),
-                    MLKEMPublicKey::MLKEM512(pk.into()),
-                )
+                (MLKEMPrivateKey::MLKEM512(sk.into()), MLKEMPublicKey::MLKEM512(pk.into()))
             }
             MLKEM::MLKEM768 => {
                 let (pk, sk) = mlkem768::keypair();
-                (
-                    MLKEMPrivateKey::MLKEM768(sk.into()),
-                    MLKEMPublicKey::MLKEM768(pk.into()),
-                )
+                (MLKEMPrivateKey::MLKEM768(sk.into()), MLKEMPublicKey::MLKEM768(pk.into()))
             }
             MLKEM::MLKEM1024 => {
                 let (pk, sk) = mlkem1024::keypair();
-                (
-                    MLKEMPrivateKey::MLKEM1024(sk.into()),
-                    MLKEMPublicKey::MLKEM1024(pk.into()),
-                )
+                (MLKEMPrivateKey::MLKEM1024(sk.into()), MLKEMPublicKey::MLKEM1024(pk.into()))
             }
         }
     }

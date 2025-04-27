@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use bc_ur::prelude::*;
 use crate::{ digest_provider::DigestProvider, tags, Digest };
-use anyhow::{ bail, Result, Error };
+use anyhow::{ bail, Result };
 
 /// Implementers of this trait provide a globally unique reference to themselves.
 ///
@@ -242,17 +242,17 @@ impl CBORTaggedEncodable for Reference {
 }
 
 impl TryFrom<CBOR> for Reference {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 impl CBORTaggedDecodable for Reference {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

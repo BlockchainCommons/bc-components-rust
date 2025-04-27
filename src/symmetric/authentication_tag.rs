@@ -1,19 +1,19 @@
 use std::rc::Rc;
 
 use anyhow::{ bail, Error, Result };
-use dcbor::prelude::*;
+use dcbor::CBOR;
 
 /// The authentication tag produced by the encryption process to verify message integrity.
 ///
-/// An `AuthenticationTag` is a 16-byte value generated during ChaCha20-Poly1305 authenticated 
-/// encryption. It serves as a message authentication code (MAC) that verifies both the 
+/// An `AuthenticationTag` is a 16-byte value generated during ChaCha20-Poly1305 authenticated
+/// encryption. It serves as a message authentication code (MAC) that verifies both the
 /// authenticity and integrity of the encrypted message.
 ///
 /// During decryption, the tag is verified to ensure:
 /// - The message has not been tampered with (integrity)
 /// - The message was encrypted by someone who possesses the encryption key (authenticity)
 ///
-/// This implementation follows the Poly1305 MAC algorithm as specified in 
+/// This implementation follows the Poly1305 MAC algorithm as specified in
 /// [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
 #[derive(Clone, Eq, PartialEq)]
 pub struct AuthenticationTag([u8; Self::AUTHENTICATION_TAG_SIZE]);

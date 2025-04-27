@@ -1,7 +1,15 @@
-use anyhow::{anyhow, bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ anyhow, Result };
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
+use dcbor::{
+    tags_for_values,
+    CBORCase,
+    CBORTagged,
+    CBORTaggedDecodable,
+    CBORTaggedEncodable,
+    Tag,
+    CBOR,
+};
 
 use crate::tags;
 
@@ -9,9 +17,9 @@ use super::MLKEM;
 
 /// A ciphertext containing an encapsulated shared secret for ML-KEM.
 ///
-/// `MLKEMCiphertext` represents a ciphertext produced by the ML-KEM 
-/// (Module Lattice-based Key Encapsulation Mechanism) post-quantum algorithm 
-/// during the encapsulation process. It contains an encapsulated shared secret 
+/// `MLKEMCiphertext` represents a ciphertext produced by the ML-KEM
+/// (Module Lattice-based Key Encapsulation Mechanism) post-quantum algorithm
+/// during the encapsulation process. It contains an encapsulated shared secret
 /// that can only be recovered by the corresponding private key.
 ///
 /// It supports multiple security levels through the variants:
@@ -89,15 +97,24 @@ impl MLKEMCiphertext {
     /// for the specified security level.
     pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLKEM::MLKEM512 => Ok(MLKEMCiphertext::MLKEM512(Box::new(
-                mlkem512::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLKEM::MLKEM768 => Ok(MLKEMCiphertext::MLKEM768(Box::new(
-                mlkem768::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLKEM::MLKEM1024 => Ok(MLKEMCiphertext::MLKEM1024(Box::new(
-                mlkem1024::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
+            MLKEM::MLKEM512 =>
+                Ok(
+                    MLKEMCiphertext::MLKEM512(
+                        Box::new(mlkem512::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLKEM::MLKEM768 =>
+                Ok(
+                    MLKEMCiphertext::MLKEM768(
+                        Box::new(mlkem768::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
+            MLKEM::MLKEM1024 =>
+                Ok(
+                    MLKEMCiphertext::MLKEM1024(
+                        Box::new(mlkem1024::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
+                    )
+                ),
         }
     }
 }
@@ -140,10 +157,10 @@ impl CBORTaggedEncodable for MLKEMCiphertext {
 
 /// Attempts to convert CBOR to an `MLKEMCiphertext`.
 impl TryFrom<CBOR> for MLKEMCiphertext {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Converts from tagged CBOR.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -154,18 +171,20 @@ impl CBORTaggedDecodable for MLKEMCiphertext {
     ///
     /// # Errors
     /// Returns an error if the CBOR value doesn't represent a valid ML-KEM ciphertext.
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("MLKEMCiphertext must have two elements");
+                    return Err("MLKEMCiphertext must have two elements".into());
                 }
 
                 let level = MLKEM::try_from(elements[0].clone())?;
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
-                MLKEMCiphertext::from_bytes(level, &data)
+                Ok(MLKEMCiphertext::from_bytes(level, &data)?)
             }
-            _ => bail!("MLKEMCiphertext must be an array"),
+            _ => {
+                return Err("MLKEMCiphertext must be an array".into());
+            }
         }
     }
 }

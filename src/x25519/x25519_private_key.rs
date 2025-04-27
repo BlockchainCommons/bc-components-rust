@@ -3,7 +3,7 @@ use bc_crypto::x25519_new_private_key_using;
 use bc_ur::prelude::*;
 use crate::{ tags, Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey };
 use bc_rand::{ SecureRandomNumberGenerator, RandomNumberGenerator };
-use anyhow::{ bail, Error, Result };
+use anyhow::{ bail, Result };
 
 /// A private key for X25519 key agreement operations.
 ///
@@ -166,18 +166,18 @@ impl CBORTaggedEncodable for X25519PrivateKey {
 
 /// Implements `TryFrom<CBOR>` for X25519PrivateKey to support conversion from CBOR data.
 impl TryFrom<CBOR> for X25519PrivateKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for X25519PrivateKey {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

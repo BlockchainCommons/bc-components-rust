@@ -1,16 +1,16 @@
-use anyhow::{bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ bail, Error, Result };
+use dcbor::CBOR;
 use pqcrypto_mldsa::*;
 
-use super::{MLDSAPrivateKey, MLDSAPublicKey};
+use super::{ MLDSAPrivateKey, MLDSAPublicKey };
 
 /// Security levels for the ML-DSA post-quantum digital signature algorithm.
 ///
-/// ML-DSA (Module Lattice-based Digital Signature Algorithm) is a post-quantum 
-/// digital signature algorithm standardized by NIST. It provides resistance 
+/// ML-DSA (Module Lattice-based Digital Signature Algorithm) is a post-quantum
+/// digital signature algorithm standardized by NIST. It provides resistance
 /// against attacks from both classical and quantum computers.
 ///
-/// Each security level offers different trade-offs between security, performance, 
+/// Each security level offers different trade-offs between security, performance,
 /// and key/signature sizes:
 ///
 /// - `MLDSA44`: NIST security level 2 (roughly equivalent to AES-128)
@@ -47,24 +47,15 @@ impl MLDSA {
         match self {
             MLDSA::MLDSA44 => {
                 let (pk, sk) = mldsa44::keypair();
-                (
-                    MLDSAPrivateKey::MLDSA44(Box::new(sk)),
-                    MLDSAPublicKey::MLDSA44(Box::new(pk)),
-                )
+                (MLDSAPrivateKey::MLDSA44(Box::new(sk)), MLDSAPublicKey::MLDSA44(Box::new(pk)))
             }
             MLDSA::MLDSA65 => {
                 let (pk, sk) = mldsa65::keypair();
-                (
-                    MLDSAPrivateKey::MLDSA65(Box::new(sk)),
-                    MLDSAPublicKey::MLDSA65(Box::new(pk)),
-                )
+                (MLDSAPrivateKey::MLDSA65(Box::new(sk)), MLDSAPublicKey::MLDSA65(Box::new(pk)))
             }
             MLDSA::MLDSA87 => {
                 let (pk, sk) = mldsa87::keypair();
-                (
-                    MLDSAPrivateKey::MLDSA87(Box::new(sk)),
-                    MLDSAPublicKey::MLDSA87(Box::new(pk)),
-                )
+                (MLDSAPrivateKey::MLDSA87(Box::new(sk)), MLDSAPublicKey::MLDSA87(Box::new(pk)))
             }
         }
     }

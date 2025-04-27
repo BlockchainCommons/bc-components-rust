@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use bc_ur::prelude::*;
 use crate::{tags, EncapsulationPublicKey, Encrypter};
-use anyhow::{ bail, Error, Result };
+use anyhow::{ bail, Result };
 
 /// A public key for X25519 key agreement operations.
 ///
@@ -105,18 +105,18 @@ impl CBORTaggedEncodable for X25519PublicKey {
 
 /// Implements `TryFrom<CBOR>` for X25519PublicKey to support conversion from CBOR data.
 impl TryFrom<CBOR> for X25519PublicKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for X25519PublicKey {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
-        Self::from_data_ref(data)
+        Ok(Self::from_data_ref(data)?)
     }
 }
 

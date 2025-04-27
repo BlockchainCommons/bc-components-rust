@@ -1,6 +1,6 @@
 use bc_rand::{ rng_random_data, RandomNumberGenerator, SecureRandomNumberGenerator };
 use bc_ur::prelude::*;
-use anyhow::{ bail, Error, Result };
+use anyhow::{ bail, Result };
 use ssh_key::private::{
     DsaKeypair,
     EcdsaKeypair,
@@ -314,7 +314,7 @@ impl CBORTaggedEncodable for PrivateKeyBase {
 }
 
 impl TryFrom<CBOR> for PrivateKeyBase {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
         Self::from_tagged_cbor(cbor)
@@ -322,7 +322,7 @@ impl TryFrom<CBOR> for PrivateKeyBase {
 }
 
 impl CBORTaggedDecodable for PrivateKeyBase {
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)

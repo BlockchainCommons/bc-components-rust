@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use anyhow::{ bail, Result, Error };
-use dcbor::prelude::*;
+use anyhow::{ Result, Error };
+use dcbor::{tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
 use crate::tags;
 
 /// A Universally Unique Identifier (UUID).
@@ -100,19 +100,19 @@ impl CBORTaggedEncodable for UUID {
 
 /// Implements `TryFrom<CBOR>` for UUID to support conversion from CBOR data.
 impl TryFrom<CBOR> for UUID {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for UUID {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
         if bytes.len() != Self::UUID_SIZE {
-            bail!("invalid UUID size");
+            return Err("invalid UUID size".into());
         }
         let mut uuid = [0u8; Self::UUID_SIZE];
         uuid.copy_from_slice(&bytes);

@@ -155,6 +155,15 @@ impl From<&SymmetricKey> for Vec<u8> {
     }
 }
 
+/// Implements conversion from a `Vec<u8>` to a SymmetricKey.
+impl TryFrom<Vec<u8>> for SymmetricKey {
+    type Error = Error;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Self::from_data_ref(value)
+    }
+}
+
 /// Implements Debug formatting to display the key in hexadecimal format.
 impl std::fmt::Debug for SymmetricKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -185,16 +194,16 @@ impl CBORTaggedEncodable for SymmetricKey {
 
 /// Implements `TryFrom<CBOR>` for SymmetricKey to support conversion from CBOR data.
 impl TryFrom<CBOR> for SymmetricKey {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_untagged_cbor(cbor)
     }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.
 impl CBORTaggedDecodable for SymmetricKey {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let bytes = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data_ref(bytes)?;
         Ok(instance)

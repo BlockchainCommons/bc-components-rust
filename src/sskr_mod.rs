@@ -1,7 +1,7 @@
 use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use bc_ur::prelude::*;
 use sskr::SSKRError;
-use anyhow::{ Result, Error };
+use anyhow::Result;
 use crate::tags;
 
 /// Re-export of the `Spec` type from the `sskr` crate.
@@ -293,19 +293,18 @@ impl CBORTaggedEncodable for SSKRShare {
 
 /// Conversion from CBOR to SSKRShare for deserialization.
 impl TryFrom<CBOR> for SSKRShare {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
 
 /// Implementation of CBOR decoding for SSKRShare.
 impl CBORTaggedDecodable for SSKRShare {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
-        let instance = Self::from_data(data);
-        Ok(instance)
+        Ok(Self::from_data(data))
     }
 }
 
@@ -476,7 +475,7 @@ pub fn sskr_generate_using(
 ///     // Two shares from group 1 (meets threshold of 2)
 ///     shares[0][0].clone(),
 ///     shares[0][1].clone(),
-///     
+///
 ///     // Three shares from group 2 (meets threshold of 3)
 ///     shares[1][0].clone(),
 ///     shares[1][1].clone(),

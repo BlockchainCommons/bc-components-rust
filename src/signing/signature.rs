@@ -1,5 +1,5 @@
 use crate::{tags, MLDSASignature};
-use anyhow::{bail, Error, Result};
+use anyhow::{bail, Result};
 use bc_crypto::{ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
 use ssh_key::{LineEnding, SshSig};
@@ -9,7 +9,7 @@ use super::SignatureScheme;
 /// A digital signature created with various signature algorithms.
 ///
 /// `Signature` is an enum representing different types of digital signatures:
-/// 
+///
 /// - `Schnorr`: A BIP-340 Schnorr signature (64 bytes)
 /// - `ECDSA`: An ECDSA signature using the secp256k1 curve (64 bytes)
 /// - `Ed25519`: An Ed25519 signature (64 bytes)
@@ -59,16 +59,16 @@ use super::SignatureScheme;
 pub enum Signature {
     /// A BIP-340 Schnorr signature (64 bytes)
     Schnorr([u8; SCHNORR_SIGNATURE_SIZE]),
-    
+
     /// An ECDSA signature using the secp256k1 curve (64 bytes)
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
-    
+
     /// An Ed25519 signature (64 bytes)
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
-    
+
     /// An SSH signature
     SSH(SshSig),
-    
+
     /// A post-quantum ML-DSA signature
     MLDSA(MLDSASignature),
 }
@@ -442,12 +442,12 @@ impl CBORTaggedEncodable for Signature {
 
 /// TryFrom implementation for converting CBOR to Signature
 impl TryFrom<CBOR> for Signature {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Tries to convert a CBOR value to a Signature.
     ///
     /// This is a convenience method that calls from_tagged_cbor.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -471,9 +471,9 @@ impl CBORTaggedDecodable for Signature {
     /// - An array of length 2, where the first element is 1 (ECDSA) or 2 (Ed25519)
     ///   and the second element is a byte string containing the signature data
     /// - A tagged value with a tag for MLDSA or SSH signatures
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         match cbor.clone().into_case() {
-            CBORCase::ByteString(bytes) => Self::schnorr_from_data_ref(bytes),
+            CBORCase::ByteString(bytes) => Ok(Self::schnorr_from_data_ref(bytes)?),
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
@@ -481,22 +481,22 @@ impl CBORTaggedDecodable for Signature {
                     let ele_1 = drain.next().unwrap().into_case();
                     match ele_0 {
                         CBORCase::ByteString(data) => {
-                            return Self::schnorr_from_data_ref(data);
+                            return Ok(Self::schnorr_from_data_ref(data)?);
                         }
                         CBORCase::Unsigned(1) => {
                             if let CBORCase::ByteString(data) = ele_1 {
-                                return Self::ecdsa_from_data_ref(data);
+                                return Ok(Self::ecdsa_from_data_ref(data)?);
                             }
                         }
                         CBORCase::Unsigned(2) => {
                             if let CBORCase::ByteString(data) = ele_1 {
-                                return Self::ed25519_from_data_ref(data);
+                                return Ok(Self::ed25519_from_data_ref(data)?);
                             }
                         }
                         _ => (),
                     }
                 }
-                bail!("Invalid signature format");
+                return Err("Invalid signature format".into());
             }
             CBORCase::Tagged(tag, item) => match tag.value() {
                 tags::TAG_MLDSA_SIGNATURE => {
@@ -505,12 +505,13 @@ impl CBORTaggedDecodable for Signature {
                 }
                 tags::TAG_SSH_TEXT_SIGNATURE => {
                     let string = item.try_into_text()?;
-                    let pem = SshSig::from_pem(string)?;
+                    let pem = SshSig::from_pem(string)
+                        .map_err(|_| "Invalid PEM format")?;
                     Ok(Self::SSH(pem))
                 }
-                _ => bail!("Invalid signature format"),
+                _ => return Err("Invalid signature format".into()),
             },
-            _ => bail!("Invalid signature format"),
+            _ => return Err("Invalid signature format".into()),
         }
     }
 }

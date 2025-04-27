@@ -1,5 +1,13 @@
-use anyhow::{anyhow, bail, Error, Result};
-use dcbor::prelude::*;
+use anyhow::{ anyhow, Result };
+use dcbor::{
+    tags_for_values,
+    CBORCase,
+    CBORTagged,
+    CBORTaggedDecodable,
+    CBORTaggedEncodable,
+    Tag,
+    CBOR,
+};
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
@@ -96,15 +104,30 @@ impl MLDSASignature {
     /// for the specified security level.
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLDSA::MLDSA44 => Ok(MLDSASignature::MLDSA44(Box::new(
-                mldsa44::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLDSA::MLDSA65 => Ok(MLDSASignature::MLDSA65(Box::new(
-                mldsa65::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
-            MLDSA::MLDSA87 => Ok(MLDSASignature::MLDSA87(Box::new(
-                mldsa87::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?,
-            ))),
+            MLDSA::MLDSA44 =>
+                Ok(
+                    MLDSASignature::MLDSA44(
+                        Box::new(
+                            mldsa44::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
+                        )
+                    )
+                ),
+            MLDSA::MLDSA65 =>
+                Ok(
+                    MLDSASignature::MLDSA65(
+                        Box::new(
+                            mldsa65::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
+                        )
+                    )
+                ),
+            MLDSA::MLDSA87 =>
+                Ok(
+                    MLDSASignature::MLDSA87(
+                        Box::new(
+                            mldsa87::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
+                        )
+                    )
+                ),
         }
     }
 }
@@ -147,10 +170,10 @@ impl CBORTaggedEncodable for MLDSASignature {
 
 /// Attempts to convert CBOR to an `MLDSASignature`.
 impl TryFrom<CBOR> for MLDSASignature {
-    type Error = Error;
+    type Error = dcbor::Error;
 
     /// Converts from tagged CBOR.
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -161,18 +184,20 @@ impl CBORTaggedDecodable for MLDSASignature {
     ///
     /// # Errors
     /// Returns an error if the CBOR value doesn't represent a valid ML-DSA signature.
-    fn from_untagged_cbor(untagged_cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() != 2 {
-                    bail!("MLDSASignature must have two elements");
+                    return Err("MLDSASignature must have two elements".into());
                 }
 
                 let level = MLDSA::try_from(elements[0].clone())?;
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
-                MLDSASignature::from_bytes(level, &data)
+                Ok(MLDSASignature::from_bytes(level, &data)?)
             }
-            _ => bail!("MLDSASignature must be an array"),
+            _ => {
+                return Err("MLDSASignature must be an array".into());
+            }
         }
     }
 }

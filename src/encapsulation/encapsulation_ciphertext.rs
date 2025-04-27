@@ -1,6 +1,6 @@
 use crate::{tags, MLKEMCiphertext};
 use anyhow::{bail, Result};
-use dcbor::prelude::*;
+use dcbor::{CBORCase, CBOR};
 
 use crate::{EncapsulationScheme, X25519PublicKey};
 
@@ -8,7 +8,7 @@ use crate::{EncapsulationScheme, X25519PublicKey};
 ///
 /// `EncapsulationCiphertext` represents the output of a key encapsulation operation
 /// where a shared secret has been encapsulated for secure transmission. The ciphertext
-/// can only be used to recover the shared secret by the holder of the corresponding 
+/// can only be used to recover the shared secret by the holder of the corresponding
 /// private key.
 ///
 /// This enum has two variants:

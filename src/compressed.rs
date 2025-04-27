@@ -3,7 +3,7 @@ use bc_ur::prelude::*;
 use bc_crypto::hash::crc32;
 use miniz_oxide::{ inflate::decompress_to_vec, deflate::compress_to_vec };
 use crate::{ digest::Digest, DigestProvider, tags };
-use anyhow::{ anyhow, bail, Error, Result };
+use anyhow::{ anyhow, bail, Result };
 
 /// A compressed binary object with integrity verification.
 ///
@@ -68,10 +68,10 @@ impl Compressed {
     /// let data = b"hello world";
     /// let checksum = crc32(data);
     /// let uncompressed_size = data.len();
-    /// 
+    ///
     /// // In a real scenario, this would be actually compressed data
     /// let compressed_data = data.to_vec();
-    /// 
+    ///
     /// let compressed = Compressed::new(
     ///     checksum,
     ///     uncompressed_size,
@@ -375,8 +375,8 @@ impl From<Compressed> for CBOR {
 /// The format is:
 /// ```text
 /// [
-///   checksum: uint, 
-///   uncompressed_size: uint, 
+///   checksum: uint,
+///   uncompressed_size: uint,
 ///   compressed_data: bytes,
 ///   digest?: Digest  // Optional
 /// ]
@@ -397,9 +397,9 @@ impl CBORTaggedEncodable for Compressed {
 
 /// Conversion from CBOR to `Compressed` for deserialization.
 impl TryFrom<CBOR> for Compressed {
-    type Error = Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
         Self::from_tagged_cbor(cbor)
     }
 }
@@ -408,16 +408,16 @@ impl TryFrom<CBOR> for Compressed {
 ///
 /// Defines how to create a `Compressed` object from untagged CBOR.
 impl CBORTaggedDecodable for Compressed {
-    fn from_untagged_cbor(cbor: CBOR) -> Result<Self> {
+    fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let elements = cbor.try_into_array()?;
         if elements.len() < 3 || elements.len() > 4 {
-            bail!("invalid number of elements in compressed");
+            return Err("invalid number of elements in compressed".into());
         }
         let checksum = elements[0].clone().try_into()?;
         let uncompressed_size = elements[1].clone().try_into()?;
         let compressed_data = elements[2].clone().try_into_byte_string()?;
         let digest = if elements.len() == 4 { Some(elements[3].clone().try_into()?) } else { None };
-        Self::new(checksum, uncompressed_size, compressed_data, digest)
+        Ok(Self::new(checksum, uncompressed_size, compressed_data, digest)?)
     }
 }
 
