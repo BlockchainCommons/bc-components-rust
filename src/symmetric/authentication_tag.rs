@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use anyhow::{ bail, Error, Result };
-use dcbor::CBOR;
+use dcbor::prelude::*;
 
 /// The authentication tag produced by the encryption process to verify message integrity.
 ///

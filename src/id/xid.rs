@@ -1,7 +1,16 @@
 use anyhow::{ bail, Result, Error };
-use dcbor::{tags_for_values, CBOREncodable, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
+use dcbor::prelude::*;
 
-use crate::{tags, Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider, SigningPrivateKey, SigningPublicKey};
+use crate::{
+    tags,
+    Digest,
+    PrivateKeyBase,
+    PublicKeys,
+    Reference,
+    ReferenceProvider,
+    SigningPrivateKey,
+    SigningPublicKey,
+};
 
 /// A XID (eXtensible IDentifier).
 ///
@@ -84,12 +93,12 @@ impl XID {
 
     /// The first four bytes of the XID as upper-case ByteWords.
     pub fn bytewords_identifier(&self, prefix: bool) -> String {
-        self.ref_bytewords(if prefix {Some("🅧")} else {None})
+        self.ref_bytewords(if prefix { Some("🅧") } else { None })
     }
 
     /// The first four bytes of the XID as Bytemoji.
     pub fn bytemoji_identifier(&self, prefix: bool) -> String {
-        self.ref_bytemoji(if prefix {Some("🅧")} else {None})
+        self.ref_bytemoji(if prefix { Some("🅧") } else { None })
     }
 }
 
@@ -246,7 +255,7 @@ impl From<XID> for Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{ECPrivateKey, SigningPrivateKey};
+    use crate::{ ECPrivateKey, SigningPrivateKey };
 
     use super::*;
     use bc_ur::prelude::*;
@@ -256,15 +265,29 @@ mod tests {
     #[test]
     fn test_xid() {
         crate::register_tags();
-        let xid = XID::from_data_ref(hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")).unwrap();
-        assert_eq!(xid.to_hex(), "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037");
+        let xid = XID::from_data_ref(
+            hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")
+        ).unwrap();
+        assert_eq!(
+            xid.to_hex(),
+            "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037"
+        );
         assert_eq!(xid.short_description(), "de285368");
-        assert_eq!(xid.data(), &hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037"));
-        assert_eq!(format!("{:?}", xid), "XID(de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037)");
+        assert_eq!(
+            xid.data(),
+            &hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")
+        );
+        assert_eq!(
+            format!("{:?}", xid),
+            "XID(de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037)"
+        );
         assert_eq!(format!("{}", xid), "XID(de285368)");
 
         let xid_string = xid.ur_string();
-        assert_eq!(xid_string, "ur:xid/hdcxuedeguisgevwhdaxnbluenutlbglhfiygamsamadmojkdydtneteeowffhwprtemcaatledk");
+        assert_eq!(
+            xid_string,
+            "ur:xid/hdcxuedeguisgevwhdaxnbluenutlbglhfiygamsamadmojkdydtneteeowffhwprtemcaatledk"
+        );
         assert_eq!(XID::from_ur_string(xid_string).unwrap(), xid);
         assert_eq!(xid.bytewords_identifier(true), "🅧 URGE DICE GURU IRIS");
         assert_eq!(xid.bytemoji_identifier(true), "🅧 🐻 😻 🍞 💐");
@@ -281,23 +304,34 @@ mod tests {
         let public_key = private_key.public_key().unwrap();
 
         let key_cbor = public_key.to_cbor();
+        #[rustfmt::skip]
         assert_eq!(key_cbor.diagnostic(), indoc! {"
             40022(
                 h'e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a'
             )
         "}.trim());
+        #[rustfmt::skip]
         assert_eq!(key_cbor.hex_annotated(), indoc! {"
             d9 9c56                                 # tag(40022) signing-public-key
                 5820                                # bytes(32)
                     e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a
         "}.trim());
         let key_cbor_data = key_cbor.to_cbor_data();
-        assert_eq!(key_cbor_data, hex!("d99c565820e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a"));
+        assert_eq!(
+            key_cbor_data,
+            hex!("d99c565820e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a")
+        );
         let digest = Digest::from_image(&key_cbor_data);
-        assert_eq!(digest.data(), &hex!("d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47"));
+        assert_eq!(
+            digest.data(),
+            &hex!("d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47")
+        );
 
         let xid = XID::new(&public_key);
-        assert_eq!(format!("{:?}", xid), "XID(d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47)");
+        assert_eq!(
+            format!("{:?}", xid),
+            "XID(d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47)"
+        );
         xid.validate(&public_key);
 
         assert_eq!(format!("{}", xid), "XID(d40e0602)");

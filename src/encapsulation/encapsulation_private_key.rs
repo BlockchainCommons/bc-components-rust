@@ -1,6 +1,6 @@
 use crate::{Decrypter, MLKEMPrivateKey};
 use anyhow::{bail, Result};
-use dcbor::{CBORCase, CBOR};
+use dcbor::prelude::*;
 
 use crate::{tags, EncapsulationCiphertext, EncapsulationScheme, SymmetricKey, X25519PrivateKey};
 

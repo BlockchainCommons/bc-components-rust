@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::{ Result, Error };
-use dcbor::{tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
+use dcbor::prelude::*;
 use crate::tags;
 
 /// A Universally Unique Identifier (UUID).

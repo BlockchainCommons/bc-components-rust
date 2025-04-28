@@ -1,6 +1,6 @@
 use anyhow::{ bail, Error, Result };
 use pqcrypto_mlkem::*;
-use dcbor::CBOR;
+use dcbor::prelude::*;
 
 use super::{ MLKEMPrivateKey, MLKEMPublicKey };
 

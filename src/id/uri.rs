@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use dcbor::{tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR};
+use dcbor::prelude::*;
 use url::Url;
 use anyhow::{ bail, Result, Error };
 

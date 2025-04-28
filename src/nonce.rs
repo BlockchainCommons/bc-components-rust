@@ -1,7 +1,7 @@
 use std::rc::Rc;
 use anyhow::bail;
 use bc_rand::fill_random_data;
-use dcbor::{ tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR };
+use dcbor::prelude::*;
 use crate::tags;
 
 /// A random nonce ("number used once").

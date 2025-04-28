@@ -1,6 +1,6 @@
 [package]
 name = "bc-components"
-version = "0.19.0"
+version = "0.20.0"
 edition = "2024"
 description = "Secure Components for Rust."
 authors = ["Blockchain Commons"]
@@ -12,12 +12,12 @@ keywords = ["cryptography"]                                            # Up to f
 categories = ["cryptography"]                                          # https://crates.io/category_slugs
 
 [dependencies]
-bc-crypto = "^0.7.0"
-bc-rand = "^0.3.0"
-dcbor = "^0.17.0"
+bc-crypto = "^0.8.0"
+bc-rand = "^0.4.0"
+dcbor = { version = "^0.18.0", features = ["anyhow", "multithreaded"] }
 bc-tags = "^0.1.0"
-bc-ur = "^0.7.0"
-sskr = "^0.6.0"
+bc-ur = "^0.8.0"
+sskr = "^0.7.0"
 
 hex = "^0.4.3"
 miniz_oxide = "^0.7.1"

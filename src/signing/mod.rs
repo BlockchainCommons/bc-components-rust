@@ -58,7 +58,7 @@
 //! ```
 
 mod signing_private_key;
-pub use signing_private_key::{SigningOptions, SigningPrivateKey};
+pub use signing_private_key::{ SigningOptions, SigningPrivateKey };
 
 mod signing_public_key;
 pub use signing_public_key::SigningPublicKey;
@@ -67,18 +67,25 @@ mod signature;
 pub use signature::Signature;
 
 mod signer;
-pub use signer::{Signer, Verifier};
+pub use signer::{ Signer, Verifier };
 
 mod signature_scheme;
 pub use signature_scheme::SignatureScheme;
 
 #[cfg(test)]
 mod tests {
-    use std::{cell::RefCell, rc::Rc};
+    use std::{ cell::RefCell, rc::Rc };
 
     use crate::{
-        ECPrivateKey, Ed25519PrivateKey, MLDSASignature, Signature, Signer, SigningOptions,
-        SigningPrivateKey, Verifier, MLDSA,
+        ECPrivateKey,
+        Ed25519PrivateKey,
+        MLDSASignature,
+        Signature,
+        Signer,
+        SigningOptions,
+        SigningPrivateKey,
+        Verifier,
+        MLDSA,
     };
     use bc_rand::make_fake_random_number_generator;
     use dcbor::prelude::*;
@@ -88,19 +95,22 @@ mod tests {
 
     use super::SignatureScheme;
 
-    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
-        SigningPrivateKey::new_ecdsa(ECPrivateKey::from_data(hex!(
-            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
-        )));
-    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey =
-        SigningPrivateKey::new_schnorr(ECPrivateKey::from_data(hex!(
-            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
-        )));
+    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ecdsa(
+        ECPrivateKey::from_data(
+            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
+        )
+    );
+    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_schnorr(
+        ECPrivateKey::from_data(
+            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
+        )
+    );
 
-    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey =
-        SigningPrivateKey::new_ed25519(Ed25519PrivateKey::from_data(hex!(
-            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
-        )));
+    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ed25519(
+        Ed25519PrivateKey::from_data(
+            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
+        )
+    );
     const MESSAGE: &dyn AsRef<[u8]> = b"Wolf McNally";
 
     #[test]
@@ -120,20 +130,19 @@ mod tests {
     fn test_schnorr_cbor() {
         let rng = Rc::new(RefCell::new(make_fake_random_number_generator()));
         let options = SigningOptions::Schnorr { rng };
-        let signature = SCHNORR_SIGNING_PRIVATE_KEY
-            .sign_with_options(MESSAGE, Some(options))
-            .unwrap();
+        let signature = SCHNORR_SIGNING_PRIVATE_KEY.sign_with_options(
+            MESSAGE,
+            Some(options)
+        ).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
+        #[rustfmt::skip]
         let expected = indoc! {r#"
-        40020(
-            h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
-        )
+            40020(
+                h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
+            )
         "#}.trim();
-        assert_eq!(
-            CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
-            expected
-        );
+        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(), expected);
         let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
@@ -156,14 +165,14 @@ mod tests {
         let signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
-        let expected = indoc! {
-        r#"
-        40020(
-            [
-                1,
-                h'1458d0f3d97e25109b38fd965782b43213134d02b01388a14e74ebf21e5dea4866f25a23866de9ecf0f9b72404d8192ed71fba4dc355cd89b47213e855cf6d23'
-            ]
-        )
+        #[rustfmt::skip]
+        let expected = indoc! {r#"
+            40020(
+                [
+                    1,
+                    h'1458d0f3d97e25109b38fd965782b43213134d02b01388a14e74ebf21e5dea4866f25a23866de9ecf0f9b72404d8192ed71fba4dc355cd89b47213e855cf6d23'
+                ]
+            )
         "#}.trim();
         let cbor = CBOR::try_from_data(&tagged_cbor_data).unwrap();
         assert_eq!(cbor.diagnostic(), expected);

@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.19.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.20.0")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.19.0"
+//! bc-components = "0.20.0"
 //! ```
 
 mod digest;
@@ -295,33 +295,30 @@ mod tests {
 
     #[test]
     fn test_ssh_dsa_signing() {
-        let expected_private_key = Some(
-            indoc! {
-                r#"
-                    -----BEGIN OPENSSH PRIVATE KEY-----
-                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABsgAAAAdzc2gtZH
-                    NzAAAAgQCWG4f7r8FAMT/IL11w9OfM/ZduIQ8vEq1Ub+uMdyJS8wS/jXL5OB2/dPnXCNSt
-                    L4vjSqpDzMs+Dtd5wJy6baSQ3zGEbYv71mkIRJB/AtSVmd8FZe5AEjLFvHxYMSlO0jpi1Y
-                    /1nLM7vLQu4QByDCLhYYjPxgrZKXB3cLxtjvly5wAAABUA4fIZLivnDVcg9PXzwcb5m07H
-                    9k0AAACBAJK5Vm6t1Sg7n+C63wrNgDA6LTNyGzxqRVM2unI16jisCOzuC98Dgs+IbAkLhT
-                    qWSY+nI+U9HBHc7sr+KKdWCzR76NLK5eSilXvtt8g+LfHIXvCjD4Q2puowtjDoXSEQAJYd
-                    c1gtef21KZ2eoKoyAwzQIehCbvLpwYbxnhap5usVAAAAgGCrsbfReaDZo1Cw4/dFlJWBDP
-                    sMGeG04/2hCThNmU+zLiKCwsEg0X6onOTMTonCXve3fVb5lNjIU92iTmt5QkmOj2hjsbgo
-                    q/0sa0lALHp7UcK/W4IdU4Abtc4m0SUflgJcds1nsy2rKUNEtAfRa/WwtDResWOa4T7L+3
-                    FEUdavAAAB6F0RJ3hdESd4AAAAB3NzaC1kc3MAAACBAJYbh/uvwUAxP8gvXXD058z9l24h
-                    Dy8SrVRv64x3IlLzBL+Ncvk4Hb90+dcI1K0vi+NKqkPMyz4O13nAnLptpJDfMYRti/vWaQ
-                    hEkH8C1JWZ3wVl7kASMsW8fFgxKU7SOmLVj/Wcszu8tC7hAHIMIuFhiM/GCtkpcHdwvG2O
-                    +XLnAAAAFQDh8hkuK+cNVyD09fPBxvmbTsf2TQAAAIEAkrlWbq3VKDuf4LrfCs2AMDotM3
-                    IbPGpFUza6cjXqOKwI7O4L3wOCz4hsCQuFOpZJj6cj5T0cEdzuyv4op1YLNHvo0srl5KKV
-                    e+23yD4t8che8KMPhDam6jC2MOhdIRAAlh1zWC15/bUpnZ6gqjIDDNAh6EJu8unBhvGeFq
-                    nm6xUAAACAYKuxt9F5oNmjULDj90WUlYEM+wwZ4bTj/aEJOE2ZT7MuIoLCwSDRfqic5MxO
-                    icJe97d9VvmU2MhT3aJOa3lCSY6PaGOxuCir/SxrSUAsentRwr9bgh1TgBu1zibRJR+WAl
-                    x2zWezLaspQ0S0B9Fr9bC0NF6xY5rhPsv7cURR1q8AAAAVANWljfuxQcmJ/T7wSmAUXmXo
-                    6ZI0AAAADEtleSBjb21tZW50LgECAwQF
-                    -----END OPENSSH PRIVATE KEY-----
-                "#
-            }
-        );
+        #[rustfmt::skip]
+        let expected_private_key = Some(indoc! {r#"
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABsgAAAAdzc2gtZH
+            NzAAAAgQCWG4f7r8FAMT/IL11w9OfM/ZduIQ8vEq1Ub+uMdyJS8wS/jXL5OB2/dPnXCNSt
+            L4vjSqpDzMs+Dtd5wJy6baSQ3zGEbYv71mkIRJB/AtSVmd8FZe5AEjLFvHxYMSlO0jpi1Y
+            /1nLM7vLQu4QByDCLhYYjPxgrZKXB3cLxtjvly5wAAABUA4fIZLivnDVcg9PXzwcb5m07H
+            9k0AAACBAJK5Vm6t1Sg7n+C63wrNgDA6LTNyGzxqRVM2unI16jisCOzuC98Dgs+IbAkLhT
+            qWSY+nI+U9HBHc7sr+KKdWCzR76NLK5eSilXvtt8g+LfHIXvCjD4Q2puowtjDoXSEQAJYd
+            c1gtef21KZ2eoKoyAwzQIehCbvLpwYbxnhap5usVAAAAgGCrsbfReaDZo1Cw4/dFlJWBDP
+            sMGeG04/2hCThNmU+zLiKCwsEg0X6onOTMTonCXve3fVb5lNjIU92iTmt5QkmOj2hjsbgo
+            q/0sa0lALHp7UcK/W4IdU4Abtc4m0SUflgJcds1nsy2rKUNEtAfRa/WwtDResWOa4T7L+3
+            FEUdavAAAB6F0RJ3hdESd4AAAAB3NzaC1kc3MAAACBAJYbh/uvwUAxP8gvXXD058z9l24h
+            Dy8SrVRv64x3IlLzBL+Ncvk4Hb90+dcI1K0vi+NKqkPMyz4O13nAnLptpJDfMYRti/vWaQ
+            hEkH8C1JWZ3wVl7kASMsW8fFgxKU7SOmLVj/Wcszu8tC7hAHIMIuFhiM/GCtkpcHdwvG2O
+            +XLnAAAAFQDh8hkuK+cNVyD09fPBxvmbTsf2TQAAAIEAkrlWbq3VKDuf4LrfCs2AMDotM3
+            IbPGpFUza6cjXqOKwI7O4L3wOCz4hsCQuFOpZJj6cj5T0cEdzuyv4op1YLNHvo0srl5KKV
+            e+23yD4t8che8KMPhDam6jC2MOhdIRAAlh1zWC15/bUpnZ6gqjIDDNAh6EJu8unBhvGeFq
+            nm6xUAAACAYKuxt9F5oNmjULDj90WUlYEM+wwZ4bTj/aEJOE2ZT7MuIoLCwSDRfqic5MxO
+            icJe97d9VvmU2MhT3aJOa3lCSY6PaGOxuCir/SxrSUAsentRwr9bgh1TgBu1zibRJR+WAl
+            x2zWezLaspQ0S0B9Fr9bC0NF6xY5rhPsv7cURR1q8AAAAVANWljfuxQcmJ/T7wSmAUXmXo
+            6ZI0AAAADEtleSBjb21tZW50LgECAwQF
+            -----END OPENSSH PRIVATE KEY-----
+        "#});
         let expected_public_key = Some(
             "ssh-dss AAAAB3NzaC1kc3MAAACBAJYbh/uvwUAxP8gvXXD058z9l24hDy8SrVRv64x3IlLzBL+Ncvk4Hb90+dcI1K0vi+NKqkPMyz4O13nAnLptpJDfMYRti/vWaQhEkH8C1JWZ3wVl7kASMsW8fFgxKU7SOmLVj/Wcszu8tC7hAHIMIuFhiM/GCtkpcHdwvG2O+XLnAAAAFQDh8hkuK+cNVyD09fPBxvmbTsf2TQAAAIEAkrlWbq3VKDuf4LrfCs2AMDotM3IbPGpFUza6cjXqOKwI7O4L3wOCz4hsCQuFOpZJj6cj5T0cEdzuyv4op1YLNHvo0srl5KKVe+23yD4t8che8KMPhDam6jC2MOhdIRAAlh1zWC15/bUpnZ6gqjIDDNAh6EJu8unBhvGeFqnm6xUAAACAYKuxt9F5oNmjULDj90WUlYEM+wwZ4bTj/aEJOE2ZT7MuIoLCwSDRfqic5MxOicJe97d9VvmU2MhT3aJOa3lCSY6PaGOxuCir/SxrSUAsentRwr9bgh1TgBu1zibRJR+WAlx2zWezLaspQ0S0B9Fr9bC0NF6xY5rhPsv7cURR1q8= Key comment."
         );
@@ -331,21 +328,18 @@ mod tests {
     #[test]
     #[ignore]
     fn test_ssh_dsa_nistp256_signing() {
-        let expected_private_key = Some(
-            indoc! {
-                r#"
-                    -----BEGIN OPENSSH PRIVATE KEY-----
-                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
-                    1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQTtBE6+WTueAierXl/c/f83JAmoxm0k
-                    YlGMVMofLOUFeKx3FqUW0VRVljx1wHL03faFhiTPVR9CNG5iZCUqa4eLAAAAqPC+XgXwvl
-                    4FAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBO0ETr5ZO54CJ6te
-                    X9z9/zckCajGbSRiUYxUyh8s5QV4rHcWpRbRVFWWPHXAcvTd9oWGJM9VH0I0bmJkJSprh4
-                    sAAAAgAVk1Bq0ILFsF/ADaUq8G5Tow0Xv+Qs8V21gfOBSWQDEAAAAMS2V5IGNvbW1lbnQu
-                    AQIDBA==
-                    -----END OPENSSH PRIVATE KEY-----
-                "#
-            }
-        );
+        #[rustfmt::skip]
+        let expected_private_key = Some(indoc! {r#"
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
+            1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQTtBE6+WTueAierXl/c/f83JAmoxm0k
+            YlGMVMofLOUFeKx3FqUW0VRVljx1wHL03faFhiTPVR9CNG5iZCUqa4eLAAAAqPC+XgXwvl
+            4FAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBO0ETr5ZO54CJ6te
+            X9z9/zckCajGbSRiUYxUyh8s5QV4rHcWpRbRVFWWPHXAcvTd9oWGJM9VH0I0bmJkJSprh4
+            sAAAAgAVk1Bq0ILFsF/ADaUq8G5Tow0Xv+Qs8V21gfOBSWQDEAAAAMS2V5IGNvbW1lbnQu
+            AQIDBA==
+            -----END OPENSSH PRIVATE KEY-----
+        "#});
         let expected_public_key = Some(
             "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBO0ETr5ZO54CJ6teX9z9/zckCajGbSRiUYxUyh8s5QV4rHcWpRbRVFWWPHXAcvTd9oWGJM9VH0I0bmJkJSprh4s= Key comment."
         );
@@ -359,22 +353,19 @@ mod tests {
     #[test]
     #[ignore]
     fn test_ssh_dsa_nistp384_signing() {
-        let expected_private_key = Some(
-            indoc! {
-                r#"
-                    -----BEGIN OPENSSH PRIVATE KEY-----
-                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAiAAAABNlY2RzYS
-                    1zaGEyLW5pc3RwMzg0AAAACG5pc3RwMzg0AAAAYQSdYtV5QyUoBDDJX9gOG3DcJyv4qhjV
-                    L7ntdIlyOCVCdqMMWa2EUsyxV/PLrrDYGCDUruf83rRNdJwuZ+7oZWm0N6yfLOT4QPQNxv
-                    LqMJJ1hvw/xBxZVjMsr2gb/ohSG6IAAADYBFI75gRSO+YAAAATZWNkc2Etc2hhMi1uaXN0
-                    cDM4NAAAAAhuaXN0cDM4NAAAAGEEnWLVeUMlKAQwyV/YDhtw3Ccr+KoY1S+57XSJcjglQn
-                    ajDFmthFLMsVfzy66w2Bgg1K7n/N60TXScLmfu6GVptDesnyzk+ED0Dcby6jCSdYb8P8Qc
-                    WVYzLK9oG/6IUhuiAAAAMQCFOcU/ldvVE92+kXn2C/q5+wuGX3Q61YHG3LNn4655GZeL7a
-                    rH0jbCy0lsAQ5WbsMAAAAMS2V5IGNvbW1lbnQuAQID
-                    -----END OPENSSH PRIVATE KEY-----
-                "#
-            }
-        );
+        #[rustfmt::skip]
+        let expected_private_key = Some(indoc! {r#"
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAiAAAABNlY2RzYS
+            1zaGEyLW5pc3RwMzg0AAAACG5pc3RwMzg0AAAAYQSdYtV5QyUoBDDJX9gOG3DcJyv4qhjV
+            L7ntdIlyOCVCdqMMWa2EUsyxV/PLrrDYGCDUruf83rRNdJwuZ+7oZWm0N6yfLOT4QPQNxv
+            LqMJJ1hvw/xBxZVjMsr2gb/ohSG6IAAADYBFI75gRSO+YAAAATZWNkc2Etc2hhMi1uaXN0
+            cDM4NAAAAAhuaXN0cDM4NAAAAGEEnWLVeUMlKAQwyV/YDhtw3Ccr+KoY1S+57XSJcjglQn
+            ajDFmthFLMsVfzy66w2Bgg1K7n/N60TXScLmfu6GVptDesnyzk+ED0Dcby6jCSdYb8P8Qc
+            WVYzLK9oG/6IUhuiAAAAMQCFOcU/ldvVE92+kXn2C/q5+wuGX3Q61YHG3LNn4655GZeL7a
+            rH0jbCy0lsAQ5WbsMAAAAMS2V5IGNvbW1lbnQuAQID
+            -----END OPENSSH PRIVATE KEY-----
+        "#});
         let expected_public_key = Some(
             "ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBJ1i1XlDJSgEMMlf2A4bcNwnK/iqGNUvue10iXI4JUJ2owxZrYRSzLFX88uusNgYINSu5/zetE10nC5n7uhlabQ3rJ8s5PhA9A3G8uowknWG/D/EHFlWMyyvaBv+iFIbog== Key comment."
         );
@@ -389,24 +380,21 @@ mod tests {
     #[test]
     #[ignore]
     fn test_ssh_dsa_nistp521_signing() {
-        let expected_private_key = Some(
-            indoc! {
-                r#"
-                    -----BEGIN OPENSSH PRIVATE KEY-----
-                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAArAAAABNlY2RzYS
-                    1zaGEyLW5pc3RwNTIxAAAACG5pc3RwNTIxAAAAhQQBD3AAo2UN1WreSuQWtp4DTbfzQ+D2
-                    LyK9u5ykCfFXd/AMpQbyIyEQGbAiLNyAhGOfLgarJiAv4myKcHSGW2fTxQUB3V09IqubOw
-                    JdNLaCJbszLQQSqoZlIWrXD51X7FdQFtXYY4GKmVeMKuK+u9Iby6F41nSrYpHlaFzzxr+D
-                    5n1uq7cAAAEQrIPPE6yDzxMAAAATZWNkc2Etc2hhMi1uaXN0cDUyMQAAAAhuaXN0cDUyMQ
-                    AAAIUEAQ9wAKNlDdVq3krkFraeA02380Pg9i8ivbucpAnxV3fwDKUG8iMhEBmwIizcgIRj
-                    ny4GqyYgL+JsinB0hltn08UFAd1dPSKrmzsCXTS2giW7My0EEqqGZSFq1w+dV+xXUBbV2G
-                    OBiplXjCrivrvSG8uheNZ0q2KR5Whc88a/g+Z9bqu3AAAAQgGDA9XptdyVFY5Svw8XXSJ5
-                    7lrvc2R/T2CBthF0FgxqlNF5oTdqmrFuEqJ34oxIvhd9sJB/3qBpoJnPVKcuVmGC6gAAAA
-                    xLZXkgY29tbWVudC4BAgMEBQY=
-                    -----END OPENSSH PRIVATE KEY-----
-                "#
-            }
-        );
+        #[rustfmt::skip]
+        let expected_private_key = Some(indoc! {r#"
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAArAAAABNlY2RzYS
+            1zaGEyLW5pc3RwNTIxAAAACG5pc3RwNTIxAAAAhQQBD3AAo2UN1WreSuQWtp4DTbfzQ+D2
+            LyK9u5ykCfFXd/AMpQbyIyEQGbAiLNyAhGOfLgarJiAv4myKcHSGW2fTxQUB3V09IqubOw
+            JdNLaCJbszLQQSqoZlIWrXD51X7FdQFtXYY4GKmVeMKuK+u9Iby6F41nSrYpHlaFzzxr+D
+            5n1uq7cAAAEQrIPPE6yDzxMAAAATZWNkc2Etc2hhMi1uaXN0cDUyMQAAAAhuaXN0cDUyMQ
+            AAAIUEAQ9wAKNlDdVq3krkFraeA02380Pg9i8ivbucpAnxV3fwDKUG8iMhEBmwIizcgIRj
+            ny4GqyYgL+JsinB0hltn08UFAd1dPSKrmzsCXTS2giW7My0EEqqGZSFq1w+dV+xXUBbV2G
+            OBiplXjCrivrvSG8uheNZ0q2KR5Whc88a/g+Z9bqu3AAAAQgGDA9XptdyVFY5Svw8XXSJ5
+            7lrvc2R/T2CBthF0FgxqlNF5oTdqmrFuEqJ34oxIvhd9sJB/3qBpoJnPVKcuVmGC6gAAAA
+            xLZXkgY29tbWVudC4BAgMEBQY=
+            -----END OPENSSH PRIVATE KEY-----
+        "#});
         let expected_public_key = Some(
             "ecdsa-sha2-nistp521 AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBAEPcACjZQ3Vat5K5Ba2ngNNt/ND4PYvIr27nKQJ8Vd38AylBvIjIRAZsCIs3ICEY58uBqsmIC/ibIpwdIZbZ9PFBQHdXT0iq5s7Al00toIluzMtBBKqhmUhatcPnVfsV1AW1dhjgYqZV4wq4r670hvLoXjWdKtikeVoXPPGv4PmfW6rtw== Key comment."
         );
@@ -446,19 +434,16 @@ xLZXkgY29tbWVudC4BAgMEBQY=
 
     #[test]
     fn test_ssh_ed25519_signing() {
-        let expected_private_key = Some(
-            indoc! {
-                r#"
-                    -----BEGIN OPENSSH PRIVATE KEY-----
-                    b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-                    QyNTUxOQAAACBUe4FDGyGIgHf75yVdE4hYl9guj02FdsIadgLC04zObQAAAJA+TyZiPk8m
-                    YgAAAAtzc2gtZWQyNTUxOQAAACBUe4FDGyGIgHf75yVdE4hYl9guj02FdsIadgLC04zObQ
-                    AAAECsX3CKi3hm5VrrU26ffa2FB2YrFogg45ucOVbIz4FQo1R7gUMbIYiAd/vnJV0TiFiX
-                    2C6PTYV2whp2AsLTjM5tAAAADEtleSBjb21tZW50LgE=
-                    -----END OPENSSH PRIVATE KEY-----
-                "#
-            }
-        );
+        #[rustfmt::skip]
+        let expected_private_key = Some(indoc! {r#"
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACBUe4FDGyGIgHf75yVdE4hYl9guj02FdsIadgLC04zObQAAAJA+TyZiPk8m
+            YgAAAAtzc2gtZWQyNTUxOQAAACBUe4FDGyGIgHf75yVdE4hYl9guj02FdsIadgLC04zObQ
+            AAAECsX3CKi3hm5VrrU26ffa2FB2YrFogg45ucOVbIz4FQo1R7gUMbIYiAd/vnJV0TiFiX
+            2C6PTYV2whp2AsLTjM5tAAAADEtleSBjb21tZW50LgE=
+            -----END OPENSSH PRIVATE KEY-----
+        "#});
         let expected_public_key = Some(
             "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFR7gUMbIYiAd/vnJV0TiFiX2C6PTYV2whp2AsLTjM5t Key comment."
         );

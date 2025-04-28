@@ -1,5 +1,5 @@
 use anyhow::{ bail, Error, Result };
-use dcbor::CBOR;
+use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 
 use super::{ MLDSAPrivateKey, MLDSAPublicKey };

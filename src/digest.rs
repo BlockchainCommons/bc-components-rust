@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use bc_crypto::hash::sha256;
 use crate::{ digest_provider::DigestProvider, tags };
 use anyhow::{ bail, Result };
-use dcbor::{ tags_for_values, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR };
+use dcbor::prelude::*;
 
 /// A cryptographically secure digest, implemented with SHA-256.
 ///

@@ -5,9 +5,7 @@
 use crate::{ tags, EncryptedMessage, Nonce, Salt };
 use bc_crypto::{ hash::hkdf_hmac_sha512, hkdf_hmac_sha256, pbkdf2_hmac_sha256, scrypt_opt };
 use anyhow::{ Result, Error };
-use dcbor::{
-    tags_for_values, CBOREncodable, CBORTagged, CBORTaggedDecodable, CBORTaggedEncodable, Tag, CBOR
-};
+use dcbor::prelude::*;
 
 use super::SymmetricKey;
 

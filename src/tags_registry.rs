@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use bc_tags::*;
-use dcbor::{ with_tags_mut, CBORTaggedDecodable, TagsStore, CBOR };
 
 use crate::{
     Digest,

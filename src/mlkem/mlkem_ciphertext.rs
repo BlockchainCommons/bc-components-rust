@@ -1,18 +1,8 @@
 use anyhow::{ anyhow, Result };
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
-use dcbor::{
-    tags_for_values,
-    CBORCase,
-    CBORTagged,
-    CBORTaggedDecodable,
-    CBORTaggedEncodable,
-    Tag,
-    CBOR,
-};
-
+use dcbor::prelude::*;
 use crate::tags;
-
 use super::MLKEM;
 
 /// A ciphertext containing an encapsulated shared secret for ML-KEM.
