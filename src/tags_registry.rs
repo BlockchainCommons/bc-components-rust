@@ -179,7 +179,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         TAG_SSH_TEXT_PRIVATE_KEY,
         Arc::new(move |untagged_cbor: CBOR| {
             SSHPrivateKey::from_openssh(untagged_cbor.try_into_text()?).map_err(|e|
-                dcbor::Error::from(e.to_string())
+                dcbor::Error::msg(e.to_string())
             )?;
             Ok("SSHPrivateKey".to_string())
         })
@@ -189,7 +189,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         TAG_SSH_TEXT_PUBLIC_KEY,
         Arc::new(move |untagged_cbor: CBOR| {
             SSHPublicKey::from_openssh(&untagged_cbor.try_into_text()?).map_err(|e|
-                dcbor::Error::from(e.to_string())
+                dcbor::Error::msg(e.to_string())
             )?;
             Ok("SSHPublicKey".to_string())
         })
@@ -199,7 +199,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         TAG_SSH_TEXT_SIGNATURE,
         Arc::new(move |untagged_cbor: CBOR| {
             SSHSignature::from_pem(untagged_cbor.try_into_text()?).map_err(|e|
-                dcbor::Error::from(e.to_string())
+                dcbor::Error::msg(e.to_string())
             )?;
             Ok("SSHSignature".to_string())
         })
