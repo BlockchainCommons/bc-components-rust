@@ -1,5 +1,5 @@
-use anyhow::{bail, Result};
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use anyhow::{ bail, Result };
+use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 
 use crate::Ed25519PublicKey;
 
@@ -19,7 +19,7 @@ pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 ///
 /// This implementation allows:
 /// - Creating random Ed25519 private keys
-/// - Deriving the corresponding public key 
+/// - Deriving the corresponding public key
 /// - Signing messages
 /// - Converting between various formats
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -62,7 +62,7 @@ impl Ed25519PrivateKey {
 
     /// Derives a new `SigningPrivateKey` from the given key material.
     pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
-        Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
+        Self::from_data(bc_crypto::derive_signing_private_key(key_material))
     }
 
     pub fn hex(&self) -> String {

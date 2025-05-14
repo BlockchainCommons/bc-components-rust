@@ -709,7 +709,7 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                     tags::TAG_SSH_TEXT_PRIVATE_KEY => {
                         let string = item.try_into_text()?;
                         let key = SSHPrivateKey::from_openssh(string)
-                            .map_err(|_| dcbor::Error::Custom("Invalid SSH private key".into()))?;
+                            .map_err(|_| dcbor::Error::msg("Invalid SSH private key"))?;
                         Ok(Self::SSH(Box::new(key)))
                     }
                     tags::TAG_MLDSA_PRIVATE_KEY => {

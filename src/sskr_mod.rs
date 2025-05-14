@@ -48,8 +48,8 @@ impl SSKRShare {
     /// let data = vec![0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC]; // Example data
     /// let share = SSKRShare::from_data(data);
     /// ```
-    pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
-        Self(data.into())
+    pub fn from_data(data: impl AsRef<[u8]>) -> Self {
+        Self(data.as_ref().to_vec())
     }
 
     /// Returns a reference to the raw binary data of this share.
@@ -67,7 +67,7 @@ impl SSKRShare {
     /// let share = SSKRShare::from_data(data.clone());
     /// assert_eq!(share.data(), &data);
     /// ```
-    pub fn data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &[u8] {
         &self.0
     }
 

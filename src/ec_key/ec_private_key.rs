@@ -1,8 +1,8 @@
-use anyhow::{bail, Result};
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use anyhow::{ bail, Result };
+use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
 use bc_ur::prelude::*;
 
-use crate::{ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey};
+use crate::{ ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey };
 
 /// The size of an ECDSA private key in bytes (32 bytes).
 pub const ECDSA_PRIVATE_KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
@@ -98,7 +98,7 @@ impl ECPrivateKey {
     /// This method uses the provided key material to deterministically
     /// generate a valid private key for the secp256k1 curve.
     pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
-        Self::from_data(bc_crypto::x25519_derive_signing_private_key(key_material))
+        Self::from_data(bc_crypto::derive_signing_private_key(key_material))
     }
 }
 
@@ -129,7 +129,7 @@ impl ECPrivateKey {
     pub fn schnorr_sign_using(
         &self,
         message: impl AsRef<[u8]>,
-        rng: &mut dyn RandomNumberGenerator,
+        rng: &mut dyn RandomNumberGenerator
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         bc_crypto::schnorr_sign_using(&self.0, message, rng)
     }
@@ -141,7 +141,7 @@ impl ECPrivateKey {
     /// Returns a 64-byte signature.
     pub fn schnorr_sign(
         &self,
-        message: impl AsRef<[u8]>,
+        message: impl AsRef<[u8]>
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         let mut rng = SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, &mut rng)

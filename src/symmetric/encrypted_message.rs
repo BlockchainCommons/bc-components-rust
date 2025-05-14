@@ -39,26 +39,26 @@ impl EncryptedMessage {
     ///
     /// This is a low-level function that is not normally needed.
     pub fn new(
-        ciphertext: impl Into<Vec<u8>>,
-        aad: impl Into<Vec<u8>>,
+        ciphertext: impl AsRef<[u8]>,
+        aad: impl AsRef<[u8]>,
         nonce: Nonce,
         auth: AuthenticationTag
     ) -> Self {
         Self {
-            ciphertext: ciphertext.into(),
-            aad: aad.into(),
+            ciphertext: ciphertext.as_ref().to_vec(),
+            aad: aad.as_ref().to_vec(),
             nonce,
             auth,
         }
     }
 
     /// Returns a reference to the ciphertext data.
-    pub fn ciphertext(&self) -> &Vec<u8> {
+    pub fn ciphertext(&self) -> &[u8] {
         &self.ciphertext
     }
 
     /// Returns a reference to the additional authenticated data (AAD).
-    pub fn aad(&self) -> &Vec<u8> {
+    pub fn aad(&self) -> &[u8] {
         &self.aad
     }
 

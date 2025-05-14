@@ -96,14 +96,14 @@ impl PrivateKeyBase {
     }
 
     /// Restores a `PrivateKeyBase` from bytes.
-    pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
-        Self(data.into())
+    pub fn from_data(data: impl AsRef<[u8]>) -> Self {
+        Self(data.as_ref().to_vec())
     }
 
     /// Restores a `PrivateKeyBase` from an optional reference to an array of bytes.
     ///
     /// If the data is `None`, a new random `PrivateKeyBase` is generated.
-    pub fn from_optional_data(data: Option<impl Into<Vec<u8>>>) -> Self {
+    pub fn from_optional_data(data: Option<impl AsRef<[u8]>>) -> Self {
         match data {
             Some(data) => Self::from_data(data),
             None => Self::new(),

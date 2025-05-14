@@ -118,12 +118,12 @@ impl Seed {
     ///
     /// If the data is less than 16 bytes, this will return `None`.
     pub fn new_opt(
-        data: impl Into<Vec<u8>>,
+        data: impl AsRef<[u8]>,
         name: Option<String>,
         note: Option<String>,
         creation_date: Option<dcbor::Date>
     ) -> Result<Self> {
-        let data = data.into();
+        let data = data.as_ref().to_vec();
         if data.len() < Self::MIN_SEED_LENGTH {
             bail!("Seed data is too short");
         }
@@ -136,7 +136,7 @@ impl Seed {
     }
 
     /// Return the data of the seed.
-    pub fn data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &[u8] {
         &self.data
     }
 
@@ -195,7 +195,7 @@ impl AsRef<Seed> for Seed {
 /// Implements PrivateKeyDataProvider to use seed data for key derivation.
 impl PrivateKeyDataProvider for Seed {
     fn private_key_data(&self) -> Vec<u8> {
-        self.data().clone()
+        self.data().to_vec()
     }
 }
 

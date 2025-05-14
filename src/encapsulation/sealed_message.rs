@@ -60,7 +60,7 @@ impl SealedMessage {
     /// let decrypted = sealed_message.decrypt(&recipient_private_key).unwrap();
     /// assert_eq!(decrypted, plaintext);
     /// ```
-    pub fn new(plaintext: impl Into<Vec<u8>>, recipient: &dyn Encrypter) -> Self {
+    pub fn new(plaintext: impl AsRef<[u8]>, recipient: &dyn Encrypter) -> Self {
         Self::new_with_aad(plaintext, recipient, None::<Vec<u8>>)
     }
 
@@ -97,9 +97,9 @@ impl SealedMessage {
     /// assert_eq!(decrypted, plaintext);
     /// ```
     pub fn new_with_aad(
-        plaintext: impl Into<Vec<u8>>,
+        plaintext: impl AsRef<[u8]>,
         recipient: &dyn Encrypter,
-        aad: Option<impl Into<Vec<u8>>>
+        aad: Option<impl AsRef<[u8]>>
     ) -> Self {
         Self::new_opt(plaintext, recipient, aad, None::<Nonce>)
     }
@@ -120,9 +120,9 @@ impl SealedMessage {
     ///
     /// A new `SealedMessage` containing the encrypted message and encapsulated key
     pub fn new_opt(
-        plaintext: impl Into<Vec<u8>>,
+        plaintext: impl AsRef<[u8]>,
         recipient: &dyn Encrypter,
-        aad: Option<impl Into<Vec<u8>>>,
+        aad: Option<impl AsRef<[u8]>>,
         test_nonce: Option<impl AsRef<Nonce>>
     ) -> Self {
         let (shared_key, encapsulated_key) = recipient.encapsulate_new_shared_secret();

@@ -131,11 +131,11 @@ impl Compressed {
     /// assert_eq!(uncompressed, data.as_bytes());
     /// ```
     pub fn from_uncompressed_data(
-        uncompressed_data: impl Into<Vec<u8>>,
+        uncompressed_data: impl AsRef<[u8]>,
         digest: Option<Digest>
     ) -> Self {
-        let uncompressed_data = uncompressed_data.into();
-        let compressed_data = compress_to_vec(&uncompressed_data, 6);
+        let uncompressed_data = uncompressed_data.as_ref();
+        let compressed_data = compress_to_vec(uncompressed_data, 6);
         let checksum = crc32(&uncompressed_data);
         let uncompressed_size = uncompressed_data.len();
         let compressed_size = compressed_data.len();
@@ -150,7 +150,7 @@ impl Compressed {
             Self {
                 checksum,
                 uncompressed_size,
-                compressed_data: uncompressed_data,
+                compressed_data: uncompressed_data.to_vec(),
                 digest,
             }
         }

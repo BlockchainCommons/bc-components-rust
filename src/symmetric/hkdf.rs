@@ -1,0 +1,113 @@
+use bc_crypto::{ hash::hkdf_hmac_sha512, hkdf_hmac_sha256 };
+use dcbor::prelude::*;
+use crate::{ Nonce, Salt };
+use anyhow::Result;
+use super::{
+    EncryptedMessage,
+    HashType,
+    KeyDerivation,
+    KeyDerivationMethod,
+    SymmetricKey,
+    SALT_LEN,
+};
+
+/// Struct representing HKDF parameters.
+///
+/// CDDL:
+/// ```cddl
+/// HKDF = [0, Salt, HashType]
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HKDF {
+    salt: Salt,
+    hash_type: HashType,
+}
+
+impl KeyDerivation for HKDF {
+    const INDEX: usize = KeyDerivationMethod::HKDF as usize;
+
+    fn lock(&self, content_key: &SymmetricKey, secret: impl AsRef<[u8]>) -> EncryptedMessage {
+        let derived_key: SymmetricKey = (
+            match self.hash_type {
+                HashType::SHA256 => hkdf_hmac_sha256(secret, &self.salt, 32),
+                HashType::SHA512 => hkdf_hmac_sha512(secret, &self.salt, 32),
+            }
+        )
+            .try_into()
+            .unwrap();
+        let encoded_method: Vec<u8> = self.to_cbor_data();
+        derived_key.encrypt(content_key, Some(encoded_method), Option::<Nonce>::None)
+    }
+
+    fn unlock(
+        &self,
+        encrypted_key: &EncryptedMessage,
+        secret: impl AsRef<[u8]>
+    ) -> Result<SymmetricKey> {
+        let derived_key: SymmetricKey = (
+            match self.hash_type {
+                HashType::SHA256 => hkdf_hmac_sha256(secret, &self.salt, 32),
+                HashType::SHA512 => hkdf_hmac_sha512(secret, &self.salt, 32),
+            }
+        ).try_into()?;
+        let content_key = derived_key.decrypt(encrypted_key)?.try_into()?;
+        Ok(content_key)
+    }
+}
+
+impl std::fmt::Display for HKDF {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "HKDF({})", self.hash_type)
+    }
+}
+
+impl Into<CBOR> for HKDF {
+    fn into(self) -> CBOR {
+        vec![CBOR::from(Self::INDEX), self.salt.into(), self.hash_type.into()].into()
+    }
+}
+
+impl TryFrom<CBOR> for HKDF {
+    type Error = dcbor::Error;
+
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
+        let a = cbor.try_into_array()?;
+        a
+            .len()
+            .eq(&3)
+            .then_some(())
+            .ok_or_else(|| dcbor::Error::msg("Invalid HKDF CBOR"))?;
+        let mut iter = a.into_iter();
+        let _index: usize = iter
+            .next()
+            .ok_or_else(|| dcbor::Error::msg("Missing index"))?
+            .try_into()?;
+        let salt: Salt = iter
+            .next()
+            .ok_or_else(|| dcbor::Error::msg("Missing salt"))?
+            .try_into()?;
+        let hash_type: HashType = iter
+            .next()
+            .ok_or_else(|| dcbor::Error::msg("Missing hash type"))?
+            .try_into()?;
+        Ok(Self { salt, hash_type })
+    }
+}
+
+impl HKDF {
+    pub fn new() -> Self {
+        Self::new_opt(Salt::new_with_len(SALT_LEN).unwrap(), HashType::SHA256)
+    }
+
+    pub fn new_opt(salt: Salt, hash_type: HashType) -> Self {
+        Self { salt, hash_type }
+    }
+
+    pub fn salt(&self) -> &Salt {
+        &self.salt
+    }
+
+    pub fn hash_type(&self) -> HashType {
+        self.hash_type
+    }
+}

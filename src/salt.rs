@@ -86,12 +86,12 @@ impl Salt {
     }
 
     /// Create a new salt from data.
-    pub fn from_data(data: impl Into<Vec<u8>>) -> Self {
-        Self(data.into())
+    pub fn from_data(data: impl AsRef<[u8]>) -> Self {
+        Self(data.as_ref().to_vec())
     }
 
     /// Return the data of the salt.
-    pub fn data(&self) -> &Vec<u8> {
+    pub fn data(&self) -> &[u8] {
         &self.0
     }
 

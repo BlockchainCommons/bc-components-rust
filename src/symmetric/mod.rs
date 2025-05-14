@@ -22,7 +22,24 @@ mod symmetric_key;
 pub use symmetric_key::SymmetricKey;
 
 mod encrypted_key;
-pub use encrypted_key::{ EncryptedKey, DerivationParams, HashType, KeyDerivationMethod };
+pub use encrypted_key::{ EncryptedKey, KeyDerivationMethod };
+
+mod argon2id;
+pub use argon2id::Argon2id;
+mod hkdf;
+pub use hkdf::HKDF;
+mod pbkdf2;
+pub use pbkdf2::PBKDF2;
+mod scrypt;
+pub use scrypt::Scrypt;
+mod hash_type;
+pub use hash_type::HashType;
+mod key_derivation;
+pub use key_derivation::KeyDerivation;
+mod derivation_params;
+pub use derivation_params::DerivationParams;
+
+pub const SALT_LEN: usize = 16;
 
 #[cfg(test)]
 mod test {

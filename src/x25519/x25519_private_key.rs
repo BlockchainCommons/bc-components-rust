@@ -44,7 +44,9 @@ impl X25519PrivateKey {
     }
 
     /// Generate a new random `X25519PrivateKey` and corresponding `X25519PublicKey` using the given random number generator.
-    pub fn keypair_using(rng: &mut impl RandomNumberGenerator) -> (X25519PrivateKey, X25519PublicKey) {
+    pub fn keypair_using(
+        rng: &mut impl RandomNumberGenerator
+    ) -> (X25519PrivateKey, X25519PublicKey) {
         let private_key = X25519PrivateKey::new_using(rng);
         let public_key = private_key.public_key();
         (private_key, public_key)
@@ -92,14 +94,12 @@ impl X25519PrivateKey {
 
     /// Get the `X25519PublicKey` corresponding to this `X25519PrivateKey`.
     pub fn public_key(&self) -> X25519PublicKey {
-        X25519PublicKey::from_data(
-            bc_crypto::x25519_public_key_from_private_key(self.into())
-        )
+        X25519PublicKey::from_data(bc_crypto::x25519_public_key_from_private_key(self.into()))
     }
 
     /// Derive an `X25519PrivateKey` from the given key material.
     pub fn derive_from_key_material(key_material: impl AsRef<[u8]>) -> Self {
-        Self::from_data(bc_crypto::x25519_derive_private_key(key_material))
+        Self::from_data(bc_crypto::derive_agreement_private_key(key_material))
     }
 
     /// Derive a shared symmetric key from this `X25519PrivateKey` and the given `X25519PublicKey`.
@@ -109,7 +109,7 @@ impl X25519PrivateKey {
 }
 
 /// Implements the Decrypter trait to support key encapsulation mechanisms.
-impl Decrypter for X25519PrivateKey{
+impl Decrypter for X25519PrivateKey {
     fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
         EncapsulationPrivateKey::X25519(self.clone())
     }
