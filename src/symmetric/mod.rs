@@ -1,16 +1,17 @@
 //! Symmetric cryptography types and operations.
 //!
-//! This module provides types and operations for symmetric encryption, where the same key is
-//! used for both encryption and decryption. It implements the ChaCha20-Poly1305 AEAD
-//! (Authenticated Encryption with Associated Data) construction as specified in
-//! [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
+//! This module provides types and operations for symmetric encryption, where
+//! the same key is used for both encryption and decryption. It implements the
+//! ChaCha20-Poly1305 AEAD (Authenticated Encryption with Associated Data)
+//! construction as specified in [RFC-8439](https://datatracker.ietf.org/doc/html/rfc8439).
 //!
 //! The main components are:
 //!
 //! - `SymmetricKey`: A 32-byte key used for both encryption and decryption
 //! - `AuthenticationTag`: A 16-byte value that verifies message integrity
-//! - `EncryptedMessage`: A complete encrypted message containing ciphertext, nonce,
-//!   authentication tag, and optional additional authenticated data (AAD)
+//! - `EncryptedMessage`: A complete encrypted message containing ciphertext,
+//!   nonce, authentication tag, and optional additional authenticated data
+//!   (AAD)
 
 mod encrypted_message;
 pub use encrypted_message::EncryptedMessage;
@@ -21,51 +22,28 @@ pub use authentication_tag::AuthenticationTag;
 mod symmetric_key;
 pub use symmetric_key::SymmetricKey;
 
-mod encrypted_key;
-pub use encrypted_key::{ EncryptedKey, KeyDerivationMethod };
-
-mod argon2id;
-pub use argon2id::Argon2id;
-mod hkdf;
-pub use hkdf::HKDF;
-mod pbkdf2;
-pub use pbkdf2::PBKDF2;
-mod scrypt;
-pub use scrypt::Scrypt;
-mod hash_type;
-pub use hash_type::HashType;
-mod key_derivation;
-pub use key_derivation::KeyDerivation;
-mod derivation_params;
-pub use derivation_params::DerivationParams;
-
-pub const SALT_LEN: usize = 16;
-
 #[cfg(test)]
 mod test {
-    use bc_ur::{ UREncodable, URDecodable };
+    use bc_ur::{URDecodable, UREncodable};
     use dcbor::prelude::*;
     use hex_literal::hex;
     use indoc::indoc;
 
-    use crate::{ SymmetricKey, Nonce, EncryptedMessage, AuthenticationTag };
+    use crate::{AuthenticationTag, EncryptedMessage, Nonce, SymmetricKey};
 
     const PLAINTEXT: &[u8] = b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
     const AAD: [u8; 12] = hex!("50515253c0c1c2c3c4c5c6c7");
-    const KEY: SymmetricKey = SymmetricKey::from_data(
-        hex!("808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f")
-    );
+    const KEY: SymmetricKey = SymmetricKey::from_data(hex!(
+        "808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f"
+    ));
     const NONCE: Nonce = Nonce::from_data(hex!("070000004041424344454647"));
     const CIPHERTEXT: [u8; 114] = hex!(
         "d31a8d34648e60db7b86afbc53ef7ec2a4aded51296e08fea9e2b5a736ee62d63dbea45e8ca9671282fafb69da92728b1a71de0a9e060b2905d6a5b67ecd3b3692ddbd7f2d778b8c9803aee328091b58fab324e4fad675945585808b4831d7bc3ff4def08e4b7a9de576d26586cec64b6116"
     );
-    const AUTH: AuthenticationTag = AuthenticationTag::from_data(
-        hex!("1ae10b594f09e26a7e902ecbd0600691")
-    );
+    const AUTH: AuthenticationTag =
+        AuthenticationTag::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
 
-    fn encrypted_message() -> EncryptedMessage {
-        KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE))
-    }
+    fn encrypted_message() -> EncryptedMessage { KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE)) }
 
     #[test]
     fn test_rfc_test_vector() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -152,8 +130,7 @@ mod test {
         crate::register_tags();
         let encrypted_message = encrypted_message();
         let ur = encrypted_message.ur();
-        let expected_ur =
-            "ur:encrypted/lrhdjptecylgeeiemnhnuykglnperfguwskbsaoxpmwegydtjtayzeptvoreosenwyidtbfsrnoxhylkptiobglfzszointnmojplucyjsuebknnambddtahtbonrpkbsnfrenmoutrylbdpktlulkmkaxplvldeascwhdzsqddkvezstbkpmwgolplalufdehtsrffhwkuewtmngrknntvwkotdihlntoswgrhscmgsataeaeaefzfpfwfxfyfefgflgdcyvybdhkgwasvoimkbmhdmsbtihnammegsgdgygmgurtsesasrssskswstcfnbpdct";
+        let expected_ur = "ur:encrypted/lrhdjptecylgeeiemnhnuykglnperfguwskbsaoxpmwegydtjtayzeptvoreosenwyidtbfsrnoxhylkptiobglfzszointnmojplucyjsuebknnambddtahtbonrpkbsnfrenmoutrylbdpktlulkmkaxplvldeascwhdzsqddkvezstbkpmwgolplalufdehtsrffhwkuewtmngrknntvwkotdihlntoswgrhscmgsataeaeaefzfpfwfxfyfefgflgdcyvybdhkgwasvoimkbmhdmsbtihnammegsgdgygmgurtsesasrssskswstcfnbpdct";
         assert_eq!(ur.to_string(), expected_ur);
         let decoded = EncryptedMessage::from_ur(ur).unwrap();
         assert_eq!(encrypted_message, decoded);

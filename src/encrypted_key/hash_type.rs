@@ -1,5 +1,5 @@
-use dcbor::prelude::*;
 use anyhow::{Error, Result};
+use dcbor::prelude::*;
 
 /// Enum representing the supported hash types.
 ///
@@ -25,9 +25,7 @@ impl std::fmt::Display for HashType {
 }
 
 impl Into<CBOR> for HashType {
-    fn into(self) -> CBOR {
-        CBOR::from(self as u8)
-    }
+    fn into(self) -> CBOR { CBOR::from(self as u8) }
 }
 
 impl TryFrom<CBOR> for HashType {
