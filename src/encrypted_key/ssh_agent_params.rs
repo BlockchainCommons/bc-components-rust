@@ -1,4 +1,4 @@
-use std::{env, path::Path};
+use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 use anyhow::{Context, Result, bail};
 use bc_crypto::hkdf_hmac_sha256;
@@ -8,24 +8,97 @@ use ssh_agent_client_rs::Client;
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
 use crate::{EncryptedMessage, Nonce, Salt, SymmetricKey};
 
+#[allow(dead_code)]
+pub trait SSHAgent {
+    fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>>;
+    fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()>;
+    fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()>;
+    fn remove_all_identities(&mut self) -> Result<()>;
+    fn sign(
+        &mut self,
+        key: &ssh_key::PublicKey,
+        data: &[u8],
+    ) -> Result<ssh_key::Signature>;
+}
+
+impl SSHAgent for Client {
+    fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
+        self.list_identities()
+            .map_err(|e| anyhow::anyhow!(e.to_string()))
+    }
+
+    fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+        self.add_identity(key)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))
+    }
+
+    fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+        self.remove_identity(key)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))
+    }
+
+    fn remove_all_identities(&mut self) -> Result<()> {
+        self.remove_all_identities()
+            .map_err(|e| anyhow::anyhow!(e.to_string()))
+    }
+
+    fn sign(
+        &mut self,
+        key: &ssh_key::PublicKey,
+        data: &[u8],
+    ) -> Result<ssh_key::Signature> {
+        self.sign(key, data)
+            .map_err(|e| anyhow::anyhow!(e.to_string()))
+    }
+}
+
 /// Struct representing SSH Agent parameters.
 ///
 /// CDDL:
 /// ```cddl
 /// SSHAgentParams = [4, Salt, id: tstr]
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct SSHAgentParams {
     salt: Salt,
     id: String,
+
+    agent: Option<Rc<RefCell<dyn SSHAgent + 'static>>>,
+}
+
+impl PartialEq for SSHAgentParams {
+    fn eq(&self, other: &Self) -> bool {
+        self.salt == other.salt && self.id == other.id
+    }
+}
+
+impl Eq for SSHAgentParams {}
+
+impl std::fmt::Debug for SSHAgentParams {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SSHAgentParams")
+            .field("salt", &self.salt)
+            .field("id", &self.id)
+            .finish()
+    }
 }
 
 impl SSHAgentParams {
     pub fn new() -> Self {
-        Self::new_opt(Salt::new_with_len(SALT_LEN).unwrap(), String::new())
+        Self::new_opt(
+            Salt::new_with_len(SALT_LEN).unwrap(),
+            String::new(),
+            None,
+        )
     }
 
-    pub fn new_opt(salt: Salt, id: String) -> Self { Self { salt, id } }
+    pub fn new_opt(
+        salt: Salt,
+        id: impl AsRef<str>,
+        agent: Option<Rc<RefCell<dyn SSHAgent + 'static>>>,
+    ) -> Self {
+        Self { salt, id: id.as_ref().to_string(), agent }
+    }
 
     pub fn salt(&self) -> &Salt { &self.salt }
 
@@ -33,10 +106,12 @@ impl SSHAgentParams {
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
-fn connect_to_agent() -> Result<Client> {
+fn connect_to_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
     let sock =
         env::var("SSH_AUTH_SOCK").context("SSH_AUTH_SOCK env var not set")?;
-    Client::connect(Path::new(&sock)).context("no ssh-agent reachable")
+    let client =
+        Client::connect(Path::new(&sock)).context("no ssh-agent reachable")?;
+    Ok(Rc::new(RefCell::new(client)))
 }
 
 impl KeyDerivation for SSHAgentParams {
@@ -51,11 +126,14 @@ impl KeyDerivation for SSHAgentParams {
         let id = String::from_utf8(secret.as_ref().to_vec())
             .context("SSH Agent secret must be a valid UTF-8 string")?;
 
-        // Connect to the SSH agent.
-        let mut agent = connect_to_agent()?;
+        // If None call connect_to_agent to get the agent.
+        let agent = self
+            .agent
+            .as_ref()
+            .map_or_else(|| connect_to_agent(), |a| Ok(a.clone()))?;
 
         // List all identities in the SSH agent.
-        let ids = agent.list_identities()?;
+        let ids = agent.borrow_mut().list_identities()?;
 
         // Filter down to the identities that have Ed25519 keys.
         let ids: Vec<_> = ids
@@ -78,11 +156,10 @@ impl KeyDerivation for SSHAgentParams {
                 .context("No matching identity found")?
         };
 
-        // Safe to unwrap because SALT_LEN is a valid length for Salt.
-        let salt = Salt::new_with_len(SALT_LEN).unwrap();
-
         // Sign the salt with the identity.
+        let salt = self.salt().clone();
         let sig = agent
+            .borrow_mut()
             .sign(identity, salt.data())
             .context("SSH agent refused to sign")?;
 
@@ -95,7 +172,7 @@ impl KeyDerivation for SSHAgentParams {
         .unwrap(); // Safe to unwrap because SYMMETRIC_KEY_SIZE is valid.
 
         // Encode the method as CBOR data.
-        let encoded_method = Self::new_opt(salt, id).to_cbor_data();
+        let encoded_method = Self::new_opt(salt, id, None).to_cbor_data();
 
         // Encrypt the content key with the derived key, using the
         // encoded method as additional authenticated data.
@@ -115,11 +192,14 @@ impl KeyDerivation for SSHAgentParams {
         let id = String::from_utf8(secret.as_ref().to_vec())
             .context("SSH Agent secret must be a valid UTF-8 string")?;
 
-        // Connect to the SSH agent.
-        let mut agent = connect_to_agent()?;
+        // If None call connect_to_agent to get the agent.
+        let agent = self
+            .agent
+            .as_ref()
+            .map_or_else(|| connect_to_agent(), |a| Ok(a.clone()))?;
 
         // List all identities in the SSH agent.
-        let ids = agent.list_identities()?;
+        let ids = agent.borrow_mut().list_identities()?;
 
         // Filter down to the identities that have Ed25519 keys.
         let ids: Vec<_> = ids
@@ -150,6 +230,7 @@ impl KeyDerivation for SSHAgentParams {
 
         // Sign the salt with the identity.
         let sig = agent
+            .borrow_mut()
             .sign(identity, self.salt.data())
             .context("SSH agent refused to sign")?;
 
@@ -209,6 +290,122 @@ impl TryFrom<CBOR> for SSHAgentParams {
             .next()
             .ok_or_else(|| dcbor::Error::msg("Missing id"))?
             .try_into()?;
-        Ok(SSHAgentParams { salt, id })
+        Ok(SSHAgentParams { salt, id, agent: None })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{cell::RefCell, collections::HashMap, rc::Rc};
+
+    use anyhow::Result;
+
+    use super::{SSHAgent, SSHAgentParams};
+    use crate::{KeyDerivation, SALT_LEN, Salt};
+
+    struct MockSSHAgent {
+        identities: HashMap<String, ssh_key::PrivateKey>,
+    }
+
+    impl MockSSHAgent {
+        fn new() -> Self { Self { identities: HashMap::new() } }
+
+        fn add_identity(&mut self, key: ssh_key::PrivateKey) {
+            self.identities.insert(key.comment().to_string(), key);
+        }
+    }
+
+    impl SSHAgent for MockSSHAgent {
+        fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
+            Ok(self
+                .identities
+                .values()
+                .map(|k| k.public_key().clone())
+                .collect())
+        }
+
+        fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+            self.add_identity(key.clone());
+            Ok(())
+        }
+
+        fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+            self.identities.remove(key.comment());
+            Ok(())
+        }
+
+        fn remove_all_identities(&mut self) -> Result<()> {
+            self.identities.clear();
+            Ok(())
+        }
+
+        fn sign(
+            &mut self,
+            key: &ssh_key::PublicKey,
+            data: &[u8],
+        ) -> Result<ssh_key::Signature> {
+            println!("Signing public key: {:?}", &key);
+            println!("Data: {:?}", hex::encode(data));
+            let private_key = self
+                .identities
+                .get(key.comment())
+                .ok_or_else(|| anyhow::anyhow!("Identity not found"))?;
+            println!("Signing Private key: {:?}", private_key);
+            let sig: ssh_key::SshSig = private_key
+                .sign("test_namespace", ssh_key::HashAlg::Sha256, data)
+                .map_err(|e| anyhow::anyhow!("Failed to sign data: {}", e))?;
+            println!("Signature: {:?}", sig.signature());
+            Ok(sig.signature().clone())
+        }
+    }
+
+    fn test_agent() -> Result<Rc<RefCell<dyn SSHAgent>>> {
+        let mut agent = MockSSHAgent::new();
+        let mut rng = bc_rand::SecureRandomNumberGenerator;
+        let keypair: ssh_key::private::Ed25519Keypair =
+            ssh_key::private::Ed25519Keypair::random(&mut rng);
+        let private_key = ssh_key::PrivateKey::new(
+            keypair.into(),
+            "test_key@example.com".to_string(),
+        )?;
+        agent.add_identity(private_key);
+        Ok(Rc::new(RefCell::new(agent)))
+    }
+
+    #[test]
+    fn test_ssh_agent() {
+        let agent = test_agent().unwrap();
+        let identities = agent.borrow_mut().list_identities().unwrap();
+        assert!(!identities.is_empty(), "No identities found in SSH agent");
+
+        let first_identity = &identities[0];
+        let data = b"test data";
+        let signature1 = agent.borrow_mut().sign(first_identity, data).unwrap();
+        let signature2 = agent.borrow_mut().sign(first_identity, data).unwrap();
+        assert_eq!(
+            signature1, signature2,
+            "Signatures should match for the same data"
+        );
+    }
+
+    #[test]
+    fn test_ssh_agent_params() {
+        let agent = test_agent().unwrap();
+        let params = SSHAgentParams::new_opt(
+            Salt::new_with_len(SALT_LEN).unwrap(),
+            "",
+            Some(agent.clone()),
+        );
+        let content_key = crate::SymmetricKey::new();
+        let secret = b"";
+        let encrypted_key = params
+            .lock(&content_key, secret)
+            .expect("Failed to lock content key with SSH agent params");
+        let decrypted_key = params.unlock(&encrypted_key, secret);
+        assert_eq!(
+            content_key,
+            decrypted_key
+                .expect("Failed to unlock content key with SSH agent params")
+        );
     }
 }

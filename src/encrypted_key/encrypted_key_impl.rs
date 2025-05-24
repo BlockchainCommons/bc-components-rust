@@ -6,12 +6,12 @@
 use anyhow::{Error, Result};
 use dcbor::prelude::*;
 
-use crate::{
-    Argon2idParams, EncryptedMessage, HKDFParams, KeyDerivation, KeyDerivationMethod,
-    KeyDerivationParams, PBKDF2Params, ScryptParams, SymmetricKey, tags,
-};
-
 use super::SSHAgentParams;
+use crate::{
+    Argon2idParams, EncryptedMessage, HKDFParams, KeyDerivation,
+    KeyDerivationMethod, KeyDerivationParams, PBKDF2Params, ScryptParams,
+    SymmetricKey, tags,
+};
 
 /// # Overview
 /// Provides symmetric encryption and decryption of content keys using various
@@ -116,15 +116,22 @@ impl EncryptedKey {
         }
     }
 
-    pub fn unlock(&self, secret: impl AsRef<[u8]>) -> Result<SymmetricKey> {
+    pub fn derivation_method(&self) -> Result<KeyDerivationMethod> {
         let encrypted_message = &self.encrypted_key;
         let aad = encrypted_message.aad();
         let cbor = CBOR::try_from_data(aad)?;
         let array = cbor.clone().try_into_array()?;
-        let method: KeyDerivationMethod = array
+        array
             .get(0)
             .ok_or_else(|| Error::msg("Missing method"))?
-            .try_into()?;
+            .try_into()
+    }
+
+    pub fn unlock(&self, secret: impl AsRef<[u8]>) -> Result<SymmetricKey> {
+        let encrypted_message = &self.encrypted_key;
+        let aad = encrypted_message.aad();
+        let cbor = CBOR::try_from_data(aad)?;
+        let method = self.derivation_method()?;
         match method {
             KeyDerivationMethod::HKDF => {
                 let params = HKDFParams::try_from(cbor)?;
@@ -165,13 +172,17 @@ impl From<EncryptedKey> for CBOR {
 }
 
 impl CBORTaggedEncodable for EncryptedKey {
-    fn untagged_cbor(&self) -> CBOR { return self.encrypted_key.clone().into(); }
+    fn untagged_cbor(&self) -> CBOR {
+        return self.encrypted_key.clone().into();
+    }
 }
 
 impl TryFrom<CBOR> for EncryptedKey {
     type Error = dcbor::Error;
 
-    fn try_from(value: CBOR) -> dcbor::Result<Self> { Self::from_tagged_cbor(value) }
+    fn try_from(value: CBOR) -> dcbor::Result<Self> {
+        Self::from_tagged_cbor(value)
+    }
 }
 
 impl CBORTaggedDecodable for EncryptedKey {
@@ -197,7 +208,9 @@ mod tests {
         let secret = test_secret();
         let content_key = test_content_key();
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key).unwrap();
+        let encrypted =
+            EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key)
+                .unwrap();
         assert_eq!(format!("{}", encrypted), "EncryptedKey(HKDF(SHA256))");
         let cbor = encrypted.clone().to_cbor();
         let encrypted2 = EncryptedKey::try_from(cbor).unwrap();
@@ -211,7 +224,12 @@ mod tests {
         let secret = test_secret();
         let content_key = test_content_key();
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::PBKDF2, secret, &content_key).unwrap();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::PBKDF2,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         assert_eq!(format!("{}", encrypted), "EncryptedKey(PBKDF2(SHA256))");
         let cbor = encrypted.clone().to_cbor();
         let encrypted2 = EncryptedKey::try_from(cbor).unwrap();
@@ -225,7 +243,12 @@ mod tests {
         let secret = test_secret();
         let content_key = test_content_key();
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::Scrypt, secret, &content_key).unwrap();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::Scrypt,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         assert_eq!(format!("{}", encrypted), "EncryptedKey(Scrypt)");
         let cbor = encrypted.clone().to_cbor();
         let encrypted2 = EncryptedKey::try_from(cbor).unwrap();
@@ -240,15 +263,27 @@ mod tests {
         let wrong_secret = b"wrong secret";
         let content_key = test_content_key();
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key).unwrap();
+        let encrypted =
+            EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key)
+                .unwrap();
         let result = EncryptedKey::unlock(&encrypted, wrong_secret);
         assert!(result.is_err());
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::PBKDF2, secret, &content_key).unwrap();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::PBKDF2,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         let result = EncryptedKey::unlock(&encrypted, wrong_secret);
         assert!(result.is_err());
 
-        let encrypted = EncryptedKey::lock(KeyDerivationMethod::Scrypt, secret, &content_key).unwrap();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::Scrypt,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         let result = EncryptedKey::unlock(&encrypted, wrong_secret);
         assert!(result.is_err());
     }
@@ -258,13 +293,25 @@ mod tests {
         let secret = test_secret();
         let content_key = test_content_key();
 
-        let hkdf = EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key).unwrap();
+        let hkdf =
+            EncryptedKey::lock(KeyDerivationMethod::HKDF, secret, &content_key)
+                .unwrap();
         matches!(hkdf.params, KeyDerivationParams::HKDF(_));
 
-        let pbkdf2 = EncryptedKey::lock(KeyDerivationMethod::PBKDF2, secret, &content_key).unwrap();
+        let pbkdf2 = EncryptedKey::lock(
+            KeyDerivationMethod::PBKDF2,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         matches!(pbkdf2.params, KeyDerivationParams::PBKDF2(_));
 
-        let scrypt = EncryptedKey::lock(KeyDerivationMethod::Scrypt, secret, &content_key).unwrap();
+        let scrypt = EncryptedKey::lock(
+            KeyDerivationMethod::Scrypt,
+            secret,
+            &content_key,
+        )
+        .unwrap();
         matches!(scrypt.params, KeyDerivationParams::Scrypt(_));
     }
 }
