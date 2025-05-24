@@ -39,6 +39,7 @@ rand_core = "0.6.4"
 pqcrypto-mlkem = "^0.1.0"
 pqcrypto-mldsa = "^0.1.1"
 pqcrypto-traits = "^0.3.5"
+ssh-agent-client-rs = "1.0.0"
 
 [dev-dependencies]
 hex-literal = "^0.4.1"
