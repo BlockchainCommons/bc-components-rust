@@ -55,7 +55,7 @@ impl KeyDerivation for HKDFParams {
 
     fn unlock(
         &self,
-        encrypted_key: &EncryptedMessage,
+        encrypted_message: &EncryptedMessage,
         secret: impl AsRef<[u8]>,
     ) -> Result<SymmetricKey> {
         let derived_key: SymmetricKey = (match self.hash_type {
@@ -63,7 +63,7 @@ impl KeyDerivation for HKDFParams {
             HashType::SHA512 => hkdf_hmac_sha512(secret, &self.salt, 32),
         })
         .try_into()?;
-        let content_key = derived_key.decrypt(encrypted_key)?.try_into()?;
+        let content_key = derived_key.decrypt(encrypted_message)?.try_into()?;
         Ok(content_key)
     }
 }

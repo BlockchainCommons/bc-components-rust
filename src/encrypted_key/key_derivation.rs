@@ -15,7 +15,7 @@ pub trait KeyDerivation: CBORCodable {
 
     fn unlock(
         &self,
-        encrypted_key: &EncryptedMessage,
+        encrypted_message: &EncryptedMessage,
         secret: impl AsRef<[u8]>,
     ) -> Result<SymmetricKey>;
 }

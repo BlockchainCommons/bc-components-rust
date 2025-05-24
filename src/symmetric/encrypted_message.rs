@@ -70,16 +70,23 @@ impl EncryptedMessage {
     /// Returns a reference to the authentication tag value used for encryption.
     pub fn authentication_tag(&self) -> &AuthenticationTag { &self.auth }
 
-    /// Returns an optional `Digest` instance if the AAD data can be parsed as
+    /// Returns a CBOR representation in the AAD field, if it exists.
+    pub fn aad_cbor(&self) -> Option<CBOR> {
+        if self.aad.is_empty() {
+            None
+        } else {
+            CBOR::try_from_data(self.aad()).ok()
+        }
+    }
+
+    /// Returns a `Digest` instance if the AAD data can be parsed as
     /// CBOR.
-    pub fn opt_digest(&self) -> Option<Digest> {
-        CBOR::try_from_data(self.aad())
-            .ok()
-            .and_then(|data| Digest::try_from(data).ok())
+    pub fn aad_digest(&self) -> Option<Digest> {
+        self.aad_cbor().and_then(|cbor| Digest::try_from(cbor).ok())
     }
 
     /// Returns `true` if the AAD data can be parsed as CBOR.
-    pub fn has_digest(&self) -> bool { self.opt_digest().is_some() }
+    pub fn has_digest(&self) -> bool { self.aad_digest().is_some() }
 }
 
 /// Implements Debug formatting to display the message contents in a structured
@@ -103,7 +110,7 @@ impl AsRef<EncryptedMessage> for EncryptedMessage {
 /// Implements DigestProvider to provide the digest stored in the AAD field.
 impl DigestProvider for EncryptedMessage {
     fn digest(&self) -> Cow<'_, Digest> {
-        let a = self.opt_digest().unwrap();
+        let a = self.aad_digest().unwrap();
         Cow::Owned(a)
     }
 }
@@ -123,7 +130,9 @@ impl From<EncryptedMessage> for CBOR {
 impl TryFrom<CBOR> for EncryptedMessage {
     type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> dcbor::Result<Self> { Self::from_tagged_cbor(cbor) }
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
+        Self::from_tagged_cbor(cbor)
+    }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
@@ -149,12 +158,17 @@ impl CBORTaggedDecodable for EncryptedMessage {
         match cbor.as_case() {
             CBORCase::Array(elements) => {
                 if elements.len() < 3 {
-                    return Err("EncryptedMessage must have at least 3 elements".into());
+                    return Err(
+                        "EncryptedMessage must have at least 3 elements".into(),
+                    );
                 }
-                let ciphertext = CBOR::try_into_byte_string(elements[0].clone())?;
-                let nonce_data = CBOR::try_into_byte_string(elements[1].clone())?;
+                let ciphertext =
+                    CBOR::try_into_byte_string(elements[0].clone())?;
+                let nonce_data =
+                    CBOR::try_into_byte_string(elements[1].clone())?;
                 let nonce = Nonce::from_data_ref(nonce_data)?;
-                let auth_data = CBOR::try_into_byte_string(elements[2].clone())?;
+                let auth_data =
+                    CBOR::try_into_byte_string(elements[2].clone())?;
                 let auth = AuthenticationTag::from_data_ref(auth_data)?;
                 let aad = if elements.len() > 3 {
                     CBOR::try_into_byte_string(elements[3].clone())?

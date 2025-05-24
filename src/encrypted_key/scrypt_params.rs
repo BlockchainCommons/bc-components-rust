@@ -58,13 +58,13 @@ impl KeyDerivation for ScryptParams {
 
     fn unlock(
         &self,
-        encrypted_key: &EncryptedMessage,
+        encrypted_message: &EncryptedMessage,
         secret: impl AsRef<[u8]>,
     ) -> Result<SymmetricKey> {
         let derived_key: SymmetricKey =
             scrypt_opt(secret, &self.salt, 32, self.log_n, self.r, self.p)
                 .try_into()?;
-        derived_key.decrypt(encrypted_key)?.try_into()
+        derived_key.decrypt(encrypted_message)?.try_into()
     }
 }
 

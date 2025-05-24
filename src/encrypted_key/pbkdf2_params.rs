@@ -66,7 +66,7 @@ impl KeyDerivation for PBKDF2Params {
 
     fn unlock(
         &self,
-        encrypted_key: &EncryptedMessage,
+        encrypted_message: &EncryptedMessage,
         secret: impl AsRef<[u8]>,
     ) -> Result<SymmetricKey> {
         let derived_key: SymmetricKey = (match self.hash_type {
@@ -78,7 +78,7 @@ impl KeyDerivation for PBKDF2Params {
             }
         })
         .try_into()?;
-        derived_key.decrypt(encrypted_key)?.try_into()
+        derived_key.decrypt(encrypted_message)?.try_into()
     }
 }
 

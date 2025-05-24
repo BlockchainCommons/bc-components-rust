@@ -1,9 +1,10 @@
+use anyhow::Result;
 use dcbor::prelude::*;
 
 use super::{
-    Argon2idParams, HKDFParams, KeyDerivationMethod, PBKDF2Params,
-    SSHAgentParams, ScryptParams,
+    Argon2idParams, HKDFParams, KeyDerivation, KeyDerivationMethod, PBKDF2Params, SSHAgentParams, ScryptParams
 };
+use crate::{EncryptedMessage, SymmetricKey};
 
 /// Enum representing the derivation parameters.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -13,6 +14,43 @@ pub enum KeyDerivationParams {
     Scrypt(ScryptParams),
     Argon2id(Argon2idParams),
     SSHAgent(SSHAgentParams),
+}
+
+impl KeyDerivationParams {
+    /// Returns the key derivation method associated with the parameters.
+    pub fn method(&self) -> KeyDerivationMethod {
+        match self {
+            KeyDerivationParams::HKDF(_) => KeyDerivationMethod::HKDF,
+            KeyDerivationParams::PBKDF2(_) => KeyDerivationMethod::PBKDF2,
+            KeyDerivationParams::Scrypt(_) => KeyDerivationMethod::Scrypt,
+            KeyDerivationParams::Argon2id(_) => KeyDerivationMethod::Argon2id,
+            KeyDerivationParams::SSHAgent(_) => KeyDerivationMethod::SSHAgent,
+        }
+    }
+
+    pub fn lock(
+        &self,
+        content_key: &SymmetricKey,
+        secret: impl AsRef<[u8]>,
+    ) -> Result<EncryptedMessage> {
+        match self {
+            KeyDerivationParams::HKDF(params) => {
+                params.lock(content_key, secret)
+            }
+            KeyDerivationParams::PBKDF2(params) => {
+                params.lock(content_key, secret)
+            }
+            KeyDerivationParams::Scrypt(params) => {
+                params.lock(content_key, secret)
+            }
+            KeyDerivationParams::Argon2id(params) => {
+                params.lock(content_key, secret)
+            }
+            KeyDerivationParams::SSHAgent(params) => {
+                params.lock(content_key, secret)
+            }
+        }
+    }
 }
 
 impl std::fmt::Display for KeyDerivationParams {

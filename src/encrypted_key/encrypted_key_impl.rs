@@ -63,75 +63,71 @@ use crate::{
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EncryptedKey {
     params: KeyDerivationParams,
-    encrypted_key: EncryptedMessage,
+    encrypted_message: EncryptedMessage,
 }
 
 impl EncryptedKey {
+    pub fn lock_opt(
+        params: KeyDerivationParams,
+        secret: impl AsRef<[u8]>,
+        content_key: &SymmetricKey,
+    ) -> Result<Self> {
+        let encrypted_message = params.lock(content_key, secret)?;
+        Ok(Self { params, encrypted_message })
+    }
+
     pub fn lock(
         method: KeyDerivationMethod,
         secret: impl AsRef<[u8]>,
         content_key: &SymmetricKey,
     ) -> Result<Self> {
         match method {
-            KeyDerivationMethod::HKDF => {
-                let params = HKDFParams::new();
-                let encrypted_key = params.lock(content_key, secret)?;
-                Ok(Self {
-                    params: KeyDerivationParams::HKDF(params),
-                    encrypted_key,
-                })
-            }
-            KeyDerivationMethod::PBKDF2 => {
-                let params = PBKDF2Params::new();
-                let encrypted_key = params.lock(content_key, secret)?;
-                Ok(Self {
-                    params: KeyDerivationParams::PBKDF2(params),
-                    encrypted_key,
-                })
-            }
-            KeyDerivationMethod::Scrypt => {
-                let params = ScryptParams::new();
-                let encrypted_key = params.lock(content_key, secret)?;
-                Ok(Self {
-                    params: KeyDerivationParams::Scrypt(params),
-                    encrypted_key,
-                })
-            }
-            KeyDerivationMethod::Argon2id => {
-                let params = Argon2idParams::new();
-                let encrypted_key = params.lock(content_key, secret)?;
-                Ok(Self {
-                    params: KeyDerivationParams::Argon2id(params),
-                    encrypted_key,
-                })
-            }
-            KeyDerivationMethod::SSHAgent => {
-                let params = SSHAgentParams::new();
-                let encrypted_key = params.lock(content_key, secret)?;
-                Ok(Self {
-                    params: KeyDerivationParams::SSHAgent(params),
-                    encrypted_key,
-                })
-            }
+            KeyDerivationMethod::HKDF => Self::lock_opt(
+                KeyDerivationParams::HKDF(HKDFParams::new()),
+                secret,
+                content_key,
+            ),
+            KeyDerivationMethod::PBKDF2 => Self::lock_opt(
+                KeyDerivationParams::PBKDF2(PBKDF2Params::new()),
+                secret,
+                content_key,
+            ),
+            KeyDerivationMethod::Scrypt => Self::lock_opt(
+                KeyDerivationParams::Scrypt(ScryptParams::new()),
+                secret,
+                content_key,
+            ),
+            KeyDerivationMethod::Argon2id => Self::lock_opt(
+                KeyDerivationParams::Argon2id(Argon2idParams::new()),
+                secret,
+                content_key,
+            ),
+            KeyDerivationMethod::SSHAgent => Self::lock_opt(
+                KeyDerivationParams::SSHAgent(SSHAgentParams::new()),
+                secret,
+                content_key,
+            ),
         }
     }
 
-    pub fn derivation_method(&self) -> Result<KeyDerivationMethod> {
-        let encrypted_message = &self.encrypted_key;
-        let aad = encrypted_message.aad();
-        let cbor = CBOR::try_from_data(aad)?;
-        let array = cbor.clone().try_into_array()?;
-        array
-            .get(0)
-            .ok_or_else(|| Error::msg("Missing method"))?
-            .try_into()
+    pub fn encrypted_message(&self) -> &EncryptedMessage {
+        &self.encrypted_message
+    }
+
+    pub fn aad_cbor(&self) -> Result<CBOR> {
+        self.encrypted_message()
+            .aad_cbor()
+            .ok_or_else(|| Error::msg("Missing AAD CBOR in EncryptedMessage"))
     }
 
     pub fn unlock(&self, secret: impl AsRef<[u8]>) -> Result<SymmetricKey> {
-        let encrypted_message = &self.encrypted_key;
-        let aad = encrypted_message.aad();
-        let cbor = CBOR::try_from_data(aad)?;
-        let method = self.derivation_method()?;
+        let encrypted_message = &self.encrypted_message();
+        let cbor = self.aad_cbor()?;
+        let array = cbor.clone().try_into_array()?;
+        let method = array
+            .get(0)
+            .ok_or_else(|| Error::msg("Missing method"))?
+            .try_into()?;
         match method {
             KeyDerivationMethod::HKDF => {
                 let params = HKDFParams::try_from(cbor)?;
@@ -173,7 +169,7 @@ impl From<EncryptedKey> for CBOR {
 
 impl CBORTaggedEncodable for EncryptedKey {
     fn untagged_cbor(&self) -> CBOR {
-        return self.encrypted_key.clone().into();
+        return self.encrypted_message().clone().into();
     }
 }
 
@@ -190,7 +186,7 @@ impl CBORTaggedDecodable for EncryptedKey {
         let encrypted_key: EncryptedMessage = untagged_cbor.try_into()?;
         let params_cbor = CBOR::try_from_data(encrypted_key.aad())?;
         let params = params_cbor.try_into()?;
-        Ok(Self { params, encrypted_key })
+        Ok(Self { params, encrypted_message: encrypted_key })
     }
 }
 
