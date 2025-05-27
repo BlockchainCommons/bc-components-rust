@@ -35,7 +35,7 @@ impl KeyDerivation for HKDFParams {
     const INDEX: usize = KeyDerivationMethod::HKDF as usize;
 
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {

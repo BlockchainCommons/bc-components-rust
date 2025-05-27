@@ -42,7 +42,7 @@ impl KeyDerivation for PBKDF2Params {
     const INDEX: usize = KeyDerivationMethod::PBKDF2 as usize;
 
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {

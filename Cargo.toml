@@ -52,3 +52,6 @@ pre-release-replacements = [
     { file = "src/lib.rs", search = "bc-components = .*", replace = "{{crate_name}} = \"{{version}}\"" },
     { file = "src/lib.rs", search = "#!\\[doc\\(html_root_url = \"https://docs.rs/bc-components/[0-9.]*\"\\)\\]", replace = "#![doc(html_root_url = \"https://docs.rs/bc-components/{{version}}\")]" },
 ]
+
+[features]
+ssh_agent_tests = []

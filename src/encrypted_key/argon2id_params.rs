@@ -30,7 +30,7 @@ impl KeyDerivation for Argon2idParams {
     const INDEX: usize = KeyDerivationMethod::Argon2id as usize;
 
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {

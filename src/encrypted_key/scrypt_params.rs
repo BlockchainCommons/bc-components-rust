@@ -40,7 +40,7 @@ impl ScryptParams {
 impl KeyDerivation for ScryptParams {
     const INDEX: usize = KeyDerivationMethod::Scrypt as usize;
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {

@@ -68,7 +68,7 @@ pub struct EncryptedKey {
 
 impl EncryptedKey {
     pub fn lock_opt(
-        params: KeyDerivationParams,
+        mut params: KeyDerivationParams,
         secret: impl AsRef<[u8]>,
         content_key: &SymmetricKey,
     ) -> Result<Self> {
@@ -254,6 +254,25 @@ mod tests {
     }
 
     #[test]
+    fn test_encrypted_key_argon2id_roundtrip() {
+        let secret = test_secret();
+        let content_key = test_content_key();
+
+        let argon2id = EncryptedKey::lock(
+            KeyDerivationMethod::Argon2id,
+            secret,
+            &content_key,
+        )
+        .unwrap();
+        assert_eq!(format!("{}", argon2id), "EncryptedKey(Argon2id)");
+        let cbor = argon2id.clone().to_cbor();
+        let argon2id2 = EncryptedKey::try_from(cbor).unwrap();
+        let decrypted = EncryptedKey::unlock(&argon2id2, secret).unwrap();
+
+        assert_eq!(content_key, decrypted);
+    }
+
+    #[test]
     fn test_encrypted_key_wrong_secret_fails() {
         let secret = test_secret();
         let wrong_secret = b"wrong secret";
@@ -276,6 +295,15 @@ mod tests {
 
         let encrypted = EncryptedKey::lock(
             KeyDerivationMethod::Scrypt,
+            secret,
+            &content_key,
+        )
+        .unwrap();
+        let result = EncryptedKey::unlock(&encrypted, wrong_secret);
+        assert!(result.is_err());
+
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::Argon2id,
             secret,
             &content_key,
         )
@@ -309,5 +337,13 @@ mod tests {
         )
         .unwrap();
         matches!(scrypt.params, KeyDerivationParams::Scrypt(_));
+
+        let argon2id = EncryptedKey::lock(
+            KeyDerivationMethod::Argon2id,
+            secret,
+            &content_key,
+        )
+        .unwrap();
+        matches!(argon2id.params, KeyDerivationParams::Argon2id(_));
     }
 }

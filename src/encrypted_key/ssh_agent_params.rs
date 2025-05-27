@@ -117,7 +117,7 @@ impl SSHAgentParams {
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
-fn connect_to_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
+pub fn connect_to_ssh_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
     let sock =
         env::var("SSH_AUTH_SOCK").context("SSH_AUTH_SOCK env var not set")?;
     let client =
@@ -129,7 +129,7 @@ impl KeyDerivation for SSHAgentParams {
     const INDEX: usize = KeyDerivationMethod::SSHAgent as usize;
 
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {
@@ -141,7 +141,7 @@ impl KeyDerivation for SSHAgentParams {
         let agent = self
             .agent
             .as_ref()
-            .map_or_else(|| connect_to_agent(), |a| Ok(a.clone()))?;
+            .map_or_else(|| connect_to_ssh_agent(), |a| Ok(a.clone()))?;
 
         // List all identities in the SSH agent.
         let ids = agent.borrow_mut().list_identities()?;
@@ -182,8 +182,11 @@ impl KeyDerivation for SSHAgentParams {
         ))
         .unwrap(); // Safe to unwrap because SYMMETRIC_KEY_SIZE is valid.
 
+        // Set the ID in the parameters.
+        self.id = id;
+
         // Encode the method as CBOR data.
-        let encoded_method = Self::new_opt(salt, id, None).to_cbor_data();
+        let encoded_method = self.to_cbor_data();
 
         // Encrypt the content key with the derived key, using the
         // encoded method as additional authenticated data.
@@ -207,7 +210,7 @@ impl KeyDerivation for SSHAgentParams {
         let agent = self
             .agent
             .as_ref()
-            .map_or_else(|| connect_to_agent(), |a| Ok(a.clone()))?;
+            .map_or_else(|| connect_to_ssh_agent(), |a| Ok(a.clone()))?;
 
         // List all identities in the SSH agent.
         let ids = agent.borrow_mut().list_identities()?;
@@ -269,7 +272,7 @@ impl KeyDerivation for SSHAgentParams {
 
 impl std::fmt::Display for SSHAgentParams {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SSHAgent({})", self.id)
+        write!(f, r#"SSHAgent("{}")"#, self.id)
     }
 }
 
@@ -306,16 +309,82 @@ impl TryFrom<CBOR> for SSHAgentParams {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_common {
+    use std::{cell::RefCell, rc::Rc};
+
+    use dcbor::prelude::*;
+
+    use crate::{
+        EncryptedKey, KeyDerivation, KeyDerivationParams, SALT_LEN, SSHAgent,
+        SSHAgentParams, Salt,
+    };
+
+    pub fn test_id() -> String { "your_email@example.com".to_string() }
+
+    pub fn test_ssh_agent_params(agent: Rc<RefCell<dyn SSHAgent>>) {
+        // Create SSHAgentParams with the agent.
+        let params = SSHAgentParams::new_opt(
+            Salt::new_with_len(SALT_LEN).unwrap(),
+            "",
+            Some(agent.clone()),
+        );
+
+        // Create a content key to encrypt.
+        let content_key = crate::SymmetricKey::new();
+
+        // Empty: use the first identity in the agent.
+        let secret = b"";
+
+        // Lock the content key with the SSH agent parameters.
+        let encrypted_key = EncryptedKey::lock_opt(
+            KeyDerivationParams::SSHAgent(params),
+            secret,
+            &content_key,
+        )
+        .expect("Lock content key with SSH agent params");
+
+        // Serialize the encrypted key to CBOR.
+        let cbor_data = encrypted_key.to_cbor_data();
+
+        // Deserialize the CBOR data.
+        let cbor = CBOR::try_from_data(cbor_data)
+            .expect("Convert encrypted key to CBOR");
+
+        // Convert the CBOR back to an EncryptedKey.
+        let encrypted_key_2 = EncryptedKey::try_from_cbor(&cbor)
+            .expect("Convert CBOR to EncryptedKey");
+
+        // Extract the SSH agent parameters from the AAD CBOR.
+        let aad_cbor = encrypted_key_2
+            .aad_cbor()
+            .expect("Get AAD CBOR from EncryptedKey");
+        let mut params_2 = SSHAgentParams::try_from(aad_cbor)
+            .expect("Convert AAD CBOR to SSHAgentParams");
+
+        // Set the mock agent in the parameters.
+        params_2.set_agent(Some(agent.clone()));
+
+        // Unlock the content key using the SSH agent parameters.
+        let decrypted_content_key =
+            params_2.unlock(encrypted_key.encrypted_message(), secret);
+
+        // Assert that the decrypted key matches the original content key.
+        assert_eq!(
+            content_key,
+            decrypted_content_key
+                .expect("Unlock content key with SSH agent params")
+        );
+    }
+}
+
+#[cfg(test)]
+mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
     use anyhow::Result;
-    use dcbor::{CBOR, CBORDecodable, CBOREncodable};
 
-    use super::{SSHAgent, SSHAgentParams};
-    use crate::{
-        EncryptedKey, KeyDerivation, KeyDerivationParams, SALT_LEN, Salt,
-    };
+    use super::tests_common::{test_id, test_ssh_agent_params};
+    use crate::SSHAgent;
 
     struct MockSSHAgent {
         identities: HashMap<String, ssh_key::PrivateKey>,
@@ -373,26 +442,25 @@ mod tests {
         }
     }
 
-    fn mock_agent() -> Result<Rc<RefCell<dyn SSHAgent>>> {
+    fn mock_agent() -> Rc<RefCell<dyn SSHAgent>> {
         let mut agent = MockSSHAgent::new();
         let mut rng = bc_rand::SecureRandomNumberGenerator;
         let keypair: ssh_key::private::Ed25519Keypair =
             ssh_key::private::Ed25519Keypair::random(&mut rng);
-        let private_key = ssh_key::PrivateKey::new(
-            keypair.into(),
-            "test_key@example.com".to_string(),
-        )?;
+        let private_key =
+            ssh_key::PrivateKey::new(keypair.into(), test_id()).unwrap();
         agent.add_identity(private_key);
-        Ok(Rc::new(RefCell::new(agent)))
+        Rc::new(RefCell::new(agent))
     }
 
     #[test]
-    fn test_ssh_agent() {
-        let agent = mock_agent().unwrap();
+    fn test_mock_agent() {
+        let agent = mock_agent();
         let identities = agent.borrow_mut().list_identities().unwrap();
         assert!(!identities.is_empty(), "No identities found in SSH agent");
 
         let first_identity = &identities[0];
+        assert_eq!(first_identity.comment(), test_id());
         let data = b"test data";
         let signature1 = agent.borrow_mut().sign(first_identity, data).unwrap();
         let signature2 = agent.borrow_mut().sign(first_identity, data).unwrap();
@@ -403,59 +471,110 @@ mod tests {
     }
 
     #[test]
-    fn test_ssh_agent_params() {
-        // Get a mock SSH agent.
-        let agent = mock_agent().unwrap();
-        // Create SSHAgentParams with the mock agent.
-        let params = SSHAgentParams::new_opt(
-            Salt::new_with_len(SALT_LEN).unwrap(),
-            "",
-            Some(agent.clone()),
-        );
+    fn test_ssh_agent_params_with_mock_agent() {
+        // Create a mock SSH agent.
+        let agent = mock_agent();
 
-        // Create a content key to encrypt.
-        let content_key = crate::SymmetricKey::new();
+        // Test the SSHAgentParams with the mock agent.
+        test_ssh_agent_params(agent);
+    }
+}
 
-        // Empty: use the first identity in the agent.
-        let secret = b"";
+/// For these tests to run correctly, you need to have a real SSH agent running
+/// and have at least one Ed25519 identity added to it with
+/// `your_email@example.com` as the identity comment.
+///
+/// To run these tests, use the following command:
+/// ```bash
+/// cargo test real_agent_tests --features ssh_agent_tests
+/// ```
+///
+/// Your `SSH_AUTH_SOCK` environment variable must be set to the socket
+/// the SSH agent is listening on. This is usually set automatically when you
+/// start your SSH agent, but you can check it with:
+/// ```bash
+/// echo $SSH_AUTH_SOCK
+/// ```
+///
+/// To list the keys in your SSH agent, you can use:
+/// ```bash
+/// ssh-add -l
+/// ```
+///
+/// To generate a new Ed25519 key and add it to your SSH agent as a test
+/// identity, you can use:
+/// ```bash
+/// ssh-keygen -t ed25519 -C "your_email@example.com" -f <your_key_file>
+/// ssh-add <your_key_file>
+/// ```
+#[cfg(test)]
+#[cfg(feature = "ssh_agent_tests")]
+mod real_agent_tests {
+    use dcbor::prelude::*;
 
-        // Lock the content key with the SSH agent parameters.
-        let encrypted_key = EncryptedKey::lock_opt(
-            KeyDerivationParams::SSHAgent(params),
+    use super::tests_common::{test_id, test_ssh_agent_params};
+    use crate::{
+        EncryptedKey, KeyDerivationMethod, SymmetricKey, connect_to_ssh_agent,
+    };
+
+    pub fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
+
+    #[test]
+    fn test_ssh_agent_params_with_real_agent() {
+        // Connect to the real SSH agent.
+        let agent = connect_to_ssh_agent().expect("Connect to SSH agent");
+
+        // Test the SSHAgentParams with the real agent.
+        test_ssh_agent_params(agent);
+    }
+
+    #[test]
+    fn test_encrypted_key_ssh_agent_roundtrip() {
+        let id = test_id();
+        let content_key = test_content_key();
+
+        let encrypted_key = EncryptedKey::lock(
+            KeyDerivationMethod::SSHAgent,
+            id.clone(),
+            &content_key,
+        )
+        .unwrap();
+        let expected = format!(r#"EncryptedKey(SSHAgent("{}"))"#, id);
+        assert_eq!(format!("{}", encrypted_key), expected);
+        let cbor = encrypted_key.clone().to_cbor();
+        let argon2id2 = EncryptedKey::try_from(cbor).unwrap();
+        let decrypted = EncryptedKey::unlock(&argon2id2, id).unwrap();
+
+        assert_eq!(content_key, decrypted);
+    }
+
+    #[test]
+    fn test_encrypted_key_ssh_agent_wrong_secret_fails() {
+        let secret = test_id();
+        let content_key = test_content_key();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::SSHAgent,
             secret,
             &content_key,
         )
-        .expect("Lock content key with SSH agent params");
+        .unwrap();
+        let wrong_secret = b"wrong secret";
+        let result = EncryptedKey::unlock(&encrypted, wrong_secret);
+        assert!(result.is_err(), "Unlock should fail with wrong secret");
+    }
 
-        // Serialize the encrypted key to CBOR.
-        let cbor_data = encrypted_key.to_cbor_data();
-
-        // Deserialize the CBOR data.
-        let cbor = CBOR::try_from_data(cbor_data)
-            .expect("Convert encrypted key to CBOR");
-
-        // Convert the CBOR back to an EncryptedKey.
-        let encrypted_key_2 = EncryptedKey::try_from_cbor(&cbor)
-            .expect("Convert CBOR to EncryptedKey");
-
-        // Extract the SSH agent parameters from the AAD CBOR.
-        let aad_cbor = encrypted_key_2
-            .aad_cbor()
-            .expect("Get AAD CBOR from EncryptedKey");
-        let mut params_2 = SSHAgentParams::try_from(aad_cbor)
-            .expect("Convert AAD CBOR to SSHAgentParams");
-
-        // Set the mock agent in the parameters.
-        params_2.set_agent(Some(agent.clone()));
-
-        // Unlock the content key using the SSH agent parameters.
-        let decrypted_content_key =
-            params_2.unlock(encrypted_key.encrypted_message(), secret);
-
-        // Assert that the decrypted key matches the original content key.
-        assert_eq!(
-            content_key,
-            decrypted_content_key.expect("Unlock content key with SSH agent params")
+    #[test]
+    fn test_ssh_agent_lock_fails_with_nonexistent_identity() {
+        let secret = b"nonexistent_identity";
+        let content_key = test_content_key();
+        let encrypted = EncryptedKey::lock(
+            KeyDerivationMethod::SSHAgent,
+            secret,
+            &content_key,
+        );
+        assert!(
+            encrypted.is_err(),
+            "Lock should fail with nonexistent identity"
         );
     }
 }

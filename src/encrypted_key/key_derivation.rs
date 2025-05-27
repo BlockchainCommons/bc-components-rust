@@ -8,7 +8,7 @@ pub trait KeyDerivation: CBORCodable {
     const INDEX: usize;
 
     fn lock(
-        &self,
+        &mut self,
         content_key: &SymmetricKey,
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage>;
