@@ -159,6 +159,10 @@ impl KeyDerivation for SSHAgentParams {
         // If `id` is empty, use the first available identity, otherwise find
         // the one matching `id`.
         let identity = if id.is_empty() {
+            // If there is more than one identity, throw an error.
+            if ids.len() > 1 {
+                bail!("Multiple identities available in SSH agent, but no ID provided");
+            }
             // Safe to unwrap because we checked that `ids` is not empty
             ids.first().unwrap()
         } else {

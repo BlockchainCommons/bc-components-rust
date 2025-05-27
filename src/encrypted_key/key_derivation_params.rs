@@ -2,7 +2,8 @@ use anyhow::Result;
 use dcbor::prelude::*;
 
 use super::{
-    Argon2idParams, HKDFParams, KeyDerivation, KeyDerivationMethod, PBKDF2Params, SSHAgentParams, ScryptParams
+    Argon2idParams, HKDFParams, KeyDerivation, KeyDerivationMethod,
+    PBKDF2Params, SSHAgentParams, ScryptParams,
 };
 use crate::{EncryptedMessage, SymmetricKey};
 
@@ -26,6 +27,19 @@ impl KeyDerivationParams {
             KeyDerivationParams::Argon2id(_) => KeyDerivationMethod::Argon2id,
             KeyDerivationParams::SSHAgent(_) => KeyDerivationMethod::SSHAgent,
         }
+    }
+
+    pub fn is_password_based(&self) -> bool {
+        matches!(
+            self,
+            KeyDerivationParams::PBKDF2(_)
+                | KeyDerivationParams::Scrypt(_)
+                | KeyDerivationParams::Argon2id(_)
+        )
+    }
+
+    pub fn is_ssh_agent(&self) -> bool {
+        matches!(self, KeyDerivationParams::SSHAgent(_))
     }
 
     pub fn lock(

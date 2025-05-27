@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/bc-components/0.21.0")]
+#![doc(html_root_url = "https://docs.rs/bc-components/0.21.1")]
 #![warn(rust_2018_idioms)]
 
 //! # Introduction
@@ -16,7 +16,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! bc-components = "0.21.0"
+//! bc-components = "0.21.1"
 //! ```
 
 mod digest;
@@ -54,8 +54,8 @@ pub use seed::Seed;
 
 mod signing;
 pub use signing::{
-    Signature, SignatureScheme, Signer, SigningOptions, SigningPrivateKey, SigningPublicKey,
-    Verifier,
+    Signature, SignatureScheme, Signer, SigningOptions, SigningPrivateKey,
+    SigningPublicKey, Verifier,
 };
 
 mod encrypter;
@@ -91,15 +91,15 @@ pub use mlkem::{MLKEM, MLKEMCiphertext, MLKEMPrivateKey, MLKEMPublicKey};
 
 mod encapsulation;
 pub use encapsulation::{
-    EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey, EncapsulationScheme,
-    SealedMessage,
+    EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey,
+    EncapsulationScheme, SealedMessage,
 };
 
 mod sskr_mod;
 pub use sskr::SSKRError;
 pub use sskr_mod::{
-    SSKRGroupSpec, SSKRSecret, SSKRShare, SSKRSpec, sskr_combine, sskr_generate,
-    sskr_generate_using,
+    SSKRGroupSpec, SSKRSecret, SSKRShare, SSKRSpec, sskr_combine,
+    sskr_generate, sskr_generate_using,
 };
 
 mod hkdf_rng;
@@ -113,21 +113,23 @@ mod tests {
     use std::ops::Deref;
 
     use bc_crypto::{
-        ecdsa_new_private_key_using, ecdsa_public_key_from_private_key, ecdsa_sign, ecdsa_verify,
-        schnorr_public_key_from_private_key, schnorr_sign_using, schnorr_verify,
+        ecdsa_new_private_key_using, ecdsa_public_key_from_private_key,
+        ecdsa_sign, ecdsa_verify, schnorr_public_key_from_private_key,
+        schnorr_sign_using, schnorr_verify,
     };
     use bc_rand::make_fake_random_number_generator;
     use bc_ur::{URDecodable, UREncodable};
     use hex_literal::hex;
     use indoc::indoc;
     use ssh_key::{
-        Algorithm as SSHAlgorithm, EcdsaCurve, HashAlg, LineEnding, PrivateKey as SSHPrivateKey,
-        PublicKey as SSHPublicKey,
+        Algorithm as SSHAlgorithm, EcdsaCurve, HashAlg, LineEnding,
+        PrivateKey as SSHPrivateKey, PublicKey as SSHPublicKey,
     };
 
     use crate::{
-        ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey,
-        SigningPublicKey, Verifier, X25519PrivateKey, X25519PublicKey,
+        ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions,
+        SigningPrivateKey, SigningPublicKey, Verifier, X25519PrivateKey,
+        X25519PublicKey,
     };
 
     #[test]
@@ -156,7 +158,8 @@ mod tests {
             public_key
         );
 
-        let derived_private_key = X25519PrivateKey::derive_from_key_material("password".as_bytes());
+        let derived_private_key =
+            X25519PrivateKey::derive_from_key_material("password".as_bytes());
         assert_eq!(
             derived_private_key.ur_string(),
             "ur:agreement-private-key/hdcxkgcfkomeeyiemywkftvabnrdolmttlrnfhjnguvaiehlrldmdpemgyjlatdthsnecytdoxat"
@@ -172,7 +175,8 @@ mod tests {
         let bob_private_key = X25519PrivateKey::new_using(&mut rng);
         let bob_public_key = bob_private_key.public_key();
 
-        let alice_shared_key = alice_private_key.shared_key_with(&bob_public_key);
+        let alice_shared_key =
+            alice_private_key.shared_key_with(&bob_public_key);
         let bob_shared_key = bob_private_key.shared_key_with(&alice_public_key);
         assert_eq!(alice_shared_key, bob_shared_key);
     }
@@ -181,7 +185,8 @@ mod tests {
     fn test_ecdsa_signing_keys() {
         crate::register_tags();
         let mut rng = make_fake_random_number_generator();
-        let schnorr_private_key = SigningPrivateKey::new_schnorr(ECPrivateKey::new_using(&mut rng));
+        let schnorr_private_key =
+            SigningPrivateKey::new_schnorr(ECPrivateKey::new_using(&mut rng));
         let schnorr_private_key_ur = schnorr_private_key.ur_string();
         assert_eq!(
             schnorr_private_key_ur,
@@ -192,7 +197,8 @@ mod tests {
             schnorr_private_key
         );
 
-        let ecdsa_private_key = SigningPrivateKey::new_ecdsa(ECPrivateKey::new_using(&mut rng));
+        let ecdsa_private_key =
+            SigningPrivateKey::new_ecdsa(ECPrivateKey::new_using(&mut rng));
         let ecdsa_public_key = ecdsa_private_key.public_key().unwrap();
         let ecdsa_public_key_ur = ecdsa_public_key.ur_string();
         assert_eq!(
@@ -236,7 +242,8 @@ mod tests {
             .ssh_signing_private_key(algorithm, "Key comment.")
             .unwrap();
         let ssh_private_key: &SSHPrivateKey = private_key.to_ssh().unwrap();
-        let ssh_private_key_string = ssh_private_key.to_openssh(LineEnding::default()).unwrap();
+        let ssh_private_key_string =
+            ssh_private_key.to_openssh(LineEnding::default()).unwrap();
 
         let public_key: SigningPublicKey = private_key.public_key().unwrap();
         let ssh_public_key: &SSHPublicKey = public_key.to_ssh().unwrap();
@@ -294,7 +301,11 @@ mod tests {
         let expected_public_key = Some(
             "ssh-dss AAAAB3NzaC1kc3MAAACBAJYbh/uvwUAxP8gvXXD058z9l24hDy8SrVRv64x3IlLzBL+Ncvk4Hb90+dcI1K0vi+NKqkPMyz4O13nAnLptpJDfMYRti/vWaQhEkH8C1JWZ3wVl7kASMsW8fFgxKU7SOmLVj/Wcszu8tC7hAHIMIuFhiM/GCtkpcHdwvG2O+XLnAAAAFQDh8hkuK+cNVyD09fPBxvmbTsf2TQAAAIEAkrlWbq3VKDuf4LrfCs2AMDotM3IbPGpFUza6cjXqOKwI7O4L3wOCz4hsCQuFOpZJj6cj5T0cEdzuyv4op1YLNHvo0srl5KKVe+23yD4t8che8KMPhDam6jC2MOhdIRAAlh1zWC15/bUpnZ6gqjIDDNAh6EJu8unBhvGeFqnm6xUAAACAYKuxt9F5oNmjULDj90WUlYEM+wwZ4bTj/aEJOE2ZT7MuIoLCwSDRfqic5MxOicJe97d9VvmU2MhT3aJOa3lCSY6PaGOxuCir/SxrSUAsentRwr9bgh1TgBu1zibRJR+WAlx2zWezLaspQ0S0B9Fr9bC0NF6xY5rhPsv7cURR1q8= Key comment.",
         );
-        test_ssh_signing(SSHAlgorithm::Dsa, expected_private_key, expected_public_key);
+        test_ssh_signing(
+            SSHAlgorithm::Dsa,
+            expected_private_key,
+            expected_public_key,
+        );
     }
 
     #[test]
@@ -443,8 +454,10 @@ xLZXkgY29tbWVudC4BAgMEBQY=
         );
         assert!(ecdsa_verify(&ecdsa_public_key, &ecdsa_signature, MESSAGE));
 
-        let schnorr_public_key = schnorr_public_key_from_private_key(&private_key);
-        let schnorr_signature = schnorr_sign_using(&private_key, MESSAGE, &mut rng);
+        let schnorr_public_key =
+            schnorr_public_key_from_private_key(&private_key);
+        let schnorr_signature =
+            schnorr_sign_using(&private_key, MESSAGE, &mut rng);
         assert_eq!(
             schnorr_signature,
             hex!(

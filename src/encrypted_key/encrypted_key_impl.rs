@@ -151,6 +151,14 @@ impl EncryptedKey {
             }
         }
     }
+
+    pub fn is_password_based(&self) -> bool {
+        self.params.is_password_based()
+    }
+
+    pub fn is_ssh_agent(&self) -> bool {
+        self.params.is_ssh_agent()
+    }
 }
 
 impl std::fmt::Display for EncryptedKey {
