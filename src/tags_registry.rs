@@ -33,7 +33,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_DIGEST,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let arid = Digest::from_untagged_cbor(untagged_cbor)?;
             Ok(arid.short_description().flanked_by("Digest(", ")"))
         })
@@ -41,7 +41,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_ARID,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let arid = ARID::from_untagged_cbor(untagged_cbor)?;
             Ok(arid.short_description().flanked_by("ARID(", ")"))
         })
@@ -49,7 +49,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_XID,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let xid = XID::from_untagged_cbor(untagged_cbor)?;
             Ok(xid.short_description().flanked_by("XID(", ")"))
         })
@@ -57,7 +57,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_URI,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let uri = URI::from_untagged_cbor(untagged_cbor)?;
             Ok(uri.to_string().flanked_by("URI(", ")"))
         })
@@ -65,7 +65,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_UUID,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let uuid = UUID::from_untagged_cbor(untagged_cbor)?;
             Ok(uuid.to_string().flanked_by("UUID(", ")"))
         })
@@ -73,7 +73,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_NONCE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             Nonce::from_untagged_cbor(untagged_cbor)?;
             Ok("Nonce".to_string())
         })
@@ -81,7 +81,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SALT,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             Salt::from_untagged_cbor(untagged_cbor)?;
             Ok("Salt".to_string())
         })
@@ -89,7 +89,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SEED,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             Seed::from_untagged_cbor(untagged_cbor)?;
             Ok("Seed".to_string())
         })
@@ -97,7 +97,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_PRIVATE_KEYS,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let private_keys = PrivateKeys::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{private_keys}"))
         })
@@ -105,7 +105,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_PUBLIC_KEYS,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let public_keys = PublicKeys::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{public_keys}"))
         })
@@ -113,7 +113,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_REFERENCE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let reference = Reference::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{reference}"))
         })
@@ -121,7 +121,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_ENCRYPTED_KEY,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let encrypted_key = EncryptedKey::from_untagged_cbor(untagged_cbor)?;
             Ok(format!("{encrypted_key}"))
         })
@@ -129,7 +129,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_PRIVATE_KEY_BASE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             PrivateKeyBase::from_untagged_cbor(untagged_cbor)?;
             Ok("PrivateKeyBase".to_string())
         })
@@ -137,7 +137,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SIGNATURE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let signature = Signature::from_untagged_cbor(untagged_cbor)?;
             let scheme = signature.scheme();
             let summary = if let Ok(scheme) = scheme {
@@ -155,7 +155,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SEALED_MESSAGE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             let sealed_message = SealedMessage::from_untagged_cbor(untagged_cbor)?;
             let encapsulation_scheme = sealed_message.encapsulation_scheme();
             let summary = if encapsulation_scheme == EncapsulationScheme::default() {
@@ -169,7 +169,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SSKR_SHARE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             SSKRShare::from_untagged_cbor(untagged_cbor)?;
             Ok("SSKRShare".to_string())
         })
@@ -177,7 +177,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PRIVATE_KEY,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             SSHPrivateKey::from_openssh(untagged_cbor.try_into_text()?).map_err(|e|
                 dcbor::Error::msg(e.to_string())
             )?;
@@ -187,7 +187,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PUBLIC_KEY,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             SSHPublicKey::from_openssh(&untagged_cbor.try_into_text()?).map_err(|e|
                 dcbor::Error::msg(e.to_string())
             )?;
@@ -197,7 +197,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SSH_TEXT_SIGNATURE,
-        Arc::new(move |untagged_cbor: CBOR| {
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             SSHSignature::from_pem(untagged_cbor.try_into_text()?).map_err(|e|
                 dcbor::Error::msg(e.to_string())
             )?;
@@ -207,7 +207,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
 
     tags_store.set_summarizer(
         TAG_SSH_TEXT_CERTIFICATE,
-        Arc::new(move |_untagged_cbor: CBOR| {
+        Arc::new(move |_untagged_cbor: CBOR, _flat: bool| {
             // todo: validation
             Ok("SSHCertificate".to_string())
         })
