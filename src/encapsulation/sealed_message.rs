@@ -1,21 +1,28 @@
-use crate::{ tags, Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypter, Nonce };
-use bc_ur::prelude::*;
 use anyhow::Result;
+use bc_ur::prelude::*;
 
 use super::EncapsulationScheme;
+use crate::{
+    Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypter, Nonce,
+    tags,
+};
 
 /// A sealed message that can only be decrypted by the intended recipient.
 ///
-/// `SealedMessage` provides a public key encryption mechanism where a message is
-/// encrypted with a symmetric key, and that key is then encapsulated using the
-/// recipient's public key. This ensures that only the recipient can decrypt the
-/// message by first decapsulating the shared secret using their private key.
+/// `SealedMessage` provides a public key encryption mechanism where a message
+/// is encrypted with a symmetric key, and that key is then encapsulated using
+/// the recipient's public key. This ensures that only the recipient can decrypt
+/// the message by first decapsulating the shared secret using their private
+/// key.
 ///
 /// Features:
-/// - Anonymous sender: The sender's identity is not revealed in the sealed message
-/// - Authenticated encryption: Message integrity and authenticity are guaranteed
+/// - Anonymous sender: The sender's identity is not revealed in the sealed
+///   message
+/// - Authenticated encryption: Message integrity and authenticity are
+///   guaranteed
 /// - Forward secrecy: Each message uses a different ephemeral key
-/// - Post-quantum security options: Can use ML-KEM for quantum-resistant encryption
+/// - Post-quantum security options: Can use ML-KEM for quantum-resistant
+///   encryption
 ///
 /// The structure internally contains:
 /// - An `EncryptedMessage` containing the actual encrypted data
@@ -32,7 +39,8 @@ impl SealedMessage {
     /// Creates a new `SealedMessage` from the given plaintext and recipient.
     ///
     /// This method performs the following steps:
-    /// 1. Generates a new shared secret key and encapsulates it for the recipient
+    /// 1. Generates a new shared secret key and encapsulates it for the
+    ///    recipient
     /// 2. Encrypts the plaintext using that shared secret
     ///
     /// # Parameters
@@ -42,7 +50,8 @@ impl SealedMessage {
     ///
     /// # Returns
     ///
-    /// A new `SealedMessage` containing the encrypted message and encapsulated key
+    /// A new `SealedMessage` containing the encrypted message and encapsulated
+    /// key
     ///
     /// # Example
     ///
@@ -50,7 +59,8 @@ impl SealedMessage {
     /// use bc_components::{EncapsulationScheme, SealedMessage};
     ///
     /// // Generate a keypair for the recipient
-    /// let (recipient_private_key, recipient_public_key) = EncapsulationScheme::default().keypair();
+    /// let (recipient_private_key, recipient_public_key) =
+    ///     EncapsulationScheme::default().keypair();
     ///
     /// // Create a sealed message for the recipient
     /// let plaintext = b"For your eyes only";
@@ -73,11 +83,13 @@ impl SealedMessage {
     ///
     /// * `plaintext` - The message data to encrypt
     /// * `recipient` - The recipient who will be able to decrypt the message
-    /// * `aad` - Additional authenticated data that will be bound to the encryption
+    /// * `aad` - Additional authenticated data that will be bound to the
+    ///   encryption
     ///
     /// # Returns
     ///
-    /// A new `SealedMessage` containing the encrypted message and encapsulated key
+    /// A new `SealedMessage` containing the encrypted message and encapsulated
+    /// key
     ///
     /// # Example
     ///
@@ -85,12 +97,17 @@ impl SealedMessage {
     /// use bc_components::{EncapsulationScheme, SealedMessage};
     ///
     /// // Generate a keypair for the recipient
-    /// let (recipient_private_key, recipient_public_key) = EncapsulationScheme::default().keypair();
+    /// let (recipient_private_key, recipient_public_key) =
+    ///     EncapsulationScheme::default().keypair();
     ///
     /// // Create a sealed message with additional authenticated data
     /// let plaintext = b"For your eyes only";
     /// let aad = b"Message ID: 12345";
-    /// let sealed_message = SealedMessage::new_with_aad(plaintext, &recipient_public_key, Some(aad));
+    /// let sealed_message = SealedMessage::new_with_aad(
+    ///     plaintext,
+    ///     &recipient_public_key,
+    ///     Some(aad),
+    /// );
     ///
     /// // The recipient can decrypt the message
     /// let decrypted = sealed_message.decrypt(&recipient_private_key).unwrap();
@@ -99,38 +116,39 @@ impl SealedMessage {
     pub fn new_with_aad(
         plaintext: impl AsRef<[u8]>,
         recipient: &dyn Encrypter,
-        aad: Option<impl AsRef<[u8]>>
+        aad: Option<impl AsRef<[u8]>>,
     ) -> Self {
         Self::new_opt(plaintext, recipient, aad, None::<Nonce>)
     }
 
     /// Creates a new `SealedMessage` with options for testing.
     ///
-    /// This method is similar to `new_with_aad` but allows specifying a test nonce,
-    /// which is useful for deterministic testing.
+    /// This method is similar to `new_with_aad` but allows specifying a test
+    /// nonce, which is useful for deterministic testing.
     ///
     /// # Parameters
     ///
     /// * `plaintext` - The message data to encrypt
     /// * `recipient` - The recipient who will be able to decrypt the message
-    /// * `aad` - Additional authenticated data that will be bound to the encryption
-    /// * `test_nonce` - Optional nonce for deterministic encryption (testing only)
+    /// * `aad` - Additional authenticated data that will be bound to the
+    ///   encryption
+    /// * `test_nonce` - Optional nonce for deterministic encryption (testing
+    ///   only)
     ///
     /// # Returns
     ///
-    /// A new `SealedMessage` containing the encrypted message and encapsulated key
+    /// A new `SealedMessage` containing the encrypted message and encapsulated
+    /// key
     pub fn new_opt(
         plaintext: impl AsRef<[u8]>,
         recipient: &dyn Encrypter,
         aad: Option<impl AsRef<[u8]>>,
-        test_nonce: Option<impl AsRef<Nonce>>
+        test_nonce: Option<impl AsRef<Nonce>>,
     ) -> Self {
-        let (shared_key, encapsulated_key) = recipient.encapsulate_new_shared_secret();
+        let (shared_key, encapsulated_key) =
+            recipient.encapsulate_new_shared_secret();
         let message = shared_key.encrypt(plaintext, aad, test_nonce);
-        Self {
-            message,
-            encapsulated_key,
-        }
+        Self { message, encapsulated_key }
     }
 
     /// Decrypts the message using the recipient's private key.
@@ -162,7 +180,8 @@ impl SealedMessage {
     ///
     /// // Generate keypairs for different users
     /// let (alice_private_key, _) = EncapsulationScheme::default().keypair();
-    /// let (bob_private_key, bob_public_key) = EncapsulationScheme::default().keypair();
+    /// let (bob_private_key, bob_public_key) =
+    ///     EncapsulationScheme::default().keypair();
     ///
     /// // Alice sends a message to Bob
     /// let plaintext = b"Secret message for Bob";
@@ -176,7 +195,8 @@ impl SealedMessage {
     /// assert!(sealed_message.decrypt(&alice_private_key).is_err());
     /// ```
     pub fn decrypt(&self, private_key: &dyn Decrypter) -> Result<Vec<u8>> {
-        let shared_key = private_key.decapsulate_shared_secret(&self.encapsulated_key)?;
+        let shared_key =
+            private_key.decapsulate_shared_secret(&self.encapsulated_key)?;
         shared_key.decrypt(&self.message)
     }
 
@@ -196,10 +216,14 @@ impl SealedMessage {
     /// let (_, public_key) = EncapsulationScheme::MLKEM768.keypair();
     ///
     /// // Create a sealed message
-    /// let sealed_message = SealedMessage::new(b"Quantum-resistant message", &public_key);
+    /// let sealed_message =
+    ///     SealedMessage::new(b"Quantum-resistant message", &public_key);
     ///
     /// // Check the encapsulation scheme
-    /// assert_eq!(sealed_message.encapsulation_scheme(), EncapsulationScheme::MLKEM768);
+    /// assert_eq!(
+    ///     sealed_message.encapsulation_scheme(),
+    ///     EncapsulationScheme::MLKEM768
+    /// );
     /// ```
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         self.encapsulated_key.encapsulation_scheme()
@@ -208,23 +232,17 @@ impl SealedMessage {
 
 /// Implementation of `AsRef` trait for `SealedMessage`.
 impl AsRef<SealedMessage> for SealedMessage {
-    fn as_ref(&self) -> &SealedMessage {
-        self
-    }
+    fn as_ref(&self) -> &SealedMessage { self }
 }
 
 /// Implementation of CBOR tagging for `SealedMessage`.
 impl CBORTagged for SealedMessage {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_SEALED_MESSAGE])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_SEALED_MESSAGE]) }
 }
 
 /// Conversion from `SealedMessage` to CBOR for serialization.
 impl From<SealedMessage> for CBOR {
-    fn from(value: SealedMessage) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SealedMessage) -> Self { value.tagged_cbor() }
 }
 
 /// Conversion from CBOR to `SealedMessage` for deserialization.
@@ -255,19 +273,16 @@ impl CBORTaggedDecodable for SealedMessage {
                 }
                 let message = elements[0].clone().try_into()?;
                 let ephemeral_public_key = elements[1].clone().try_into()?;
-                Ok(Self {
-                    message,
-                    encapsulated_key: ephemeral_public_key,
-                })
+                Ok(Self { message, encapsulated_key: ephemeral_public_key })
             }
-            _ => return Err("SealedMessage must be an array".into()),
+            _ => Err("SealedMessage must be an array".into()),
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ EncapsulationScheme, SealedMessage };
+    use crate::{EncapsulationScheme, SealedMessage};
 
     #[test]
     fn test_sealed_message_x25519() {
@@ -282,7 +297,10 @@ mod tests {
         let sealed_message = SealedMessage::new(plaintext, &bob_public_key);
 
         // Bob decrypts and reads the message.
-        assert_eq!(sealed_message.decrypt(&bob_private_key).unwrap(), plaintext);
+        assert_eq!(
+            sealed_message.decrypt(&bob_private_key).unwrap(),
+            plaintext
+        );
 
         // No one else can decrypt the message, not even the sender.
         assert!(sealed_message.decrypt(&alice_private_key).is_err());
@@ -302,7 +320,10 @@ mod tests {
         let sealed_message = SealedMessage::new(plaintext, &bob_public_key);
 
         // Bob decrypts and reads the message.
-        assert_eq!(sealed_message.decrypt(&bob_private_key).unwrap(), plaintext);
+        assert_eq!(
+            sealed_message.decrypt(&bob_private_key).unwrap(),
+            plaintext
+        );
 
         // No one else can decrypt the message, not even the sender.
         assert!(sealed_message.decrypt(&alice_private_key).is_err());

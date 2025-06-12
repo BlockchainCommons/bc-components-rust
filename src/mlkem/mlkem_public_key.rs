@@ -1,21 +1,24 @@
-use anyhow::{ anyhow, Result };
-use pqcrypto_mlkem::*;
-use pqcrypto_traits::kem::{ PublicKey, SharedSecret };
+use anyhow::{Result, anyhow};
 use dcbor::prelude::*;
+use pqcrypto_mlkem::*;
+use pqcrypto_traits::kem::{PublicKey, SharedSecret};
 
-use crate::{ tags, SymmetricKey };
-
-use super::{ MLKEMCiphertext, MLKEM };
+use super::{MLKEM, MLKEMCiphertext};
+use crate::{SymmetricKey, tags};
 
 /// A public key for the ML-KEM post-quantum key encapsulation mechanism.
 ///
-/// `MLKEMPublicKey` represents a public key that can be used to encapsulate shared secrets
-/// using the ML-KEM (Module Lattice-based Key Encapsulation Mechanism) post-quantum algorithm.
-/// It supports multiple security levels through the variants:
+/// `MLKEMPublicKey` represents a public key that can be used to encapsulate
+/// shared secrets using the ML-KEM (Module Lattice-based Key Encapsulation
+/// Mechanism) post-quantum algorithm. It supports multiple security levels
+/// through the variants:
 ///
-/// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128), 800 bytes
-/// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192), 1184 bytes
-/// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256), 1568 bytes
+/// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128), 800
+///   bytes
+/// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192), 1184
+///   bytes
+/// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256), 1568
+///   bytes
 ///
 /// # Examples
 ///
@@ -26,7 +29,8 @@ use super::{ MLKEMCiphertext, MLKEM };
 /// let (private_key, public_key) = MLKEM::MLKEM512.keypair();
 ///
 /// // Encapsulate a shared secret using the public key
-/// let (shared_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+/// let (shared_secret, ciphertext) =
+///     public_key.encapsulate_new_shared_secret();
 /// ```
 #[derive(Clone)]
 pub enum MLKEMPublicKey {
@@ -71,18 +75,10 @@ impl MLKEMPublicKey {
     }
 
     /// Returns the size of this ML-KEM public key in bytes.
-    pub fn size(&self) -> usize {
-        self.level().public_key_size()
-    }
+    pub fn size(&self) -> usize { self.level().public_key_size() }
 
     /// Returns the raw bytes of this ML-KEM public key.
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            MLKEMPublicKey::MLKEM512(pk) => pk.as_ref().as_bytes(),
-            MLKEMPublicKey::MLKEM768(pk) => pk.as_ref().as_bytes(),
-            MLKEMPublicKey::MLKEM1024(pk) => pk.as_ref().as_bytes(),
-        }
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates an ML-KEM public key from raw bytes and a security level.
     ///
@@ -93,8 +89,8 @@ impl MLKEMPublicKey {
     ///
     /// # Returns
     ///
-    /// An `MLKEMPublicKey` if the bytes represent a valid key for the given level,
-    /// or an error otherwise.
+    /// An `MLKEMPublicKey` if the bytes represent a valid key for the given
+    /// level, or an error otherwise.
     ///
     /// # Errors
     ///
@@ -102,24 +98,18 @@ impl MLKEMPublicKey {
     /// for the specified security level.
     pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLKEM::MLKEM512 =>
-                Ok(
-                    MLKEMPublicKey::MLKEM512(
-                        Box::new(mlkem512::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLKEM::MLKEM768 =>
-                Ok(
-                    MLKEMPublicKey::MLKEM768(
-                        Box::new(mlkem768::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLKEM::MLKEM1024 =>
-                Ok(
-                    MLKEMPublicKey::MLKEM1024(
-                        Box::new(mlkem1024::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
+            MLKEM::MLKEM512 => Ok(MLKEMPublicKey::MLKEM512(Box::new(
+                mlkem512::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLKEM::MLKEM768 => Ok(MLKEMPublicKey::MLKEM768(Box::new(
+                mlkem768::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLKEM::MLKEM1024 => Ok(MLKEMPublicKey::MLKEM1024(Box::new(
+                mlkem1024::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
         }
     }
 
@@ -144,13 +134,17 @@ impl MLKEMPublicKey {
     /// let (private_key, public_key) = MLKEM::MLKEM512.keypair();
     ///
     /// // Encapsulate a shared secret
-    /// let (shared_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+    /// let (shared_secret, ciphertext) =
+    ///     public_key.encapsulate_new_shared_secret();
     ///
     /// // The private key holder can decapsulate the same shared secret
-    /// let decapsulated_secret = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+    /// let decapsulated_secret =
+    ///     private_key.decapsulate_shared_secret(&ciphertext).unwrap();
     /// assert_eq!(shared_secret, decapsulated_secret);
     /// ```
-    pub fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, MLKEMCiphertext) {
+    pub fn encapsulate_new_shared_secret(
+        &self,
+    ) -> (SymmetricKey, MLKEMCiphertext) {
         match self {
             MLKEMPublicKey::MLKEM512(pk) => {
                 let (ss, ct) = mlkem512::encapsulate(pk.as_ref());
@@ -173,6 +167,17 @@ impl MLKEMPublicKey {
                     MLKEMCiphertext::MLKEM1024(ct.into()),
                 )
             }
+        }
+    }
+}
+
+impl AsRef<[u8]> for MLKEMPublicKey {
+    /// Returns the raw bytes of the public key.
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            MLKEMPublicKey::MLKEM512(pk) => pk.as_ref().as_bytes(),
+            MLKEMPublicKey::MLKEM768(pk) => pk.as_ref().as_bytes(),
+            MLKEMPublicKey::MLKEM1024(pk) => pk.as_ref().as_bytes(),
         }
     }
 }
@@ -200,14 +205,13 @@ impl CBORTagged for MLKEMPublicKey {
 /// Converts an `MLKEMPublicKey` to CBOR.
 impl From<MLKEMPublicKey> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: MLKEMPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: MLKEMPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for ML-KEM public keys.
 impl CBORTaggedEncodable for MLKEMPublicKey {
-    /// Creates the untagged CBOR representation as an array with level and key bytes.
+    /// Creates the untagged CBOR representation as an array with level and key
+    /// bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
@@ -228,7 +232,8 @@ impl CBORTaggedDecodable for MLKEMPublicKey {
     /// Creates an `MLKEMPublicKey` from untagged CBOR.
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM public key.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM
+    /// public key.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
@@ -240,9 +245,7 @@ impl CBORTaggedDecodable for MLKEMPublicKey {
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
                 Ok(MLKEMPublicKey::from_bytes(level, &data)?)
             }
-            _ => {
-                return Err("MLKEMPublicKey must be an array".into());
-            }
+            _ => Err("MLKEMPublicKey must be an array".into()),
         }
     }
 }

@@ -1,19 +1,20 @@
-use crate::{tags, MLKEMCiphertext};
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use dcbor::prelude::*;
 
-use crate::{EncapsulationScheme, X25519PublicKey};
+use crate::{EncapsulationScheme, MLKEMCiphertext, X25519PublicKey, tags};
 
 /// A ciphertext produced by a key encapsulation mechanism (KEM).
 ///
-/// `EncapsulationCiphertext` represents the output of a key encapsulation operation
-/// where a shared secret has been encapsulated for secure transmission. The ciphertext
-/// can only be used to recover the shared secret by the holder of the corresponding
-/// private key.
+/// `EncapsulationCiphertext` represents the output of a key encapsulation
+/// operation where a shared secret has been encapsulated for secure
+/// transmission. The ciphertext can only be used to recover the shared secret
+/// by the holder of the corresponding private key.
 ///
 /// This enum has two variants:
-/// - `X25519`: For X25519 key agreement, this is the ephemeral public key generated during encapsulation
-/// - `MLKEM`: For ML-KEM post-quantum key encapsulation, this is the ML-KEM ciphertext
+/// - `X25519`: For X25519 key agreement, this is the ephemeral public key
+///   generated during encapsulation
+/// - `MLKEM`: For ML-KEM post-quantum key encapsulation, this is the ML-KEM
+///   ciphertext
 #[derive(Debug, Clone, PartialEq)]
 pub enum EncapsulationCiphertext {
     /// X25519 key agreement ciphertext (ephemeral public key)
@@ -27,8 +28,8 @@ impl EncapsulationCiphertext {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a reference to the X25519 public key if this is an X25519
-    /// ciphertext, or an error if it's not.
+    /// A `Result` containing a reference to the X25519 public key if this is an
+    /// X25519 ciphertext, or an error if it's not.
     ///
     /// # Errors
     ///
@@ -37,7 +38,9 @@ impl EncapsulationCiphertext {
     /// # Example
     ///
     /// ```
-    /// use bc_components::{EncapsulationScheme, X25519PrivateKey, X25519PublicKey};
+    /// use bc_components::{
+    ///     EncapsulationScheme, X25519PrivateKey, X25519PublicKey,
+    /// };
     ///
     /// // Generate a keypair
     /// let (private_key, public_key) = EncapsulationScheme::X25519.keypair();
@@ -62,8 +65,8 @@ impl EncapsulationCiphertext {
     ///
     /// # Returns
     ///
-    /// A `Result` containing a reference to the ML-KEM ciphertext if this is an ML-KEM
-    /// ciphertext, or an error if it's not.
+    /// A `Result` containing a reference to the ML-KEM ciphertext if this is an
+    /// ML-KEM ciphertext, or an error if it's not.
     ///
     /// # Errors
     ///
@@ -117,9 +120,7 @@ impl EncapsulationCiphertext {
     /// assert!(ciphertext.is_x25519());
     /// assert!(!ciphertext.is_mlkem());
     /// ```
-    pub fn is_x25519(&self) -> bool {
-        matches!(self, Self::X25519(_))
-    }
+    pub fn is_x25519(&self) -> bool { matches!(self, Self::X25519(_)) }
 
     /// Returns true if this is an ML-KEM ciphertext.
     ///
@@ -142,9 +143,7 @@ impl EncapsulationCiphertext {
     /// assert!(ciphertext.is_mlkem());
     /// assert!(!ciphertext.is_x25519());
     /// ```
-    pub fn is_mlkem(&self) -> bool {
-        matches!(self, Self::MLKEM(_))
-    }
+    pub fn is_mlkem(&self) -> bool { matches!(self, Self::MLKEM(_)) }
 
     /// Returns the encapsulation scheme associated with this ciphertext.
     ///
@@ -165,7 +164,10 @@ impl EncapsulationCiphertext {
     /// let (_, ciphertext) = public_key.encapsulate_new_shared_secret();
     ///
     /// // Check the scheme
-    /// assert_eq!(ciphertext.encapsulation_scheme(), EncapsulationScheme::MLKEM768);
+    /// assert_eq!(
+    ///     ciphertext.encapsulation_scheme(),
+    ///     EncapsulationScheme::MLKEM768
+    /// );
     /// ```
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
@@ -196,12 +198,16 @@ impl TryFrom<CBOR> for EncapsulationCiphertext {
     fn try_from(cbor: CBOR) -> Result<Self> {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => match tag.value() {
-                tags::TAG_X25519_PUBLIC_KEY => Ok(EncapsulationCiphertext::X25519(
-                    X25519PublicKey::try_from(cbor)?,
-                )),
-                tags::TAG_MLKEM_CIPHERTEXT => Ok(EncapsulationCiphertext::MLKEM(
-                    MLKEMCiphertext::try_from(cbor)?,
-                )),
+                tags::TAG_X25519_PUBLIC_KEY => {
+                    Ok(EncapsulationCiphertext::X25519(
+                        X25519PublicKey::try_from(cbor)?,
+                    ))
+                }
+                tags::TAG_MLKEM_CIPHERTEXT => {
+                    Ok(EncapsulationCiphertext::MLKEM(
+                        MLKEMCiphertext::try_from(cbor)?,
+                    ))
+                }
                 _ => bail!("Invalid encapsulation ciphertext"),
             },
             _ => bail!("Invalid encapsulation ciphertext"),

@@ -1,14 +1,18 @@
 use std::rc::Rc;
+
+use anyhow::{Result, bail};
 use bc_crypto::x25519_new_private_key_using;
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
-use crate::{ tags, Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey };
-use bc_rand::{ SecureRandomNumberGenerator, RandomNumberGenerator };
-use anyhow::{ bail, Result };
+
+use crate::{
+    Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey, tags,
+};
 
 /// A private key for X25519 key agreement operations.
 ///
-/// X25519 is an elliptic-curve Diffie-Hellman key exchange protocol based on Curve25519
-/// as defined in [RFC 7748](https://datatracker.ietf.org/doc/html/rfc7748). It allows
+/// X25519 is an elliptic-curve Diffie-Hellman key exchange protocol based on
+/// Curve25519 as defined in [RFC 7748](https://datatracker.ietf.org/doc/html/rfc7748). It allows
 /// two parties to establish a shared secret key over an insecure channel.
 ///
 /// Key features of X25519:
@@ -36,31 +40,32 @@ impl X25519PrivateKey {
         Self::new_using(&mut rng)
     }
 
-    /// Generate a new random `X25519PrivateKey` and corresponding `X25519PublicKey`.
+    /// Generate a new random `X25519PrivateKey` and corresponding
+    /// `X25519PublicKey`.
     pub fn keypair() -> (X25519PrivateKey, X25519PublicKey) {
         let private_key = X25519PrivateKey::new();
         let public_key = private_key.public_key();
         (private_key, public_key)
     }
 
-    /// Generate a new random `X25519PrivateKey` and corresponding `X25519PublicKey` using the given random number generator.
+    /// Generate a new random `X25519PrivateKey` and corresponding
+    /// `X25519PublicKey` using the given random number generator.
     pub fn keypair_using(
-        rng: &mut impl RandomNumberGenerator
+        rng: &mut impl RandomNumberGenerator,
     ) -> (X25519PrivateKey, X25519PublicKey) {
         let private_key = X25519PrivateKey::new_using(rng);
         let public_key = private_key.public_key();
         (private_key, public_key)
     }
 
-    /// Generate a new random `X25519PrivateKey` using the given random number generator.
+    /// Generate a new random `X25519PrivateKey` using the given random number
+    /// generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self(x25519_new_private_key_using(rng))
     }
 
     /// Restore an `X25519PrivateKey` from a fixed-size array of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
-        Self(data)
-    }
+    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self { Self(data) }
 
     /// Restore an `X25519PrivateKey` from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -74,27 +79,29 @@ impl X25519PrivateKey {
     }
 
     /// Get a reference to the fixed-size array of bytes.
-    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::KEY_SIZE] { self.into() }
+
+    /// Get the X25519 private key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Restore an `X25519PrivateKey` from a hex string.
     ///
     /// # Panics
     ///
-    /// Panics if the hex string is invalid or the length is not `X25519PrivateKey::KEY_SIZE * 2`.
+    /// Panics if the hex string is invalid or the length is not
+    /// `X25519PrivateKey::KEY_SIZE * 2`.
     pub fn from_hex(hex: impl AsRef<str>) -> Self {
         Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// Get the hex string representation of the `X25519PrivateKey`.
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.data()) }
 
     /// Get the `X25519PublicKey` corresponding to this `X25519PrivateKey`.
     pub fn public_key(&self) -> X25519PublicKey {
-        X25519PublicKey::from_data(bc_crypto::x25519_public_key_from_private_key(self.into()))
+        X25519PublicKey::from_data(
+            bc_crypto::x25519_public_key_from_private_key(self.into()),
+        )
     }
 
     /// Derive an `X25519PrivateKey` from the given key material.
@@ -102,10 +109,21 @@ impl X25519PrivateKey {
         Self::from_data(bc_crypto::derive_agreement_private_key(key_material))
     }
 
-    /// Derive a shared symmetric key from this `X25519PrivateKey` and the given `X25519PublicKey`.
-    pub fn shared_key_with(&self, public_key: &X25519PublicKey) -> SymmetricKey {
-        SymmetricKey::from_data(bc_crypto::x25519_shared_key(self.into(), public_key.into()))
+    /// Derive a shared symmetric key from this `X25519PrivateKey` and the given
+    /// `X25519PublicKey`.
+    pub fn shared_key_with(
+        &self,
+        public_key: &X25519PublicKey,
+    ) -> SymmetricKey {
+        SymmetricKey::from_data(bc_crypto::x25519_shared_key(
+            self.into(),
+            public_key.into(),
+        ))
     }
+}
+
+impl AsRef<[u8]> for X25519PrivateKey {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements the Decrypter trait to support key encapsulation mechanisms.
@@ -117,30 +135,24 @@ impl Decrypter for X25519PrivateKey {
 
 /// Implements Default to create a new random X25519PrivateKey.
 impl Default for X25519PrivateKey {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
-/// Implements conversion from an X25519PrivateKey reference to a byte array reference.
+/// Implements conversion from an X25519PrivateKey reference to a byte array
+/// reference.
 impl<'a> From<&'a X25519PrivateKey> for &'a [u8; X25519PrivateKey::KEY_SIZE] {
-    fn from(value: &'a X25519PrivateKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a X25519PrivateKey) -> Self { &value.0 }
 }
 
-/// Implements conversion from a reference-counted X25519PrivateKey to an owned X25519PrivateKey.
+/// Implements conversion from a reference-counted X25519PrivateKey to an owned
+/// X25519PrivateKey.
 impl From<Rc<X25519PrivateKey>> for X25519PrivateKey {
-    fn from(value: Rc<X25519PrivateKey>) -> Self {
-        value.as_ref().clone()
-    }
+    fn from(value: Rc<X25519PrivateKey>) -> Self { value.as_ref().clone() }
 }
 
 /// Implements `AsRef<X25519PrivateKey>` to allow self-reference.
 impl AsRef<X25519PrivateKey> for X25519PrivateKey {
-    fn as_ref(&self) -> &Self {
-        self
-    }
+    fn as_ref(&self) -> &Self { self }
 }
 
 /// Implements the CBORTagged trait to provide CBOR tag information.
@@ -152,19 +164,16 @@ impl CBORTagged for X25519PrivateKey {
 
 /// Implements conversion from X25519PrivateKey to CBOR for serialization.
 impl From<X25519PrivateKey> for CBOR {
-    fn from(value: X25519PrivateKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: X25519PrivateKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for X25519PrivateKey {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.data())
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.data()) }
 }
 
-/// Implements `TryFrom<CBOR>` for X25519PrivateKey to support conversion from CBOR data.
+/// Implements `TryFrom<CBOR>` for X25519PrivateKey to support conversion from
+/// CBOR data.
 impl TryFrom<CBOR> for X25519PrivateKey {
     type Error = dcbor::Error;
 
@@ -188,23 +197,18 @@ impl std::fmt::Debug for X25519PrivateKey {
     }
 }
 
-/// Implements conversion from an X25519PrivateKey reference to an owned X25519PrivateKey.
+/// Implements conversion from an X25519PrivateKey reference to an owned
+/// X25519PrivateKey.
 impl From<&X25519PrivateKey> for X25519PrivateKey {
-    fn from(key: &X25519PrivateKey) -> Self {
-        key.clone()
-    }
+    fn from(key: &X25519PrivateKey) -> Self { key.clone() }
 }
 
 /// Implements conversion from an X25519PrivateKey to a byte vector.
 impl From<X25519PrivateKey> for Vec<u8> {
-    fn from(key: X25519PrivateKey) -> Self {
-        key.0.to_vec()
-    }
+    fn from(key: X25519PrivateKey) -> Self { key.0.to_vec() }
 }
 
 /// Implements conversion from an X25519PrivateKey reference to a byte vector.
 impl From<&X25519PrivateKey> for Vec<u8> {
-    fn from(key: &X25519PrivateKey) -> Self {
-        key.0.to_vec()
-    }
+    fn from(key: &X25519PrivateKey) -> Self { key.0.to_vec() }
 }

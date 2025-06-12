@@ -1,19 +1,22 @@
-use crate::{Decrypter, MLKEMPrivateKey};
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use dcbor::prelude::*;
 
-use crate::{tags, EncapsulationCiphertext, EncapsulationScheme, SymmetricKey, X25519PrivateKey};
+use crate::{
+    Decrypter, EncapsulationCiphertext, EncapsulationScheme, MLKEMPrivateKey,
+    SymmetricKey, X25519PrivateKey, tags,
+};
 
 /// A private key used for key encapsulation mechanisms (KEM).
 ///
-/// `EncapsulationPrivateKey` is an enum representing different types of private keys
-/// that can be used for key encapsulation, including:
+/// `EncapsulationPrivateKey` is an enum representing different types of private
+/// keys that can be used for key encapsulation, including:
 ///
 /// - X25519: Curve25519-based key exchange
-/// - ML-KEM: Module Lattice-based Key Encapsulation Mechanism at various security levels
+/// - ML-KEM: Module Lattice-based Key Encapsulation Mechanism at various
+///   security levels
 ///
-/// These private keys are used to decrypt (decapsulate) shared secrets that have been
-/// encapsulated with the corresponding public keys.
+/// These private keys are used to decrypt (decapsulate) shared secrets that
+/// have been encapsulated with the corresponding public keys.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum EncapsulationPrivateKey {
     /// An X25519 private key
@@ -33,11 +36,17 @@ impl EncapsulationPrivateKey {
     /// # Example
     ///
     /// ```
-    /// use bc_components::{EncapsulationScheme, X25519PrivateKey, EncapsulationPrivateKey};
+    /// use bc_components::{
+    ///     EncapsulationPrivateKey, EncapsulationScheme, X25519PrivateKey,
+    /// };
     ///
     /// let x25519_private_key = X25519PrivateKey::new();
-    /// let encapsulation_private_key = EncapsulationPrivateKey::X25519(x25519_private_key);
-    /// assert_eq!(encapsulation_private_key.encapsulation_scheme(), EncapsulationScheme::X25519);
+    /// let encapsulation_private_key =
+    ///     EncapsulationPrivateKey::X25519(x25519_private_key);
+    /// assert_eq!(
+    ///     encapsulation_private_key.encapsulation_scheme(),
+    ///     EncapsulationScheme::X25519
+    /// );
     /// ```
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
@@ -52,19 +61,20 @@ impl EncapsulationPrivateKey {
 
     /// Decapsulates a shared secret from a ciphertext using this private key.
     ///
-    /// This method performs the decapsulation operation for key exchange. It takes
-    /// an `EncapsulationCiphertext` and extracts the shared secret that was encapsulated
-    /// using the corresponding public key.
+    /// This method performs the decapsulation operation for key exchange. It
+    /// takes an `EncapsulationCiphertext` and extracts the shared secret
+    /// that was encapsulated using the corresponding public key.
     ///
     /// # Parameters
     ///
-    /// * `ciphertext` - The encapsulation ciphertext containing the encapsulated shared secret
+    /// * `ciphertext` - The encapsulation ciphertext containing the
+    ///   encapsulated shared secret
     ///
     /// # Returns
     ///
     /// A `Result` containing the decapsulated `SymmetricKey` if successful,
-    /// or an error if the decapsulation fails or if the ciphertext type doesn't match
-    /// the private key type.
+    /// or an error if the decapsulation fails or if the ciphertext type doesn't
+    /// match the private key type.
     ///
     /// # Errors
     ///
@@ -145,12 +155,16 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
     fn try_from(cbor: CBOR) -> Result<Self> {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => match tag.value() {
-                tags::TAG_X25519_PRIVATE_KEY => Ok(EncapsulationPrivateKey::X25519(
-                    X25519PrivateKey::try_from(cbor)?,
-                )),
-                tags::TAG_MLKEM_PRIVATE_KEY => Ok(EncapsulationPrivateKey::MLKEM(
-                    MLKEMPrivateKey::try_from(cbor)?,
-                )),
+                tags::TAG_X25519_PRIVATE_KEY => {
+                    Ok(EncapsulationPrivateKey::X25519(
+                        X25519PrivateKey::try_from(cbor)?,
+                    ))
+                }
+                tags::TAG_MLKEM_PRIVATE_KEY => {
+                    Ok(EncapsulationPrivateKey::MLKEM(
+                        MLKEMPrivateKey::try_from(cbor)?,
+                    ))
+                }
                 _ => bail!("Invalid encapsulation private key"),
             },
             _ => bail!("Invalid encapsulation private key"),

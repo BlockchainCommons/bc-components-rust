@@ -26,6 +26,10 @@ impl Argon2idParams {
     pub fn salt(&self) -> &Salt { &self.salt }
 }
 
+impl Default for Argon2idParams {
+    fn default() -> Self { Self::new() }
+}
+
 impl KeyDerivation for Argon2idParams {
     const INDEX: usize = KeyDerivationMethod::Argon2id as usize;
 
@@ -61,9 +65,9 @@ impl std::fmt::Display for Argon2idParams {
     }
 }
 
-impl Into<CBOR> for Argon2idParams {
-    fn into(self) -> CBOR {
-        vec![CBOR::from(Self::INDEX), self.salt.into()].into()
+impl From<Argon2idParams> for CBOR {
+    fn from(val: Argon2idParams) -> Self {
+        vec![CBOR::from(Argon2idParams::INDEX), val.salt.into()].into()
     }
 }
 

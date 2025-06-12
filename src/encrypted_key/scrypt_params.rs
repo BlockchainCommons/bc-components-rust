@@ -37,6 +37,10 @@ impl ScryptParams {
     pub fn p(&self) -> u32 { self.p }
 }
 
+impl Default for ScryptParams {
+    fn default() -> Self { Self::new() }
+}
+
 impl KeyDerivation for ScryptParams {
     const INDEX: usize = KeyDerivationMethod::Scrypt as usize;
     fn lock(
@@ -74,14 +78,14 @@ impl std::fmt::Display for ScryptParams {
     }
 }
 
-impl Into<CBOR> for ScryptParams {
-    fn into(self) -> CBOR {
+impl From<ScryptParams> for CBOR {
+    fn from(val: ScryptParams) -> Self {
         vec![
-            CBOR::from(Self::INDEX),
-            self.salt.into(),
-            self.log_n.into(),
-            self.r.into(),
-            self.p.into(),
+            CBOR::from(ScryptParams::INDEX),
+            val.salt.into(),
+            val.log_n.into(),
+            val.r.into(),
+            val.p.into(),
         ]
         .into()
     }

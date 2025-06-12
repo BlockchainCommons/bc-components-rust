@@ -1,8 +1,9 @@
-/// A trait for types that can provide unique data for cryptographic key derivation.
+/// A trait for types that can provide unique data for cryptographic key
+/// derivation.
 ///
 /// Types implementing `PrivateKeyDataProvider` can be used as seed material for
-/// cryptographic key derivation. The provided data should be sufficiently random
-/// and unpredictable to ensure the security of the derived keys.
+/// cryptographic key derivation. The provided data should be sufficiently
+/// random and unpredictable to ensure the security of the derived keys.
 ///
 /// This trait is particularly useful for:
 /// - Deterministic key generation systems
@@ -29,12 +30,11 @@ pub trait PrivateKeyDataProvider {
     fn private_key_data(&self) -> Vec<u8>;
 }
 
-/// Implementation of `PrivateKeyDataProvider` for any type that can be referenced as a byte slice.
+/// Implementation of `PrivateKeyDataProvider` for any type that can be
+/// referenced as a byte slice.
 ///
 /// This allows any type that implements `AsRef<[u8]>` to be used as a source of
 /// private key data.
 impl PrivateKeyDataProvider for dyn AsRef<[u8]> {
-    fn private_key_data(&self) -> Vec<u8> {
-        self.as_ref().to_vec()
-    }
+    fn private_key_data(&self) -> Vec<u8> { self.as_ref().to_vec() }
 }

@@ -1,11 +1,13 @@
 //! Digital signatures for various cryptographic schemes.
 //!
-//! This module provides a unified interface for creating and verifying digital signatures
-//! using different cryptographic algorithms, including:
+//! This module provides a unified interface for creating and verifying digital
+//! signatures using different cryptographic algorithms, including:
 //!
-//! - **Elliptic Curve Schemes**: ECDSA and Schnorr signatures using the secp256k1 curve
+//! - **Elliptic Curve Schemes**: ECDSA and Schnorr signatures using the
+//!   secp256k1 curve
 //! - **Edwards Curve Schemes**: Ed25519 signatures
-//! - **Post-Quantum Schemes**: ML-DSA (Module Lattice-based Digital Signature Algorithm)
+//! - **Post-Quantum Schemes**: ML-DSA (Module Lattice-based Digital Signature
+//!   Algorithm)
 //! - **SSH Schemes**: Various SSH signature algorithms
 //!
 //! The key types include:
@@ -14,8 +16,8 @@
 //! - [`SigningPublicKey`] - Public keys for verifying signatures
 //! - [`Signature`] - The digital signatures themselves
 //!
-//! All types share a common interface through the [`Signer`] and [`Verifier`] traits,
-//! and can be serialized to and from CBOR with appropriate tags.
+//! All types share a common interface through the [`Signer`] and [`Verifier`]
+//! traits, and can be serialized to and from CBOR with appropriate tags.
 //!
 //! # Examples
 //!
@@ -58,7 +60,7 @@
 //! ```
 
 mod signing_private_key;
-pub use signing_private_key::{ SigningOptions, SigningPrivateKey };
+pub use signing_private_key::{SigningOptions, SigningPrivateKey};
 
 mod signing_public_key;
 pub use signing_public_key::SigningPublicKey;
@@ -67,26 +69,15 @@ mod signature;
 pub use signature::Signature;
 
 mod signer;
-pub use signer::{ Signer, Verifier };
+pub use signer::{Signer, Verifier};
 
 mod signature_scheme;
 pub use signature_scheme::SignatureScheme;
 
 #[cfg(test)]
 mod tests {
-    use std::{ cell::RefCell, rc::Rc };
+    use std::{cell::RefCell, rc::Rc};
 
-    use crate::{
-        ECPrivateKey,
-        Ed25519PrivateKey,
-        MLDSASignature,
-        Signature,
-        Signer,
-        SigningOptions,
-        SigningPrivateKey,
-        Verifier,
-        MLDSA,
-    };
     use bc_rand::make_fake_random_number_generator;
     use dcbor::prelude::*;
     use hex_literal::hex;
@@ -94,23 +85,24 @@ mod tests {
     use ssh_key::HashAlg;
 
     use super::SignatureScheme;
+    use crate::{
+        ECPrivateKey, Ed25519PrivateKey, MLDSA, MLDSASignature, Signature,
+        Signer, SigningOptions, SigningPrivateKey, Verifier,
+    };
 
-    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ecdsa(
-        ECPrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
-    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_schnorr(
-        ECPrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
+    const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_ecdsa(ECPrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
+    const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_schnorr(ECPrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
 
-    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey = SigningPrivateKey::new_ed25519(
-        Ed25519PrivateKey::from_data(
-            hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-        )
-    );
+    const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey =
+        SigningPrivateKey::new_ed25519(Ed25519PrivateKey::from_data(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )));
     const MESSAGE: &dyn AsRef<[u8]> = b"Wolf McNally";
 
     #[test]
@@ -121,7 +113,8 @@ mod tests {
         assert!(public_key.verify(&signature, MESSAGE));
         assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
 
-        let another_signature = SCHNORR_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
+        let another_signature =
+            SCHNORR_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         assert_ne!(signature, another_signature);
         assert!(public_key.verify(&another_signature, MESSAGE));
     }
@@ -130,10 +123,9 @@ mod tests {
     fn test_schnorr_cbor() {
         let rng = Rc::new(RefCell::new(make_fake_random_number_generator()));
         let options = SigningOptions::Schnorr { rng };
-        let signature = SCHNORR_SIGNING_PRIVATE_KEY.sign_with_options(
-            MESSAGE,
-            Some(options)
-        ).unwrap();
+        let signature = SCHNORR_SIGNING_PRIVATE_KEY
+            .sign_with_options(MESSAGE, Some(options))
+            .unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
         #[rustfmt::skip]
@@ -142,8 +134,12 @@ mod tests {
                 h'9d113392074dd52dfb7f309afb3698a1993cd14d32bc27c00070407092c9ec8c096643b5b1b535bb5277c44f256441ac660cd600739aa910b150d4f94757cf95'
             )
         "#}.trim();
-        assert_eq!(CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(), expected);
-        let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
+        assert_eq!(
+            CBOR::try_from_data(&tagged_cbor_data).unwrap().diagnostic(),
+            expected
+        );
+        let received_signature =
+            Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
 
@@ -155,7 +151,8 @@ mod tests {
         assert!(public_key.verify(&signature, MESSAGE));
         assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
 
-        let another_signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
+        let another_signature =
+            ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         assert_eq!(signature, another_signature);
         assert!(public_key.verify(&another_signature, MESSAGE));
     }
@@ -176,7 +173,8 @@ mod tests {
         "#}.trim();
         let cbor = CBOR::try_from_data(&tagged_cbor_data).unwrap();
         assert_eq!(cbor.diagnostic(), expected);
-        let received_signature = Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
+        let received_signature =
+            Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
 
@@ -188,7 +186,8 @@ mod tests {
         assert!(public_key.verify(&signature, MESSAGE));
         assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
 
-        let another_signature = ED25519_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
+        let another_signature =
+            ED25519_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         assert_eq!(signature, another_signature);
         assert!(public_key.verify(&another_signature, MESSAGE));
     }
@@ -212,13 +211,18 @@ mod tests {
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
-        let received_signature = MLDSASignature::from_tagged_cbor_data(tagged_cbor_data).unwrap();
+        let received_signature =
+            MLDSASignature::from_tagged_cbor_data(tagged_cbor_data).unwrap();
         assert_eq!(signature, received_signature);
     }
 
-    fn test_keypair_signing(scheme: SignatureScheme, options: Option<SigningOptions>) {
+    fn test_keypair_signing(
+        scheme: SignatureScheme,
+        options: Option<SigningOptions>,
+    ) {
         let (private_key, public_key) = scheme.keypair();
-        let signature = private_key.sign_with_options(MESSAGE, options).unwrap();
+        let signature =
+            private_key.sign_with_options(MESSAGE, options).unwrap();
         assert!(public_key.verify(&signature, MESSAGE));
     }
 
@@ -253,12 +257,18 @@ mod tests {
     }
 
     fn signing_options() -> SigningOptions {
-        SigningOptions::Ssh { namespace: "ssh".into(), hash_alg: HashAlg::Sha512 }
+        SigningOptions::Ssh {
+            namespace: "ssh".into(),
+            hash_alg: HashAlg::Sha512,
+        }
     }
 
     #[test]
     fn test_ssh_ed25519_keypair() {
-        test_keypair_signing(SignatureScheme::SshEd25519, Some(signing_options()));
+        test_keypair_signing(
+            SignatureScheme::SshEd25519,
+            Some(signing_options()),
+        );
     }
 
     #[test]
@@ -268,11 +278,17 @@ mod tests {
 
     #[test]
     fn test_ssh_ecdsa_p256_keypair() {
-        test_keypair_signing(SignatureScheme::SshEcdsaP256, Some(signing_options()));
+        test_keypair_signing(
+            SignatureScheme::SshEcdsaP256,
+            Some(signing_options()),
+        );
     }
 
     #[test]
     fn test_ssh_ecdsa_p384_keypair() {
-        test_keypair_signing(SignatureScheme::SshEcdsaP384, Some(signing_options()));
+        test_keypair_signing(
+            SignatureScheme::SshEcdsaP384,
+            Some(signing_options()),
+        );
     }
 }

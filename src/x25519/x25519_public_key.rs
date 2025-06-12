@@ -1,15 +1,18 @@
 use std::rc::Rc;
+
+use anyhow::{Result, bail};
 use bc_ur::prelude::*;
-use crate::{tags, EncapsulationPublicKey, Encrypter};
-use anyhow::{ bail, Result };
+
+use crate::{EncapsulationPublicKey, Encrypter, tags};
 
 /// A public key for X25519 key agreement operations.
 ///
-/// X25519 is an elliptic-curve Diffie-Hellman key exchange protocol based on Curve25519
-/// as defined in [RFC 7748](https://datatracker.ietf.org/doc/html/rfc7748). It allows
+/// X25519 is an elliptic-curve Diffie-Hellman key exchange protocol based on
+/// Curve25519 as defined in [RFC 7748](https://datatracker.ietf.org/doc/html/rfc7748). It allows
 /// two parties to establish a shared secret key over an insecure channel.
 ///
-/// The X25519 public key is generated from a corresponding private key and is designed to be:
+/// The X25519 public key is generated from a corresponding private key and is
+/// designed to be:
 /// - Compact (32 bytes)
 /// - Fast to use in key agreement operations
 /// - Resistant to various cryptographic attacks
@@ -26,9 +29,7 @@ impl X25519PublicKey {
     pub const KEY_SIZE: usize = 32;
 
     /// Restore an `X25519PublicKey` from a fixed-size array of bytes.
-    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self {
-        Self(data)
-    }
+    pub const fn from_data(data: [u8; Self::KEY_SIZE]) -> Self { Self(data) }
 
     /// Restore an `X25519PublicKey` from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -42,44 +43,44 @@ impl X25519PublicKey {
     }
 
     /// Get a reference to the fixed-size array of bytes.
-    pub fn data(&self) -> &[u8; Self::KEY_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::KEY_SIZE] { self.into() }
+
+    /// Get the X25519 public key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Restore an `X25519PublicKey` from a hex string.
     ///
     /// # Panics
     ///
-    /// Panics if the hex string is invalid or the length is not `X25519PublicKey::KEY_SIZE * 2`.
+    /// Panics if the hex string is invalid or the length is not
+    /// `X25519PublicKey::KEY_SIZE * 2`.
     pub fn from_hex(hex: impl AsRef<str>) -> Self {
         Self::from_data_ref(hex::decode(hex.as_ref()).unwrap()).unwrap()
     }
 
     /// Get the hex string representation of the `X25519PublicKey`.
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.data()) }
 }
 
-/// Implements conversion from a reference-counted X25519PublicKey to an owned X25519PublicKey.
+impl AsRef<[u8]> for X25519PublicKey {
+    fn as_ref(&self) -> &[u8] { &self.0 }
+}
+
+/// Implements conversion from a reference-counted X25519PublicKey to an owned
+/// X25519PublicKey.
 impl From<Rc<X25519PublicKey>> for X25519PublicKey {
-    fn from(value: Rc<X25519PublicKey>) -> Self {
-        value.as_ref().clone()
-    }
+    fn from(value: Rc<X25519PublicKey>) -> Self { value.as_ref().clone() }
 }
 
-/// Implements conversion from an X25519PublicKey reference to a byte array reference.
+/// Implements conversion from an X25519PublicKey reference to a byte array
+/// reference.
 impl<'a> From<&'a X25519PublicKey> for &'a [u8; X25519PublicKey::KEY_SIZE] {
-    fn from(value: &'a X25519PublicKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a X25519PublicKey) -> Self { &value.0 }
 }
 
 /// Implements `AsRef<X25519PublicKey>` to allow self-reference.
 impl AsRef<X25519PublicKey> for X25519PublicKey {
-    fn as_ref(&self) -> &X25519PublicKey {
-        self
-    }
+    fn as_ref(&self) -> &X25519PublicKey { self }
 }
 
 /// Implements the CBORTagged trait to provide CBOR tag information.
@@ -91,19 +92,16 @@ impl CBORTagged for X25519PublicKey {
 
 /// Implements conversion from X25519PublicKey to CBOR for serialization.
 impl From<X25519PublicKey> for CBOR {
-    fn from(value: X25519PublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: X25519PublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for X25519PublicKey {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.data())
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.data()) }
 }
 
-/// Implements `TryFrom<CBOR>` for X25519PublicKey to support conversion from CBOR data.
+/// Implements `TryFrom<CBOR>` for X25519PublicKey to support conversion from
+/// CBOR data.
 impl TryFrom<CBOR> for X25519PublicKey {
     type Error = dcbor::Error;
 
@@ -127,25 +125,20 @@ impl std::fmt::Debug for X25519PublicKey {
     }
 }
 
-/// Implements conversion from an X25519PublicKey reference to an owned X25519PublicKey.
+/// Implements conversion from an X25519PublicKey reference to an owned
+/// X25519PublicKey.
 impl From<&X25519PublicKey> for X25519PublicKey {
-    fn from(key: &X25519PublicKey) -> Self {
-        key.clone()
-    }
+    fn from(key: &X25519PublicKey) -> Self { key.clone() }
 }
 
 /// Implements conversion from an X25519PublicKey to a byte vector.
 impl From<X25519PublicKey> for Vec<u8> {
-    fn from(key: X25519PublicKey) -> Self {
-        key.0.to_vec()
-    }
+    fn from(key: X25519PublicKey) -> Self { key.0.to_vec() }
 }
 
 /// Implements conversion from an X25519PublicKey reference to a byte vector.
 impl From<&X25519PublicKey> for Vec<u8> {
-    fn from(key: &X25519PublicKey) -> Self {
-        key.0.to_vec()
-    }
+    fn from(key: &X25519PublicKey) -> Self { key.0.to_vec() }
 }
 
 /// Implements the Encrypter trait to support key encapsulation mechanisms.

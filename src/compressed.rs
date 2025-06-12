@@ -1,15 +1,17 @@
-use std::{ fmt::Formatter, borrow::Cow };
-use bc_ur::prelude::*;
+use std::{borrow::Cow, fmt::Formatter};
+
+use anyhow::{Result, anyhow, bail};
 use bc_crypto::hash::crc32;
-use miniz_oxide::{ inflate::decompress_to_vec, deflate::compress_to_vec };
-use crate::{ digest::Digest, DigestProvider, tags };
-use anyhow::{ anyhow, bail, Result };
+use bc_ur::prelude::*;
+use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec};
+
+use crate::{DigestProvider, digest::Digest, tags};
 
 /// A compressed binary object with integrity verification.
 ///
-/// `Compressed` provides a way to efficiently store and transmit binary data using
-/// the DEFLATE compression algorithm. It includes built-in integrity verification
-/// through a CRC32 checksum and optional cryptographic digest.
+/// `Compressed` provides a way to efficiently store and transmit binary data
+/// using the DEFLATE compression algorithm. It includes built-in integrity
+/// verification through a CRC32 checksum and optional cryptographic digest.
 ///
 /// The compression is implemented using the raw DEFLATE format as described in
 /// [IETF RFC 1951](https://www.ietf.org/rfc/rfc1951.txt) with the following
@@ -21,7 +23,8 @@ use anyhow::{ anyhow, bail, Result };
 /// - Automatic compression with configurable compression level
 /// - Integrity verification via CRC32 checksum
 /// - Optional cryptographic digest for content identification
-/// - Smart behavior for small data (stores uncompressed if compression would increase size)
+/// - Smart behavior for small data (stores uncompressed if compression would
+///   increase size)
 /// - CBOR serialization/deserialization support
 #[derive(Clone, Eq, PartialEq)]
 pub struct Compressed {
@@ -38,9 +41,10 @@ pub struct Compressed {
 impl Compressed {
     /// Creates a new `Compressed` object with the specified parameters.
     ///
-    /// This is a low-level constructor that allows direct creation of a `Compressed`
-    /// object without performing compression. It's primarily intended for deserialization
-    /// or when working with pre-compressed data.
+    /// This is a low-level constructor that allows direct creation of a
+    /// `Compressed` object without performing compression. It's primarily
+    /// intended for deserialization or when working with pre-compressed
+    /// data.
     ///
     /// # Parameters
     ///
@@ -56,8 +60,8 @@ impl Compressed {
     ///
     /// # Errors
     ///
-    /// Returns an error if the compressed data is larger than the uncompressed size,
-    /// which would indicate a logical inconsistency.
+    /// Returns an error if the compressed data is larger than the uncompressed
+    /// size, which would indicate a logical inconsistency.
     ///
     /// # Example
     ///
@@ -72,18 +76,15 @@ impl Compressed {
     /// // In a real scenario, this would be actually compressed data
     /// let compressed_data = data.to_vec();
     ///
-    /// let compressed = Compressed::new(
-    ///     checksum,
-    ///     uncompressed_size,
-    ///     compressed_data,
-    ///     None
-    /// ).unwrap();
+    /// let compressed =
+    ///     Compressed::new(checksum, uncompressed_size, compressed_data, None)
+    ///         .unwrap();
     /// ```
     pub fn new(
         checksum: u32,
         uncompressed_size: usize,
         compressed_data: Vec<u8>,
-        digest: Option<Digest>
+        digest: Option<Digest>,
     ) -> Result<Self> {
         if compressed_data.len() > uncompressed_size {
             bail!("Compressed data is larger than uncompressed size");
@@ -98,11 +99,13 @@ impl Compressed {
 
     /// Creates a new `Compressed` object by compressing the provided data.
     ///
-    /// This is the primary method for creating compressed data. It automatically
-    /// handles compression using the DEFLATE algorithm with a compression level of 6.
+    /// This is the primary method for creating compressed data. It
+    /// automatically handles compression using the DEFLATE algorithm with a
+    /// compression level of 6.
     ///
-    /// If the compressed data would be larger than the original data (which can happen
-    /// with small or already compressed inputs), the original data is stored instead.
+    /// If the compressed data would be larger than the original data (which can
+    /// happen with small or already compressed inputs), the original data
+    /// is stored instead.
     ///
     /// # Parameters
     ///
@@ -132,11 +135,11 @@ impl Compressed {
     /// ```
     pub fn from_uncompressed_data(
         uncompressed_data: impl AsRef<[u8]>,
-        digest: Option<Digest>
+        digest: Option<Digest>,
     ) -> Self {
         let uncompressed_data = uncompressed_data.as_ref();
         let compressed_data = compress_to_vec(uncompressed_data, 6);
-        let checksum = crc32(&uncompressed_data);
+        let checksum = crc32(uncompressed_data);
         let uncompressed_size = uncompressed_data.len();
         let compressed_size = compressed_data.len();
         if compressed_size != 0 && compressed_size < uncompressed_size {
@@ -171,7 +174,8 @@ impl Compressed {
     ///
     /// Returns an error if:
     /// - The compressed data is corrupt and cannot be decompressed
-    /// - The checksum of the decompressed data doesn't match the stored checksum
+    /// - The checksum of the decompressed data doesn't match the stored
+    ///   checksum
     ///
     /// # Example
     ///
@@ -194,9 +198,8 @@ impl Compressed {
             return Ok(self.compressed_data.clone());
         }
 
-        let uncompressed_data = decompress_to_vec(&self.compressed_data).map_err(|_|
-            anyhow!("corrupt compressed data")
-        )?;
+        let uncompressed_data = decompress_to_vec(&self.compressed_data)
+            .map_err(|_| anyhow!("corrupt compressed data"))?;
         if crc32(&uncompressed_data) != self.checksum {
             bail!("compressed data checksum mismatch");
         }
@@ -222,14 +225,12 @@ impl Compressed {
     /// // so the compressed_size might equal the original size
     /// println!("Compressed size: {}", compressed.compressed_size());
     /// ```
-    pub fn compressed_size(&self) -> usize {
-        self.compressed_data.len()
-    }
+    pub fn compressed_size(&self) -> usize { self.compressed_data.len() }
 
     /// Returns the compression ratio of the data.
     ///
-    /// The compression ratio is calculated as (compressed size) / (uncompressed size),
-    /// so lower values indicate better compression.
+    /// The compression ratio is calculated as (compressed size) / (uncompressed
+    /// size), so lower values indicate better compression.
     ///
     /// # Returns
     ///
@@ -259,7 +260,8 @@ impl Compressed {
     ///
     /// # Returns
     ///
-    /// An optional reference to the `Digest` associated with this compressed data.
+    /// An optional reference to the `Digest` associated with this compressed
+    /// data.
     ///
     /// # Example
     ///
@@ -268,14 +270,13 @@ impl Compressed {
     ///
     /// let data = b"Hello world!";
     /// let digest = Digest::from_image(data);
-    /// let compressed = Compressed::from_uncompressed_data(data, Some(digest.clone()));
+    /// let compressed =
+    ///     Compressed::from_uncompressed_data(data, Some(digest.clone()));
     ///
     /// // We can retrieve the digest we associated with the compressed data
     /// assert_eq!(compressed.digest_ref_opt(), Some(&digest));
     /// ```
-    pub fn digest_ref_opt(&self) -> Option<&Digest> {
-        self.digest.as_ref()
-    }
+    pub fn digest_ref_opt(&self) -> Option<&Digest> { self.digest.as_ref() }
 
     /// Returns whether this compressed data has an associated digest.
     ///
@@ -294,12 +295,11 @@ impl Compressed {
     ///
     /// // Create compressed data with a digest
     /// let digest = Digest::from_image(b"Hello");
-    /// let compressed2 = Compressed::from_uncompressed_data(b"Hello", Some(digest));
+    /// let compressed2 =
+    ///     Compressed::from_uncompressed_data(b"Hello", Some(digest));
     /// assert!(compressed2.has_digest());
     /// ```
-    pub fn has_digest(&self) -> bool {
-        self.digest.is_some()
-    }
+    pub fn has_digest(&self) -> bool { self.digest.is_some() }
 }
 
 /// Implementation of the `DigestProvider` trait for `Compressed`.
@@ -316,7 +316,8 @@ impl DigestProvider for Compressed {
     /// # Panics
     ///
     /// Panics if there is no digest associated with this compressed data.
-    /// Use `has_digest()` or `digest_ref_opt()` to check before calling this method.
+    /// Use `has_digest()` or `digest_ref_opt()` to check before calling this
+    /// method.
     fn digest(&self) -> Cow<'_, Digest> {
         Cow::Owned(self.digest.as_ref().unwrap().clone())
     }
@@ -335,8 +336,7 @@ impl std::fmt::Debug for Compressed {
             self.compressed_size(),
             self.uncompressed_size,
             self.compression_ratio(),
-            self
-                .digest_ref_opt()
+            self.digest_ref_opt()
                 .map(|d| d.short_description())
                 .unwrap_or_else(|| "None".to_string())
         )
@@ -348,25 +348,19 @@ impl std::fmt::Debug for Compressed {
 /// This allows passing a `Compressed` instance to functions that take
 /// `AsRef<Compressed>` parameters.
 impl AsRef<Compressed> for Compressed {
-    fn as_ref(&self) -> &Compressed {
-        self
-    }
+    fn as_ref(&self) -> &Compressed { self }
 }
 
 /// Implementation of the `CBORTagged` trait for `Compressed`.
 ///
 /// Defines the CBOR tag(s) used when serializing a `Compressed` object.
 impl CBORTagged for Compressed {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_COMPRESSED])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_COMPRESSED]) }
 }
 
 /// Conversion from `Compressed` to CBOR for serialization.
 impl From<Compressed> for CBOR {
-    fn from(value: Compressed) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Compressed) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of CBOR encoding for `Compressed`.
@@ -386,7 +380,7 @@ impl CBORTaggedEncodable for Compressed {
         let mut elements = vec![
             self.checksum.into(),
             self.uncompressed_size.into(),
-            CBOR::to_byte_string(&self.compressed_data)
+            CBOR::to_byte_string(&self.compressed_data),
         ];
         if let Some(digest) = self.digest.clone() {
             elements.push(digest.into());
@@ -416,8 +410,17 @@ impl CBORTaggedDecodable for Compressed {
         let checksum = elements[0].clone().try_into()?;
         let uncompressed_size = elements[1].clone().try_into()?;
         let compressed_data = elements[2].clone().try_into_byte_string()?;
-        let digest = if elements.len() == 4 { Some(elements[3].clone().try_into()?) } else { None };
-        Ok(Self::new(checksum, uncompressed_size, compressed_data, digest)?)
+        let digest = if elements.len() == 4 {
+            Some(elements[3].clone().try_into()?)
+        } else {
+            None
+        };
+        Ok(Self::new(
+            checksum,
+            uncompressed_size,
+            compressed_data,
+            digest,
+        )?)
     }
 }
 

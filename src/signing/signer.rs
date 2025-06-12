@@ -8,7 +8,8 @@ use crate::{Signature, SigningOptions};
 /// cryptographic signature schemes. Implementations of this trait can sign
 /// messages using different algorithms according to the specific signer type.
 ///
-/// This trait is implemented by `SigningPrivateKey` for all supported signature schemes.
+/// This trait is implemented by `SigningPrivateKey` for all supported signature
+/// schemes.
 ///
 /// # Examples
 ///
@@ -26,7 +27,8 @@ use crate::{Signature, SigningOptions};
 /// assert!(public_key.verify(&signature, &message));
 /// ```
 pub trait Signer {
-    /// Signs a message with additional options specific to the signature scheme.
+    /// Signs a message with additional options specific to the signature
+    /// scheme.
     ///
     /// # Arguments
     ///
@@ -35,12 +37,14 @@ pub trait Signer {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the digital signature or an error if signing fails.
+    /// A `Result` containing the digital signature or an error if signing
+    /// fails.
     ///
     /// # Examples
     ///
     /// ```
     /// use std::{cell::RefCell, rc::Rc};
+    ///
     /// use bc_components::{SignatureScheme, Signer, SigningOptions, Verifier};
     /// use bc_rand::SecureRandomNumberGenerator;
     ///
@@ -53,7 +57,9 @@ pub trait Signer {
     ///
     /// // Sign a message with options
     /// let message = b"Hello, world!";
-    /// let signature = private_key.sign_with_options(&message, Some(options)).unwrap();
+    /// let signature = private_key
+    ///     .sign_with_options(&message, Some(options))
+    ///     .unwrap();
     ///
     /// // Verify the signature
     /// assert!(public_key.verify(&signature, &message));
@@ -61,7 +67,7 @@ pub trait Signer {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>
+        options: Option<SigningOptions>,
     ) -> Result<Signature>;
 
     /// Signs a message using default options.
@@ -75,7 +81,8 @@ pub trait Signer {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the digital signature or an error if signing fails.
+    /// A `Result` containing the digital signature or an error if signing
+    /// fails.
     ///
     /// # Examples
     ///
@@ -96,9 +103,9 @@ pub trait Signer {
 
 /// A trait for types capable of verifying digital signatures.
 ///
-/// The `Verifier` trait provides a method to verify that a signature was created
-/// by a corresponding signer for a specific message. This trait is implemented by
-/// `SigningPublicKey` for all supported signature schemes.
+/// The `Verifier` trait provides a method to verify that a signature was
+/// created by a corresponding signer for a specific message. This trait is
+/// implemented by `SigningPublicKey` for all supported signature schemes.
 ///
 /// # Examples
 ///

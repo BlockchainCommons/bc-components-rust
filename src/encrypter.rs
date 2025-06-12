@@ -1,12 +1,17 @@
 use anyhow::Result;
-use crate::{EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey, SymmetricKey};
 
-/// A trait for types that can encapsulate shared secrets for public key encryption.
+use crate::{
+    EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey,
+    SymmetricKey,
+};
+
+/// A trait for types that can encapsulate shared secrets for public key
+/// encryption.
 ///
-/// The `Encrypter` trait defines an interface for encapsulating a shared secret using
-/// a public key. This is a key part of hybrid encryption schemes, where a shared
-/// symmetric key is encapsulated with a public key, and the recipient uses their
-/// private key to recover the symmetric key.
+/// The `Encrypter` trait defines an interface for encapsulating a shared secret
+/// using a public key. This is a key part of hybrid encryption schemes, where a
+/// shared symmetric key is encapsulated with a public key, and the recipient
+/// uses their private key to recover the symmetric key.
 ///
 /// Types implementing this trait provide the ability to:
 /// 1. Access their encapsulation public key
@@ -37,24 +42,30 @@ pub trait Encrypter {
     /// # Example
     ///
     /// ```
-    /// use bc_components::{Encrypter, EncapsulationScheme};
+    /// use bc_components::{EncapsulationScheme, Encrypter};
     ///
     /// // Generate a recipient keypair
-    /// let (recipient_private_key, recipient_public_key) = EncapsulationScheme::default().keypair();
+    /// let (recipient_private_key, recipient_public_key) =
+    ///     EncapsulationScheme::default().keypair();
     ///
     /// // Encapsulate a new shared secret
-    /// let (shared_secret, ciphertext) = recipient_public_key.encapsulate_new_shared_secret();
+    /// let (shared_secret, ciphertext) =
+    ///     recipient_public_key.encapsulate_new_shared_secret();
     /// ```
-    fn encapsulate_new_shared_secret(&self) -> (SymmetricKey, EncapsulationCiphertext) {
-        self.encapsulation_public_key().encapsulate_new_shared_secret()
+    fn encapsulate_new_shared_secret(
+        &self,
+    ) -> (SymmetricKey, EncapsulationCiphertext) {
+        self.encapsulation_public_key()
+            .encapsulate_new_shared_secret()
     }
 }
 
-/// A trait for types that can decapsulate shared secrets for public key decryption.
+/// A trait for types that can decapsulate shared secrets for public key
+/// decryption.
 ///
-/// The `Decrypter` trait defines an interface for decapsulating (recovering) a shared
-/// secret using a private key. This is the counterpart to the `Encrypter` trait and is
-/// used by the recipient of encapsulated messages.
+/// The `Decrypter` trait defines an interface for decapsulating (recovering) a
+/// shared secret using a private key. This is the counterpart to the
+/// `Encrypter` trait and is used by the recipient of encapsulated messages.
 ///
 /// Types implementing this trait provide the ability to:
 /// 1. Access their encapsulation private key
@@ -73,12 +84,13 @@ pub trait Decrypter {
 
     /// Decapsulates a shared secret from a ciphertext.
     ///
-    /// This method recovers the shared secret that was encapsulated in the given
-    /// ciphertext, using the private key from this decrypter.
+    /// This method recovers the shared secret that was encapsulated in the
+    /// given ciphertext, using the private key from this decrypter.
     ///
     /// # Parameters
     ///
-    /// * `ciphertext` - The encapsulation ciphertext containing the encapsulated shared secret
+    /// * `ciphertext` - The encapsulation ciphertext containing the
+    ///   encapsulated shared secret
     ///
     /// # Returns
     ///
@@ -94,21 +106,27 @@ pub trait Decrypter {
     /// # Example
     ///
     /// ```
-    /// use bc_components::{Encrypter, Decrypter, EncapsulationScheme};
+    /// use bc_components::{Decrypter, EncapsulationScheme, Encrypter};
     ///
     /// // Generate a keypair
     /// let (private_key, public_key) = EncapsulationScheme::default().keypair();
     ///
     /// // Encapsulate a new shared secret
-    /// let (original_secret, ciphertext) = public_key.encapsulate_new_shared_secret();
+    /// let (original_secret, ciphertext) =
+    ///     public_key.encapsulate_new_shared_secret();
     ///
     /// // Decapsulate the shared secret
-    /// let recovered_secret = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+    /// let recovered_secret =
+    ///     private_key.decapsulate_shared_secret(&ciphertext).unwrap();
     ///
     /// // The original and recovered secrets should match
     /// assert_eq!(original_secret, recovered_secret);
     /// ```
-    fn decapsulate_shared_secret(&self, ciphertext: &EncapsulationCiphertext) -> Result<SymmetricKey> {
-        self.encapsulation_private_key().decapsulate_shared_secret(ciphertext)
+    fn decapsulate_shared_secret(
+        &self,
+        ciphertext: &EncapsulationCiphertext,
+    ) -> Result<SymmetricKey> {
+        self.encapsulation_private_key()
+            .decapsulate_shared_secret(ciphertext)
     }
 }

@@ -38,6 +38,10 @@ impl PBKDF2Params {
     pub fn hash_type(&self) -> HashType { self.hash_type }
 }
 
+impl Default for PBKDF2Params {
+    fn default() -> Self { Self::new() }
+}
+
 impl KeyDerivation for PBKDF2Params {
     const INDEX: usize = KeyDerivationMethod::PBKDF2 as usize;
 
@@ -88,13 +92,13 @@ impl std::fmt::Display for PBKDF2Params {
     }
 }
 
-impl Into<CBOR> for PBKDF2Params {
-    fn into(self) -> CBOR {
+impl From<PBKDF2Params> for CBOR {
+    fn from(val: PBKDF2Params) -> Self {
         vec![
-            CBOR::from(Self::INDEX),
-            self.salt.into(),
-            self.iterations.into(),
-            self.hash_type.into(),
+            CBOR::from(PBKDF2Params::INDEX),
+            val.salt.into(),
+            val.iterations.into(),
+            val.hash_type.into(),
         ]
         .into()
     }

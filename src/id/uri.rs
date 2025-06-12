@@ -1,14 +1,16 @@
 use std::str::FromStr;
+
+use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
 use url::Url;
-use anyhow::{ bail, Result, Error };
 
 use crate::tags;
 
 /// A Uniform Resource Identifier (URI).
 ///
-/// A URI is a string of characters that unambiguously identifies a particular resource.
-/// This implementation validates URIs using the `url` crate to ensure conformance to RFC 3986.
+/// A URI is a string of characters that unambiguously identifies a particular
+/// resource. This implementation validates URIs using the `url` crate to ensure
+/// conformance to RFC 3986.
 ///
 /// URIs are commonly used for:
 /// - Web addresses (URLs like "<https://example.com>")
@@ -36,51 +38,37 @@ impl URI {
 impl FromStr for URI {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::new(s)
-    }
+    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::new(s) }
 }
 
 /// Implements `AsRef<str>` to allow URI to be treated as a string slice.
 impl AsRef<str> for URI {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
+    fn as_ref(&self) -> &str { &self.0 }
 }
 
 /// Implements `AsRef<String>` to allow URI to be treated as a String reference.
 impl AsRef<String> for URI {
-    fn as_ref(&self) -> &String {
-        &self.0
-    }
+    fn as_ref(&self) -> &String { &self.0 }
 }
 
 /// Implements `AsRef<URI>` to allow URI to reference itself.
 impl AsRef<URI> for URI {
-    fn as_ref(&self) -> &URI {
-        self
-    }
+    fn as_ref(&self) -> &URI { self }
 }
 
 /// Implements CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for URI {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_URI])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_URI]) }
 }
 
 /// Implements conversion from URI to CBOR for serialization.
 impl From<URI> for CBOR {
-    fn from(value: URI) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: URI) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for URI {
-    fn untagged_cbor(&self) -> CBOR {
-        self.0.clone().into()
-    }
+    fn untagged_cbor(&self) -> CBOR { self.0.clone().into() }
 }
 
 /// Implements `TryFrom<CBOR>` for URI to support conversion from CBOR data.
@@ -111,9 +99,7 @@ impl std::fmt::Display for URI {
 impl TryFrom<&str> for URI {
     type Error = Error;
 
-    fn try_from(uri: &str) -> Result<Self, Self::Error> {
-        Self::new(uri)
-    }
+    fn try_from(uri: &str) -> Result<Self, Self::Error> { Self::new(uri) }
 }
 
 /// Implements conversion from String to URI with validation.
@@ -127,14 +113,10 @@ impl TryFrom<String> for URI {
 
 /// Implements conversion from URI to String.
 impl From<URI> for String {
-    fn from(uri: URI) -> Self {
-        uri.0
-    }
+    fn from(uri: URI) -> Self { uri.0 }
 }
 
 /// Implements conversion from URI reference to String.
 impl From<&URI> for String {
-    fn from(uri: &URI) -> Self {
-        uri.0.clone()
-    }
+    fn from(uri: &URI) -> Self { uri.0.clone() }
 }

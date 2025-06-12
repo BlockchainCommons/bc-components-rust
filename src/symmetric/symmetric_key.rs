@@ -1,5 +1,8 @@
 use anyhow::{Error, Result, bail};
-use bc_crypto::{aead_chacha20_poly1305_decrypt_with_aad, aead_chacha20_poly1305_encrypt_with_aad};
+use bc_crypto::{
+    aead_chacha20_poly1305_decrypt_with_aad,
+    aead_chacha20_poly1305_encrypt_with_aad,
+};
 use bc_ur::prelude::*;
 
 use crate::{Digest, EncryptedMessage, Nonce, tags};
@@ -41,7 +44,9 @@ impl SymmetricKey {
     }
 
     /// Create a new symmetric key from data.
-    pub const fn from_data(data: [u8; Self::SYMMETRIC_KEY_SIZE]) -> Self { Self(data) }
+    pub const fn from_data(data: [u8; Self::SYMMETRIC_KEY_SIZE]) -> Self {
+        Self(data)
+    }
 
     /// Create a new symmetric key from data.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -56,6 +61,9 @@ impl SymmetricKey {
 
     /// Get the data of the symmetric key.
     pub fn data(&self) -> &[u8; Self::SYMMETRIC_KEY_SIZE] { self.into() }
+
+    /// Get the data of the symmetric key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Create a new symmetric key from the given hexadecimal string.
     ///
@@ -77,10 +85,15 @@ impl SymmetricKey {
         nonce: Option<impl AsRef<Nonce>>,
     ) -> EncryptedMessage {
         let aad: Vec<u8> = aad.map(|a| a.as_ref().to_vec()).unwrap_or_default();
-        let nonce: Nonce = nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
+        let nonce: Nonce =
+            nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
         let plaintext = plaintext.as_ref().to_vec();
-        let (ciphertext, auth) =
-            aead_chacha20_poly1305_encrypt_with_aad(plaintext, self.into(), (&nonce).into(), &aad);
+        let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(
+            plaintext,
+            self.into(),
+            (&nonce).into(),
+            &aad,
+        );
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
     }
 
@@ -148,7 +161,9 @@ impl From<&SymmetricKey> for Vec<u8> {
 impl TryFrom<Vec<u8>> for SymmetricKey {
     type Error = Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> { Self::from_data_ref(value) }
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        Self::from_data_ref(value)
+    }
 }
 
 /// Implements Debug formatting to display the key in hexadecimal format.
@@ -178,7 +193,9 @@ impl CBORTaggedEncodable for SymmetricKey {
 impl TryFrom<CBOR> for SymmetricKey {
     type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> dcbor::Result<Self> { Self::from_untagged_cbor(cbor) }
+    fn try_from(cbor: CBOR) -> dcbor::Result<Self> {
+        Self::from_untagged_cbor(cbor)
+    }
 }
 
 /// Implements CBORTaggedDecodable to provide CBOR decoding functionality.

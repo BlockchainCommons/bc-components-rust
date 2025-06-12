@@ -43,10 +43,13 @@ mod test {
     const AUTH: AuthenticationTag =
         AuthenticationTag::from_data(hex!("1ae10b594f09e26a7e902ecbd0600691"));
 
-    fn encrypted_message() -> EncryptedMessage { KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE)) }
+    fn encrypted_message() -> EncryptedMessage {
+        KEY.encrypt(PLAINTEXT, Some(&AAD), Some(NONCE))
+    }
 
     #[test]
-    fn test_rfc_test_vector() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    fn test_rfc_test_vector()
+    -> std::result::Result<(), Box<dyn std::error::Error>> {
         let encrypted_message = encrypted_message();
         assert_eq!(encrypted_message.ciphertext(), &CIPHERTEXT);
         assert_eq!(encrypted_message.aad(), &AAD);
@@ -59,7 +62,8 @@ mod test {
     }
 
     #[test]
-    fn test_random_key_and_nonce() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    fn test_random_key_and_nonce()
+    -> std::result::Result<(), Box<dyn std::error::Error>> {
         let key = SymmetricKey::new();
         let nonce = Nonce::new();
         let encrypted_message = key.encrypt(PLAINTEXT, Some(&AAD), Some(nonce));
@@ -69,9 +73,11 @@ mod test {
     }
 
     #[test]
-    fn test_empty_data() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    fn test_empty_data() -> std::result::Result<(), Box<dyn std::error::Error>>
+    {
         let key = SymmetricKey::new();
-        let encrypted_message = key.encrypt(vec![], None::<Vec<u8>>, None::<Nonce>);
+        let encrypted_message =
+            key.encrypt(vec![], None::<Vec<u8>>, None::<Nonce>);
         let decrypted_plaintext = key.decrypt(&encrypted_message)?;
         assert_eq!(&[] as &[u8], decrypted_plaintext.as_slice());
         Ok(())

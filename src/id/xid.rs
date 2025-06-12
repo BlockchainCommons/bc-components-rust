@@ -1,31 +1,29 @@
-use anyhow::{ bail, Result, Error };
+use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
 
 use crate::{
-    tags,
-    Digest,
-    PrivateKeyBase,
-    PublicKeys,
-    Reference,
-    ReferenceProvider,
-    SigningPrivateKey,
-    SigningPublicKey,
+    Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider,
+    SigningPrivateKey, SigningPublicKey, tags,
 };
 
 /// A XID (eXtensible IDentifier).
 ///
-/// A XID is a unique 32-byte identifier for a subject entity (person, organization, device, or any other entity).
-/// XIDs have the following characteristics:
+/// A XID is a unique 32-byte identifier for a subject entity (person,
+/// organization, device, or any other entity). XIDs have the following
+/// characteristics:
 ///
-/// - They're cryptographically tied to a public key at inception (the "inception key")
-/// - They remain stable throughout their lifecycle even as their keys and permissions change
-/// - They can be extended to XID documents containing keys, endpoints, permissions, and delegation info
+/// - They're cryptographically tied to a public key at inception (the
+///   "inception key")
+/// - They remain stable throughout their lifecycle even as their keys and
+///   permissions change
+/// - They can be extended to XID documents containing keys, endpoints,
+///   permissions, and delegation info
 /// - They support key rotation and multiple verification schemes
 /// - They allow for delegation of specific permissions to other entities
 /// - They can include resolution methods to locate and verify the XID document
 ///
-/// A XID is created by taking the SHA-256 hash of the CBOR encoding of a public signing key.
-/// This ensures the XID is cryptographically tied to the key.
+/// A XID is created by taking the SHA-256 hash of the CBOR encoding of a public
+/// signing key. This ensures the XID is cryptographically tied to the key.
 ///
 /// As defined in [BCR-2024-010](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2024-010-xid.md).
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -35,9 +33,7 @@ impl XID {
     pub const XID_SIZE: usize = 32;
 
     /// Create a new XID from data.
-    pub fn from_data(data: [u8; Self::XID_SIZE]) -> Self {
-        Self(data)
-    }
+    pub fn from_data(data: [u8; Self::XID_SIZE]) -> Self { Self(data) }
 
     /// Create a new XID from data.
     ///
@@ -53,9 +49,10 @@ impl XID {
     }
 
     /// Return the data of the XID.
-    pub fn data(&self) -> &[u8; Self::XID_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::XID_SIZE] { self.into() }
+
+    /// Get the data of the XID as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Create a new XID from the given public key (the "genesis key").
     ///
@@ -82,14 +79,10 @@ impl XID {
     }
 
     /// The data as a hexadecimal string.
-    pub fn to_hex(&self) -> String {
-        hex::encode(self.0)
-    }
+    pub fn to_hex(&self) -> String { hex::encode(self.0) }
 
     /// The first four bytes of the XID as a hexadecimal string.
-    pub fn short_description(&self) -> String {
-        self.ref_hex_short()
-    }
+    pub fn short_description(&self) -> String { self.ref_hex_short() }
 
     /// The first four bytes of the XID as upper-case ByteWords.
     pub fn bytewords_identifier(&self, prefix: bool) -> String {
@@ -110,44 +103,32 @@ pub trait XIDProvider {
 
 /// Implements XIDProvider for XID to return itself.
 impl XIDProvider for XID {
-    fn xid(&self) -> XID {
-        *self
-    }
+    fn xid(&self) -> XID { *self }
 }
 
 /// Implements XIDProvider for SigningPublicKey to generate an XID from the key.
 impl XIDProvider for SigningPublicKey {
-    fn xid(&self) -> XID {
-        XID::new(self)
-    }
+    fn xid(&self) -> XID { XID::new(self) }
 }
 
 /// Implements ReferenceProvider for XID to generate a Reference from the XID.
 impl ReferenceProvider for XID {
-    fn reference(&self) -> Reference {
-        Reference::from_data(*self.data())
-    }
+    fn reference(&self) -> Reference { Reference::from_data(*self.data()) }
 }
 
 /// Implements conversion from a XID reference to a byte array reference.
 impl<'a> From<&'a XID> for &'a [u8; XID::XID_SIZE] {
-    fn from(value: &'a XID) -> Self {
-        &value.0
-    }
+    fn from(value: &'a XID) -> Self { &value.0 }
 }
 
 /// Implements conversion from a XID reference to a byte slice reference.
 impl<'a> From<&'a XID> for &'a [u8] {
-    fn from(value: &'a XID) -> Self {
-        &value.0
-    }
+    fn from(value: &'a XID) -> Self { &value.0 }
 }
 
 /// Implements AsRef<[u8]> to allow XID to be treated as a byte slice.
 impl AsRef<[u8]> for XID {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements PartialOrd to allow XIDs to be compared and partially ordered.
@@ -159,9 +140,7 @@ impl std::cmp::PartialOrd for XID {
 
 /// Implements Ord to allow XIDs to be fully ordered.
 impl std::cmp::Ord for XID {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.cmp(&other.0)
-    }
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering { self.0.cmp(&other.0) }
 }
 
 /// Implements Debug formatting for XID showing the full hex representation.
@@ -171,7 +150,8 @@ impl std::fmt::Debug for XID {
     }
 }
 
-/// Implements Display formatting for XID showing a shortened hex representation.
+/// Implements Display formatting for XID showing a shortened hex
+/// representation.
 impl std::fmt::Display for XID {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "XID({})", self.short_description())
@@ -180,26 +160,21 @@ impl std::fmt::Display for XID {
 
 /// Implements CBORTagged trait to provide CBOR tag information for XID.
 impl CBORTagged for XID {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_XID])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_XID]) }
 }
 
 /// Implements conversion from XID to CBOR for serialization.
 impl From<XID> for CBOR {
-    fn from(value: XID) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: XID) -> Self { value.tagged_cbor() }
 }
 
 /// Implements conversion from SigningPublicKey reference to XID.
 impl From<&SigningPublicKey> for XID {
-    fn from(key: &SigningPublicKey) -> Self {
-        Self::new(key)
-    }
+    fn from(key: &SigningPublicKey) -> Self { Self::new(key) }
 }
 
-/// Implements conversion from SigningPrivateKey reference to XID via the public key.
+/// Implements conversion from SigningPrivateKey reference to XID via the public
+/// key.
 impl TryFrom<&SigningPrivateKey> for XID {
     type Error = Error;
 
@@ -208,25 +183,24 @@ impl TryFrom<&SigningPrivateKey> for XID {
     }
 }
 
-/// Implements conversion from PublicKeys reference to XID via the signing public key.
+/// Implements conversion from PublicKeys reference to XID via the signing
+/// public key.
 impl From<&PublicKeys> for XID {
-    fn from(key: &PublicKeys) -> Self {
-        Self::new(key.signing_public_key())
-    }
+    fn from(key: &PublicKeys) -> Self { Self::new(key.signing_public_key()) }
 }
 
-/// Implements conversion from PrivateKeyBase reference to XID via the Schnorr signing key.
+/// Implements conversion from PrivateKeyBase reference to XID via the Schnorr
+/// signing key.
 impl From<&PrivateKeyBase> for XID {
     fn from(key: &PrivateKeyBase) -> Self {
         Self::new(key.schnorr_signing_private_key().public_key().unwrap())
     }
 }
 
-/// Implements CBORTaggedEncodable to provide CBOR encoding functionality for XID.
+/// Implements CBORTaggedEncodable to provide CBOR encoding functionality for
+/// XID.
 impl CBORTaggedEncodable for XID {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.0) }
 }
 
 /// Implements conversion from CBOR to XID for deserialization.
@@ -238,7 +212,8 @@ impl TryFrom<CBOR> for XID {
     }
 }
 
-/// Implements CBORTaggedDecodable to provide CBOR decoding functionality for XID.
+/// Implements CBORTaggedDecodable to provide CBOR decoding functionality for
+/// XID.
 impl CBORTaggedDecodable for XID {
     fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         let data = CBOR::try_into_byte_string(cbor)?;
@@ -246,28 +221,28 @@ impl CBORTaggedDecodable for XID {
     }
 }
 
-/// Implements conversion from XID to `Vec<u8>` to allow access to the raw bytes.
+/// Implements conversion from XID to `Vec<u8>` to allow access to the raw
+/// bytes.
 impl From<XID> for Vec<u8> {
-    fn from(xid: XID) -> Self {
-        xid.0.to_vec()
-    }
+    fn from(xid: XID) -> Self { xid.0.to_vec() }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{ ECPrivateKey, SigningPrivateKey };
-
-    use super::*;
     use bc_ur::prelude::*;
     use hex_literal::hex;
     use indoc::indoc;
 
+    use super::*;
+    use crate::{ECPrivateKey, SigningPrivateKey};
+
     #[test]
     fn test_xid() {
         crate::register_tags();
-        let xid = XID::from_data_ref(
-            hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")
-        ).unwrap();
+        let xid = XID::from_data_ref(hex!(
+            "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037"
+        ))
+        .unwrap();
         assert_eq!(
             xid.to_hex(),
             "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037"
@@ -275,7 +250,9 @@ mod tests {
         assert_eq!(xid.short_description(), "de285368");
         assert_eq!(
             xid.data(),
-            &hex!("de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037")
+            &hex!(
+                "de2853684ae55803a08b36dd7f4e566649970601927330299fd333f33fecc037"
+            )
         );
         assert_eq!(
             format!("{:?}", xid),
@@ -297,9 +274,9 @@ mod tests {
     fn test_xid_from_key() {
         crate::register_tags();
         let private_key = SigningPrivateKey::new_schnorr(
-            ECPrivateKey::from_data(
-                hex!("322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36")
-            )
+            ECPrivateKey::from_data(hex!(
+                "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+            )),
         );
         let public_key = private_key.public_key().unwrap();
 
@@ -319,12 +296,16 @@ mod tests {
         let key_cbor_data = key_cbor.to_cbor_data();
         assert_eq!(
             key_cbor_data,
-            hex!("d99c565820e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a")
+            hex!(
+                "d99c565820e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a"
+            )
         );
         let digest = Digest::from_image(&key_cbor_data);
         assert_eq!(
             digest.data(),
-            &hex!("d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47")
+            &hex!(
+                "d40e0602674df1b732f5e025d04c45f2e74ed1652c5ae1740f6a5502dbbdcd47"
+            )
         );
 
         let xid = XID::new(&public_key);

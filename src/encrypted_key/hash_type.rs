@@ -24,8 +24,8 @@ impl std::fmt::Display for HashType {
     }
 }
 
-impl Into<CBOR> for HashType {
-    fn into(self) -> CBOR { CBOR::from(self as u8) }
+impl From<HashType> for CBOR {
+    fn from(val: HashType) -> Self { CBOR::from(val as u8) }
 }
 
 impl TryFrom<CBOR> for HashType {

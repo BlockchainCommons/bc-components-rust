@@ -31,6 +31,10 @@ impl HKDFParams {
     pub fn hash_type(&self) -> HashType { self.hash_type }
 }
 
+impl Default for HKDFParams {
+    fn default() -> Self { Self::new() }
+}
+
 impl KeyDerivation for HKDFParams {
     const INDEX: usize = KeyDerivationMethod::HKDF as usize;
 
@@ -74,12 +78,12 @@ impl std::fmt::Display for HKDFParams {
     }
 }
 
-impl Into<CBOR> for HKDFParams {
-    fn into(self) -> CBOR {
+impl From<HKDFParams> for CBOR {
+    fn from(val: HKDFParams) -> Self {
         vec![
-            CBOR::from(Self::INDEX),
-            self.salt.into(),
-            self.hash_type.into(),
+            CBOR::from(HKDFParams::INDEX),
+            val.salt.into(),
+            val.hash_type.into(),
         ]
         .into()
     }

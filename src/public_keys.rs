@@ -1,34 +1,28 @@
 use bc_ur::prelude::*;
+
 use crate::{
-    tags,
-    Digest,
-    EncapsulationPublicKey,
-    Encrypter,
-    Reference,
-    ReferenceProvider,
-    Signature,
-    SigningPublicKey,
-    Verifier,
+    Digest, EncapsulationPublicKey, Encrypter, Reference, ReferenceProvider,
+    Signature, SigningPublicKey, Verifier, tags,
 };
 
 /// A container for an entity's public cryptographic keys.
 ///
-/// `PublicKeys` combines a verification key for checking digital signatures with an
-/// encapsulation key for encrypting messages, providing a complete public key
-/// package for secure communication with an entity.
+/// `PublicKeys` combines a verification key for checking digital signatures
+/// with an encapsulation key for encrypting messages, providing a complete
+/// public key package for secure communication with an entity.
 ///
-/// This type is designed to be freely shared across networks and systems, allowing
-/// others to securely communicate with the key owner, who holds the corresponding
-/// `PrivateKeys` instance.
+/// This type is designed to be freely shared across networks and systems,
+/// allowing others to securely communicate with the key owner, who holds the
+/// corresponding `PrivateKeys` instance.
 ///
 /// # Components
 ///
 /// * `signing_public_key` - A public key used for verifying digital signatures.
-///   Can verify signatures created by the corresponding private key, which may be
-///   Schnorr, ECDSA, Ed25519, or SSH-based.
+///   Can verify signatures created by the corresponding private key, which may
+///   be Schnorr, ECDSA, Ed25519, or SSH-based.
 ///
-/// * `encapsulation_public_key` - A public key used for encrypting messages that
-///   can only be decrypted by the holder of the corresponding private key.
+/// * `encapsulation_public_key` - A public key used for encrypting messages
+///   that can only be decrypted by the holder of the corresponding private key.
 ///   Can be X25519 or ML-KEM based.
 ///
 /// # Use Cases
@@ -41,7 +35,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use bc_components::{keypair, EncapsulationPublicKey};
+/// use bc_components::{EncapsulationPublicKey, keypair};
 ///
 /// // Generate a key pair
 /// let (private_keys, public_keys) = keypair();
@@ -60,15 +54,13 @@ pub struct PublicKeys {
 }
 
 impl PublicKeys {
-    /// Restores a `PublicKeys` from a `SigningPublicKey` and an `EncapsulationPublicKey`.
+    /// Restores a `PublicKeys` from a `SigningPublicKey` and an
+    /// `EncapsulationPublicKey`.
     pub fn new(
         signing_public_key: SigningPublicKey,
-        encapsulation_public_key: EncapsulationPublicKey
+        encapsulation_public_key: EncapsulationPublicKey,
     ) -> Self {
-        Self {
-            signing_public_key,
-            encapsulation_public_key,
-        }
+        Self { signing_public_key, encapsulation_public_key }
     }
 
     /// Returns the `SigningPublicKey` of this `PublicKeys`.
@@ -82,12 +74,14 @@ impl PublicKeys {
     }
 }
 
-/// A trait for types that can provide a complete set of public cryptographic keys.
+/// A trait for types that can provide a complete set of public cryptographic
+/// keys.
 ///
 /// Types implementing this trait can be used as a source of `PublicKeys`,
 /// which contain both verification and encryption public keys. This trait is
 /// particularly useful for key management systems, wallets, identity systems,
-/// or any component that needs to provide public keys for cryptographic operations.
+/// or any component that needs to provide public keys for cryptographic
+/// operations.
 ///
 /// # Examples
 ///
@@ -106,9 +100,9 @@ impl PublicKeys {
 pub trait PublicKeysProvider {
     /// Returns a complete set of public keys for cryptographic operations.
     ///
-    /// The returned `PublicKeys` instance contains both verification and encryption
-    /// public keys that can be used by other parties to securely communicate with
-    /// the key owner.
+    /// The returned `PublicKeys` instance contains both verification and
+    /// encryption public keys that can be used by other parties to securely
+    /// communicate with the key owner.
     ///
     /// # Returns
     ///
@@ -117,27 +111,23 @@ pub trait PublicKeysProvider {
 }
 
 impl PublicKeysProvider for PublicKeys {
-    fn public_keys(&self) -> PublicKeys {
-        self.clone()
-    }
+    fn public_keys(&self) -> PublicKeys { self.clone() }
 }
 
 impl ReferenceProvider for PublicKeys {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(self.tagged_cbor().to_cbor_data()))
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
     }
 }
 
 impl AsRef<PublicKeys> for PublicKeys {
-    fn as_ref(&self) -> &PublicKeys {
-        self
-    }
+    fn as_ref(&self) -> &PublicKeys { self }
 }
 
 impl AsRef<SigningPublicKey> for PublicKeys {
-    fn as_ref(&self) -> &SigningPublicKey {
-        &self.signing_public_key
-    }
+    fn as_ref(&self) -> &SigningPublicKey { &self.signing_public_key }
 }
 
 impl AsRef<EncapsulationPublicKey> for PublicKeys {
@@ -147,21 +137,18 @@ impl AsRef<EncapsulationPublicKey> for PublicKeys {
 }
 
 impl CBORTagged for PublicKeys {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_PUBLIC_KEYS])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_PUBLIC_KEYS]) }
 }
 
 impl From<PublicKeys> for CBOR {
-    fn from(value: PublicKeys) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PublicKeys) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PublicKeys {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_public_key.clone().into();
-        let encapsulation_key_cbor: CBOR = self.encapsulation_public_key.clone().into();
+        let encapsulation_key_cbor: CBOR =
+            self.encapsulation_public_key.clone().into();
         vec![signing_key_cbor, encapsulation_key_cbor].into()
     }
 }
@@ -182,13 +169,13 @@ impl CBORTaggedDecodable for PublicKeys {
                     return Err("PublicKeys must have two elements".into());
                 }
 
-                let signing_public_key = SigningPublicKey::try_from(elements[0].clone())?;
-                let encapsulation_public_key = EncapsulationPublicKey::try_from(
-                    elements[1].clone()
-                )?;
+                let signing_public_key =
+                    SigningPublicKey::try_from(elements[0].clone())?;
+                let encapsulation_public_key =
+                    EncapsulationPublicKey::try_from(elements[1].clone())?;
                 Ok(Self::new(signing_public_key, encapsulation_public_key))
             }
-            _ => return Err("PublicKeys must be an array".into()),
+            _ => Err("PublicKeys must be an array".into()),
         }
     }
 }
@@ -213,11 +200,13 @@ impl std::fmt::Display for PublicKeys {
 
 #[cfg(test)]
 mod tests {
-    use bc_ur::{ UREncodable, URDecodable };
-    use hex_literal::hex;
+    use bc_ur::{URDecodable, UREncodable};
     use dcbor::prelude::*;
+    use hex_literal::hex;
 
-    use crate::{ PrivateKeyBase, PublicKeys, PublicKeysProvider, ReferenceProvider };
+    use crate::{
+        PrivateKeyBase, PublicKeys, PublicKeysProvider, ReferenceProvider,
+    };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
@@ -243,6 +232,9 @@ mod tests {
         assert_eq!(PublicKeys::from_ur_string(&ur).unwrap(), public_keys);
 
         assert_eq!(format!("{}", public_keys), "PublicKeys(c9ede672)");
-        assert_eq!(format!("{}", public_keys.reference()), "Reference(c9ede672)");
+        assert_eq!(
+            format!("{}", public_keys.reference()),
+            "Reference(c9ede672)"
+        );
     }
 }

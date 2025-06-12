@@ -1,18 +1,19 @@
-use crate::{
-    tags, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, SchnorrPublicKey, Signature,
-    Verifier,
-};
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
+use crate::{
+    ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, SchnorrPublicKey,
+    Signature, Verifier, tags,
+};
+
 /// A public key used for verifying digital signatures.
 ///
-/// `SigningPublicKey` is an enum representing different types of signing public keys,
-/// including elliptic curve schemes (ECDSA, Schnorr), Edwards curve schemes (Ed25519),
-/// post-quantum schemes (ML-DSA), and SSH keys.
+/// `SigningPublicKey` is an enum representing different types of signing public
+/// keys, including elliptic curve schemes (ECDSA, Schnorr), Edwards curve
+/// schemes (Ed25519), post-quantum schemes (ML-DSA), and SSH keys.
 ///
-/// This type implements the `Verifier` trait, allowing it to verify signatures of
-/// the appropriate type.
+/// This type implements the `Verifier` trait, allowing it to verify signatures
+/// of the appropriate type.
 ///
 /// # Examples
 ///
@@ -93,9 +94,7 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_schnorr(schnorr_key);
     /// ```
-    pub fn from_schnorr(key: SchnorrPublicKey) -> Self {
-        Self::Schnorr(key)
-    }
+    pub fn from_schnorr(key: SchnorrPublicKey) -> Self { Self::Schnorr(key) }
 
     /// Creates a new signing public key from an ECDSA public key.
     ///
@@ -110,7 +109,7 @@ impl SigningPublicKey {
     /// # Examples
     ///
     /// ```
-    /// use bc_components::{ECPrivateKey, SigningPublicKey, ECKey};
+    /// use bc_components::{ECKey, ECPrivateKey, SigningPublicKey};
     ///
     /// // Create an EC private key and derive its public key
     /// let private_key = ECPrivateKey::new();
@@ -119,9 +118,7 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_ecdsa(public_key);
     /// ```
-    pub fn from_ecdsa(key: ECPublicKey) -> Self {
-        Self::ECDSA(key)
-    }
+    pub fn from_ecdsa(key: ECPublicKey) -> Self { Self::ECDSA(key) }
 
     /// Creates a new signing public key from an Ed25519 public key.
     ///
@@ -145,9 +142,7 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_ed25519(public_key);
     /// ```
-    pub fn from_ed25519(key: Ed25519PublicKey) -> Self {
-        Self::Ed25519(key)
-    }
+    pub fn from_ed25519(key: Ed25519PublicKey) -> Self { Self::Ed25519(key) }
 
     /// Creates a new signing public key from an SSH public key.
     ///
@@ -158,9 +153,7 @@ impl SigningPublicKey {
     /// # Returns
     ///
     /// A new signing public key containing the SSH key
-    pub fn from_ssh(key: SSHPublicKey) -> Self {
-        Self::SSH(key)
-    }
+    pub fn from_ssh(key: SSHPublicKey) -> Self { Self::SSH(key) }
 
     /// Returns the underlying Schnorr public key if this is a Schnorr key.
     ///
@@ -270,7 +263,9 @@ impl Verifier for SigningPublicKey {
                 _ => false,
             },
             SigningPublicKey::SSH(key) => match signature {
-                Signature::SSH(sig) => key.verify(sig.namespace(), message.as_ref(), sig).is_ok(),
+                Signature::SSH(sig) => {
+                    key.verify(sig.namespace(), message.as_ref(), sig).is_ok()
+                }
                 _ => false,
             },
             SigningPublicKey::MLDSA(key) => match signature {
@@ -286,9 +281,7 @@ impl Verifier for SigningPublicKey {
 /// Implementation of AsRef for SigningPublicKey
 impl AsRef<SigningPublicKey> for SigningPublicKey {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &SigningPublicKey {
-        self
-    }
+    fn as_ref(&self) -> &SigningPublicKey { self }
 }
 
 /// Implementation of the CBORTagged trait for SigningPublicKey
@@ -304,9 +297,7 @@ impl CBORTagged for SigningPublicKey {
 /// Conversion from SigningPublicKey to CBOR
 impl From<SigningPublicKey> for CBOR {
     /// Converts a SigningPublicKey to a tagged CBOR value.
-    fn from(value: SigningPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SigningPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPublicKey
@@ -316,8 +307,10 @@ impl CBORTaggedEncodable for SigningPublicKey {
     /// The CBOR encoding depends on the key type:
     ///
     /// - Schnorr: A byte string containing the 32-byte x-only public key
-    /// - ECDSA: An array containing the discriminator 1 and the 33-byte compressed public key
-    /// - Ed25519: An array containing the discriminator 2 and the 32-byte public key
+    /// - ECDSA: An array containing the discriminator 1 and the 33-byte
+    ///   compressed public key
+    /// - Ed25519: An array containing the discriminator 2 and the 32-byte
+    ///   public key
     /// - SSH: A tagged text string containing the OpenSSH-encoded public key
     /// - ML-DSA: Delegates to the MLDSAPublicKey implementation
     fn untagged_cbor(&self) -> CBOR {
@@ -360,18 +353,22 @@ impl CBORTaggedDecodable for SigningPublicKey {
     ///
     /// # Returns
     ///
-    /// A Result containing the decoded SigningPublicKey or an error if decoding fails.
+    /// A Result containing the decoded SigningPublicKey or an error if decoding
+    /// fails.
     ///
     /// # Format
     ///
     /// The CBOR value must be one of:
     /// - A byte string (interpreted as a Schnorr public key)
-    /// - An array of length 2, where the first element is a discriminator (1 for ECDSA, 2 for Ed25519)
-    ///   and the second element is a byte string containing the key data
+    /// - An array of length 2, where the first element is a discriminator (1
+    ///   for ECDSA, 2 for Ed25519) and the second element is a byte string
+    ///   containing the key data
     /// - A tagged value with a tag for ML-DSA or SSH keys
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.clone().into_case() {
-            CBORCase::ByteString(data) => Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?)),
+            CBORCase::ByteString(data) => {
+                Ok(Self::Schnorr(SchnorrPublicKey::from_data_ref(data)?))
+            }
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
@@ -379,15 +376,19 @@ impl CBORTaggedDecodable for SigningPublicKey {
                     let ele_1 = drain.next().unwrap().into_case();
                     if let CBORCase::Unsigned(1) = ele_0 {
                         if let CBORCase::ByteString(data) = ele_1 {
-                            return Ok(Self::ECDSA(ECPublicKey::from_data_ref(data)?));
+                            return Ok(Self::ECDSA(
+                                ECPublicKey::from_data_ref(data)?,
+                            ));
                         }
                     } else if let CBORCase::Unsigned(2) = ele_0 {
                         if let CBORCase::ByteString(data) = ele_1 {
-                            return Ok(Self::Ed25519(Ed25519PublicKey::from_data_ref(data)?));
+                            return Ok(Self::Ed25519(
+                                Ed25519PublicKey::from_data_ref(data)?,
+                            ));
                         }
                     }
                 }
-                return Err("invalid signing public key".into());
+                Err("invalid signing public key".into())
             }
             CBORCase::Tagged(tag, item) => match tag.value() {
                 tags::TAG_SSH_TEXT_PUBLIC_KEY => {
@@ -400,9 +401,9 @@ impl CBORTaggedDecodable for SigningPublicKey {
                     let key = MLDSAPublicKey::from_tagged_cbor(untagged_cbor)?;
                     Ok(Self::MLDSA(key))
                 }
-                _ => return Err("invalid signing public key".into()),
+                _ => Err("invalid signing public key".into()),
             },
-            _ => return Err("invalid signing public key".into()),
+            _ => Err("invalid signing public key".into()),
         }
     }
 }

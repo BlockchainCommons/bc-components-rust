@@ -1,8 +1,8 @@
-use anyhow::{ bail, Error, Result };
+use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 
-use super::{ MLDSAPrivateKey, MLDSAPublicKey };
+use super::{MLDSAPrivateKey, MLDSAPublicKey};
 
 /// Security levels for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -10,15 +10,15 @@ use super::{ MLDSAPrivateKey, MLDSAPublicKey };
 /// digital signature algorithm standardized by NIST. It provides resistance
 /// against attacks from both classical and quantum computers.
 ///
-/// Each security level offers different trade-offs between security, performance,
-/// and key/signature sizes:
+/// Each security level offers different trade-offs between security,
+/// performance, and key/signature sizes:
 ///
 /// - `MLDSA44`: NIST security level 2 (roughly equivalent to AES-128)
 /// - `MLDSA65`: NIST security level 3 (roughly equivalent to AES-192)
 /// - `MLDSA87`: NIST security level 5 (roughly equivalent to AES-256)
 ///
-/// The numeric values (2, 3, 5) correspond to the NIST security levels and are used
-/// in CBOR serialization.
+/// The numeric values (2, 3, 5) correspond to the NIST security levels and are
+/// used in CBOR serialization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum MLDSA {
@@ -47,15 +47,24 @@ impl MLDSA {
         match self {
             MLDSA::MLDSA44 => {
                 let (pk, sk) = mldsa44::keypair();
-                (MLDSAPrivateKey::MLDSA44(Box::new(sk)), MLDSAPublicKey::MLDSA44(Box::new(pk)))
+                (
+                    MLDSAPrivateKey::MLDSA44(Box::new(sk)),
+                    MLDSAPublicKey::MLDSA44(Box::new(pk)),
+                )
             }
             MLDSA::MLDSA65 => {
                 let (pk, sk) = mldsa65::keypair();
-                (MLDSAPrivateKey::MLDSA65(Box::new(sk)), MLDSAPublicKey::MLDSA65(Box::new(pk)))
+                (
+                    MLDSAPrivateKey::MLDSA65(Box::new(sk)),
+                    MLDSAPublicKey::MLDSA65(Box::new(pk)),
+                )
             }
             MLDSA::MLDSA87 => {
                 let (pk, sk) = mldsa87::keypair();
-                (MLDSAPrivateKey::MLDSA87(Box::new(sk)), MLDSAPublicKey::MLDSA87(Box::new(pk)))
+                (
+                    MLDSAPrivateKey::MLDSA87(Box::new(sk)),
+                    MLDSAPublicKey::MLDSA87(Box::new(pk)),
+                )
             }
         }
     }
@@ -91,9 +100,7 @@ impl MLDSA {
 /// Converts an `MLDSA` value to CBOR.
 impl From<MLDSA> for CBOR {
     /// Converts to the numeric security level value (2, 3, or 5).
-    fn from(level: MLDSA) -> Self {
-        (level as u32).into()
-    }
+    fn from(level: MLDSA) -> Self { (level as u32).into() }
 }
 
 /// Attempts to convert CBOR to an `MLDSA` value.
@@ -103,7 +110,8 @@ impl TryFrom<CBOR> for MLDSA {
     /// Converts from a CBOR-encoded security level (2, 3, or 5).
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA level.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA
+    /// level.
     fn try_from(cbor: CBOR) -> Result<Self> {
         let level = u32::try_from(cbor)?;
         match level {

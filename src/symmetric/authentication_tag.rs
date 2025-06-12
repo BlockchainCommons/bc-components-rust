@@ -24,7 +24,9 @@ impl AuthenticationTag {
     pub const AUTHENTICATION_TAG_SIZE: usize = 16;
 
     /// Restore an `AuthenticationTag` from a fixed-size array of bytes.
-    pub const fn from_data(data: [u8; Self::AUTHENTICATION_TAG_SIZE]) -> Self { Self(data) }
+    pub const fn from_data(data: [u8; Self::AUTHENTICATION_TAG_SIZE]) -> Self {
+        Self(data)
+    }
 
     /// Restore an `AuthenticationTag` from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -39,6 +41,13 @@ impl AuthenticationTag {
 
     /// Get a reference to the fixed-size array of bytes.
     pub fn data(&self) -> &[u8; Self::AUTHENTICATION_TAG_SIZE] { self.into() }
+
+    /// Get the reference as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
+}
+
+impl AsRef<[u8]> for AuthenticationTag {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements `AsRef<AuthenticationTag>` to allow self-reference.
@@ -63,7 +72,9 @@ impl From<Rc<AuthenticationTag>> for AuthenticationTag {
 
 /// Implements conversion from an AuthenticationTag reference to a byte array
 /// reference.
-impl<'a> From<&'a AuthenticationTag> for &'a [u8; AuthenticationTag::AUTHENTICATION_TAG_SIZE] {
+impl<'a> From<&'a AuthenticationTag>
+    for &'a [u8; AuthenticationTag::AUTHENTICATION_TAG_SIZE]
+{
     fn from(value: &'a AuthenticationTag) -> Self { &value.0 }
 }
 
@@ -74,7 +85,9 @@ impl From<&[u8]> for AuthenticationTag {
 
 /// Implements conversion from a fixed-size byte array to an AuthenticationTag.
 impl From<[u8; Self::AUTHENTICATION_TAG_SIZE]> for AuthenticationTag {
-    fn from(data: [u8; Self::AUTHENTICATION_TAG_SIZE]) -> Self { Self::from_data(data) }
+    fn from(data: [u8; Self::AUTHENTICATION_TAG_SIZE]) -> Self {
+        Self::from_data(data)
+    }
 }
 
 /// Implements conversion from a byte vector to an AuthenticationTag.
@@ -84,7 +97,9 @@ impl From<Vec<u8>> for AuthenticationTag {
 
 /// Implements conversion from AuthenticationTag to CBOR for serialization.
 impl From<AuthenticationTag> for CBOR {
-    fn from(value: AuthenticationTag) -> Self { CBOR::to_byte_string(value.data()) }
+    fn from(value: AuthenticationTag) -> Self {
+        CBOR::to_byte_string(value.data())
+    }
 }
 
 /// Implements conversion from CBOR to AuthenticationTag for deserialization.

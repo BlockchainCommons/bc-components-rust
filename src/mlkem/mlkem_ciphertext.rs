@@ -1,9 +1,10 @@
-use anyhow::{ anyhow, Result };
+use anyhow::{Result, anyhow};
+use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
-use dcbor::prelude::*;
-use crate::tags;
+
 use super::MLKEM;
+use crate::tags;
 
 /// A ciphertext containing an encapsulated shared secret for ML-KEM.
 ///
@@ -14,9 +15,12 @@ use super::MLKEM;
 ///
 /// It supports multiple security levels through the variants:
 ///
-/// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128), 768 bytes
-/// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192), 1088 bytes
-/// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256), 1568 bytes
+/// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128), 768
+///   bytes
+/// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192), 1088
+///   bytes
+/// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256), 1568
+///   bytes
 ///
 /// # Examples
 ///
@@ -27,10 +31,12 @@ use super::MLKEM;
 /// let (private_key, public_key) = MLKEM::MLKEM512.keypair();
 ///
 /// // Encapsulate a shared secret using the public key
-/// let (shared_secret_a, ciphertext) = public_key.encapsulate_new_shared_secret();
+/// let (shared_secret_a, ciphertext) =
+///     public_key.encapsulate_new_shared_secret();
 ///
 /// // Decapsulate the shared secret using the private key
-/// let shared_secret_b = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+/// let shared_secret_b =
+///     private_key.decapsulate_shared_secret(&ciphertext).unwrap();
 ///
 /// // Both shared secrets should be the same
 /// assert_eq!(shared_secret_a, shared_secret_b);
@@ -56,18 +62,10 @@ impl MLKEMCiphertext {
     }
 
     /// Returns the size of this ML-KEM ciphertext in bytes.
-    pub fn size(&self) -> usize {
-        self.level().ciphertext_size()
-    }
+    pub fn size(&self) -> usize { self.level().ciphertext_size() }
 
     /// Returns the raw bytes of this ML-KEM ciphertext.
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            MLKEMCiphertext::MLKEM512(ct) => ct.as_ref().as_bytes(),
-            MLKEMCiphertext::MLKEM768(ct) => ct.as_ref().as_bytes(),
-            MLKEMCiphertext::MLKEM1024(ct) => ct.as_ref().as_bytes(),
-        }
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates an ML-KEM ciphertext from raw bytes and a security level.
     ///
@@ -78,8 +76,8 @@ impl MLKEMCiphertext {
     ///
     /// # Returns
     ///
-    /// An `MLKEMCiphertext` if the bytes represent a valid ciphertext for the given level,
-    /// or an error otherwise.
+    /// An `MLKEMCiphertext` if the bytes represent a valid ciphertext for the
+    /// given level, or an error otherwise.
     ///
     /// # Errors
     ///
@@ -87,24 +85,29 @@ impl MLKEMCiphertext {
     /// for the specified security level.
     pub fn from_bytes(level: MLKEM, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLKEM::MLKEM512 =>
-                Ok(
-                    MLKEMCiphertext::MLKEM512(
-                        Box::new(mlkem512::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLKEM::MLKEM768 =>
-                Ok(
-                    MLKEMCiphertext::MLKEM768(
-                        Box::new(mlkem768::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLKEM::MLKEM1024 =>
-                Ok(
-                    MLKEMCiphertext::MLKEM1024(
-                        Box::new(mlkem1024::Ciphertext::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
+            MLKEM::MLKEM512 => Ok(MLKEMCiphertext::MLKEM512(Box::new(
+                mlkem512::Ciphertext::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLKEM::MLKEM768 => Ok(MLKEMCiphertext::MLKEM768(Box::new(
+                mlkem768::Ciphertext::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLKEM::MLKEM1024 => Ok(MLKEMCiphertext::MLKEM1024(Box::new(
+                mlkem1024::Ciphertext::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+        }
+    }
+}
+
+impl AsRef<[u8]> for MLKEMCiphertext {
+    /// Returns the raw bytes of the ciphertext.
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            MLKEMCiphertext::MLKEM512(ct) => ct.as_ref().as_bytes(),
+            MLKEMCiphertext::MLKEM768(ct) => ct.as_ref().as_bytes(),
+            MLKEMCiphertext::MLKEM1024(ct) => ct.as_ref().as_bytes(),
         }
     }
 }
@@ -132,14 +135,13 @@ impl CBORTagged for MLKEMCiphertext {
 /// Converts an `MLKEMCiphertext` to CBOR.
 impl From<MLKEMCiphertext> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: MLKEMCiphertext) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: MLKEMCiphertext) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for ML-KEM ciphertexts.
 impl CBORTaggedEncodable for MLKEMCiphertext {
-    /// Creates the untagged CBOR representation as an array with level and ciphertext bytes.
+    /// Creates the untagged CBOR representation as an array with level and
+    /// ciphertext bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
@@ -160,7 +162,8 @@ impl CBORTaggedDecodable for MLKEMCiphertext {
     /// Creates an `MLKEMCiphertext` from untagged CBOR.
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM ciphertext.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM
+    /// ciphertext.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
@@ -172,9 +175,7 @@ impl CBORTaggedDecodable for MLKEMCiphertext {
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
                 Ok(MLKEMCiphertext::from_bytes(level, &data)?)
             }
-            _ => {
-                return Err("MLKEMCiphertext must be an array".into());
-            }
+            _ => Err("MLKEMCiphertext must be an array".into()),
         }
     }
 }

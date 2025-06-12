@@ -1,15 +1,9 @@
 use anyhow::Result;
 use bc_ur::prelude::*;
+
 use crate::{
-    tags,
-    Decrypter,
-    Digest,
-    EncapsulationPrivateKey,
-    Reference,
-    ReferenceProvider,
-    Signature,
-    Signer,
-    SigningPrivateKey,
+    Decrypter, Digest, EncapsulationPrivateKey, Reference, ReferenceProvider,
+    Signature, Signer, SigningPrivateKey, tags,
 };
 
 /// A container for an entity's private cryptographic keys.
@@ -18,22 +12,25 @@ use crate::{
 /// encapsulation key for decrypting messages, providing a complete private key
 /// package for cryptographic operations.
 ///
-/// This type is typically used in conjunction with its public counterpart, `PublicKeys`,
-/// to enable secure communication between entities. The private keys remain with
-/// the owner, while the corresponding public keys can be freely shared.
+/// This type is typically used in conjunction with its public counterpart,
+/// `PublicKeys`, to enable secure communication between entities. The private
+/// keys remain with the owner, while the corresponding public keys can be
+/// freely shared.
 ///
 /// # Components
 ///
-/// * `signing_private_key` - A private key used for creating digital signatures.
-///   Can be Schnorr, ECDSA, Ed25519, or SSH-based, depending on the security needs.
+/// * `signing_private_key` - A private key used for creating digital
+///   signatures. Can be Schnorr, ECDSA, Ed25519, or SSH-based, depending on the
+///   security needs.
 ///
-/// * `encapsulation_private_key` - A private key used for decrypting messages that
-///   were encrypted using the corresponding public key. Can be X25519 or ML-KEM based.
+/// * `encapsulation_private_key` - A private key used for decrypting messages
+///   that were encrypted using the corresponding public key. Can be X25519 or
+///   ML-KEM based.
 ///
 /// # Security
 ///
-/// This struct contains highly sensitive cryptographic material and should be handled
-/// with appropriate security measures:
+/// This struct contains highly sensitive cryptographic material and should be
+/// handled with appropriate security measures:
 ///
 /// - Minimize serialization and storage of private keys
 /// - Ensure secure memory handling and proper zeroization
@@ -43,7 +40,7 @@ use crate::{
 /// # Examples
 ///
 /// ```
-/// use bc_components::{keypair, Signer, Verifier};
+/// use bc_components::{Signer, Verifier, keypair};
 ///
 /// // Generate a new key pair with default schemes
 /// let (private_keys, public_keys) = keypair();
@@ -62,15 +59,13 @@ pub struct PrivateKeys {
 }
 
 impl PrivateKeys {
-    /// Restores a `PrivateKeys` from a `SigningPrivateKey` and an `EncapsulationPrivateKey`.
+    /// Restores a `PrivateKeys` from a `SigningPrivateKey` and an
+    /// `EncapsulationPrivateKey`.
     pub fn with_keys(
         signing_private_key: SigningPrivateKey,
-        encapsulation_private_key: EncapsulationPrivateKey
+        encapsulation_private_key: EncapsulationPrivateKey,
     ) -> Self {
-        Self {
-            signing_private_key,
-            encapsulation_private_key,
-        }
+        Self { signing_private_key, encapsulation_private_key }
     }
 
     /// Returns the `SigningPrivateKey` of this `PrivateKeys`.
@@ -84,7 +79,8 @@ impl PrivateKeys {
     }
 }
 
-/// A trait for types that can provide a complete set of private cryptographic keys.
+/// A trait for types that can provide a complete set of private cryptographic
+/// keys.
 ///
 /// Types implementing this trait can be used as a source of `PrivateKeys`,
 /// which contain both signing and encryption private keys. This trait is
@@ -115,27 +111,23 @@ pub trait PrivateKeysProvider {
 }
 
 impl PrivateKeysProvider for PrivateKeys {
-    fn private_keys(&self) -> PrivateKeys {
-        self.clone()
-    }
+    fn private_keys(&self) -> PrivateKeys { self.clone() }
 }
 
 impl ReferenceProvider for PrivateKeys {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(self.tagged_cbor().to_cbor_data()))
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
     }
 }
 
 impl AsRef<PrivateKeys> for PrivateKeys {
-    fn as_ref(&self) -> &PrivateKeys {
-        self
-    }
+    fn as_ref(&self) -> &PrivateKeys { self }
 }
 
 impl AsRef<SigningPrivateKey> for PrivateKeys {
-    fn as_ref(&self) -> &SigningPrivateKey {
-        &self.signing_private_key
-    }
+    fn as_ref(&self) -> &SigningPrivateKey { &self.signing_private_key }
 }
 
 impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
@@ -145,21 +137,18 @@ impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
 }
 
 impl CBORTagged for PrivateKeys {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_PRIVATE_KEYS])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_PRIVATE_KEYS]) }
 }
 
 impl From<PrivateKeys> for CBOR {
-    fn from(value: PrivateKeys) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PrivateKeys) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PrivateKeys {
     fn untagged_cbor(&self) -> CBOR {
         let signing_key_cbor: CBOR = self.signing_private_key.clone().into();
-        let encapsulation_key_cbor: CBOR = self.encapsulation_private_key.clone().into();
+        let encapsulation_key_cbor: CBOR =
+            self.encapsulation_private_key.clone().into();
         vec![signing_key_cbor, encapsulation_key_cbor].into()
     }
 }
@@ -180,13 +169,16 @@ impl CBORTaggedDecodable for PrivateKeys {
                     return Err("PrivateKeys must have two elements".into());
                 }
 
-                let signing_private_key = SigningPrivateKey::try_from(elements[0].clone())?;
-                let encapsulation_private_key = EncapsulationPrivateKey::try_from(
-                    elements[1].clone()
-                )?;
-                Ok(Self::with_keys(signing_private_key, encapsulation_private_key))
+                let signing_private_key =
+                    SigningPrivateKey::try_from(elements[0].clone())?;
+                let encapsulation_private_key =
+                    EncapsulationPrivateKey::try_from(elements[1].clone())?;
+                Ok(Self::with_keys(
+                    signing_private_key,
+                    encapsulation_private_key,
+                ))
             }
-            _ => return Err("PrivateKeys must be an array".into()),
+            _ => Err("PrivateKeys must be an array".into()),
         }
     }
 }
@@ -195,7 +187,7 @@ impl Signer for PrivateKeys {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<crate::SigningOptions>
+        options: Option<crate::SigningOptions>,
     ) -> Result<Signature> {
         self.signing_private_key.sign_with_options(message, options)
     }
@@ -215,11 +207,13 @@ impl std::fmt::Display for PrivateKeys {
 
 #[cfg(test)]
 mod tests {
-    use bc_ur::{ UREncodable, URDecodable };
-    use hex_literal::hex;
+    use bc_ur::{URDecodable, UREncodable};
     use dcbor::prelude::*;
+    use hex_literal::hex;
 
-    use crate::{ PrivateKeyBase, PrivateKeys, PrivateKeysProvider, ReferenceProvider };
+    use crate::{
+        PrivateKeyBase, PrivateKeys, PrivateKeysProvider, ReferenceProvider,
+    };
 
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
@@ -247,6 +241,9 @@ mod tests {
         assert_eq!(PrivateKeys::from_ur_string(&ur).unwrap(), private_keys);
 
         assert_eq!(format!("{}", private_keys), "PrivateKeys(fa742ac8)");
-        assert_eq!(format!("{}", private_keys.reference()), "Reference(fa742ac8)");
+        assert_eq!(
+            format!("{}", private_keys.reference()),
+            "Reference(fa742ac8)"
+        );
     }
 }

@@ -1,23 +1,27 @@
+use anyhow::{Result, bail};
 use bc_rand::random_data;
 use bc_ur::prelude::*;
 
 use crate::tags;
-use anyhow::{ bail, Result };
 
 /// An "Apparently Random Identifier" (ARID)
 ///
-/// An ARID is a cryptographically strong, universally unique identifier with the following properties:
-/// - Non-correlatability: The sequence of bits cannot be correlated with its referent or any other ARID
+/// An ARID is a cryptographically strong, universally unique identifier with
+/// the following properties:
+/// - Non-correlatability: The sequence of bits cannot be correlated with its
+///   referent or any other ARID
 /// - Neutral semantics: Contains no inherent type information
-/// - Open generation: Any method of generation is allowed as long as it produces statistically random bits
+/// - Open generation: Any method of generation is allowed as long as it
+///   produces statistically random bits
 /// - Minimum strength: Must be 256 bits (32 bytes) in length
-/// - Cryptographic suitability: Can be used as inputs to cryptographic constructs
+/// - Cryptographic suitability: Can be used as inputs to cryptographic
+///   constructs
 ///
-/// Unlike digests/hashes which identify a fixed, immutable state of data, ARIDs can serve as stable
-/// identifiers for mutable data structures.
+/// Unlike digests/hashes which identify a fixed, immutable state of data, ARIDs
+/// can serve as stable identifiers for mutable data structures.
 ///
-/// ARIDs should not be confused with or cast to/from other identifier types (like UUIDs),
-/// used as nonces, keys, or cryptographic seeds.
+/// ARIDs should not be confused with or cast to/from other identifier types
+/// (like UUIDs), used as nonces, keys, or cryptographic seeds.
 ///
 /// As defined in [BCR-2022-002](https://github.com/BlockchainCommons/Research/blob/master/papers/bcr-2022-002-arid.md).
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -33,9 +37,7 @@ impl ARID {
     }
 
     /// Restore a ARID from a fixed-size array of bytes.
-    pub fn from_data(data: [u8; Self::ARID_SIZE]) -> Self {
-        Self(data)
-    }
+    pub fn from_data(data: [u8; Self::ARID_SIZE]) -> Self { Self(data) }
 
     /// Create a new ARID from a reference to an array of bytes.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -48,10 +50,11 @@ impl ARID {
         Ok(Self::from_data(arr))
     }
 
-    /// Get the data of the ARID.
-    pub fn data(&self) -> &[u8] {
-        self.into()
-    }
+    /// Get the data of the ARID as an array of bytes.
+    pub fn data(&self) -> &[u8; Self::ARID_SIZE] { &self.0 }
+
+    /// Get the data of the ARID as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Create a new ARID from the given hexadecimal string.
     ///
@@ -62,49 +65,39 @@ impl ARID {
     }
 
     /// The data as a hexadecimal string.
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.as_bytes()) }
 
     /// The first four bytes of the ARID as a hexadecimal string.
-    pub fn short_description(&self) -> String {
-        hex::encode(&self.0[0..4])
-    }
+    pub fn short_description(&self) -> String { hex::encode(&self.0[0..4]) }
+}
+
+impl AsRef<[u8]> for ARID {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements the Default trait to create a new random ARID.
 impl Default for ARID {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 /// Implements conversion from an ARID reference to a byte slice reference.
 impl<'a> From<&'a ARID> for &'a [u8] {
-    fn from(value: &'a ARID) -> Self {
-        &value.0
-    }
+    fn from(value: &'a ARID) -> Self { &value.0 }
 }
 
 /// Implements the CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for ARID {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_ARID])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_ARID]) }
 }
 
 /// Implements conversion from ARID to CBOR for serialization.
 impl From<ARID> for CBOR {
-    fn from(value: ARID) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: ARID) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for ARID {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.data())
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.as_bytes()) }
 }
 
 /// Implements `TryFrom<CBOR>` for ARID to support conversion from CBOR data.

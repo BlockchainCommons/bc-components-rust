@@ -1,10 +1,12 @@
-use crate::{tags, MLDSASignature};
-use anyhow::{bail, Result};
-use bc_crypto::{ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
+use anyhow::{Result, bail};
+use bc_crypto::{
+    ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE,
+};
 use bc_ur::prelude::*;
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
+use crate::{MLDSASignature, tags};
 
 /// A digital signature created with various signature algorithms.
 ///
@@ -50,7 +52,8 @@ use super::SignatureScheme;
 /// let data = cbor.to_cbor_data();
 ///
 /// // Convert back from CBOR
-/// let recovered = bc_components::Signature::from_tagged_cbor_data(&data).unwrap();
+/// let recovered =
+///     bc_components::Signature::from_tagged_cbor_data(&data).unwrap();
 ///
 /// // The signatures should be identical
 /// assert_eq!(signature, recovered);
@@ -77,8 +80,9 @@ pub enum Signature {
 impl PartialEq for Signature {
     /// Compares two signatures for equality.
     ///
-    /// Signatures are equal if they have the same type and the same signature data.
-    /// Signatures of different types (e.g., Schnorr vs ECDSA) are never equal.
+    /// Signatures are equal if they have the same type and the same signature
+    /// data. Signatures of different types (e.g., Schnorr vs ECDSA) are
+    /// never equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Schnorr(a), Self::Schnorr(b)) => a == b,
@@ -107,7 +111,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::schnorr_from_data(data);
     /// ```
     pub fn schnorr_from_data(data: [u8; SCHNORR_SIGNATURE_SIZE]) -> Self {
@@ -130,7 +134,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::schnorr_from_data_ref(&data).unwrap();
     /// ```
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -158,7 +162,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ecdsa_from_data(data);
     /// ```
     pub fn ecdsa_from_data(data: [u8; ECDSA_SIGNATURE_SIZE]) -> Self {
@@ -181,7 +185,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ecdsa_from_data_ref(&data).unwrap();
     /// ```
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -209,7 +213,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = [0u8; 64];  // In practice, this would be a real signature
+    /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ed25519_from_data(data);
     /// ```
     pub fn ed25519_from_data(data: [u8; ED25519_SIGNATURE_SIZE]) -> Self {
@@ -232,7 +236,7 @@ impl Signature {
     /// ```
     /// use bc_components::Signature;
     ///
-    /// let data = vec![0u8; 64];  // In practice, this would be a real signature
+    /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ed25519_from_data_ref(&data).unwrap();
     /// ```
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -254,16 +258,14 @@ impl Signature {
     /// # Returns
     ///
     /// A new SSH signature
-    pub fn from_ssh(sig: SshSig) -> Self {
-        Self::SSH(sig)
-    }
+    pub fn from_ssh(sig: SshSig) -> Self { Self::SSH(sig) }
 
     /// Returns the Schnorr signature data if this is a Schnorr signature.
     ///
     /// # Returns
     ///
-    /// Some reference to the 64-byte signature data if this is a Schnorr signature,
-    /// or None if it's a different signature type.
+    /// Some reference to the 64-byte signature data if this is a Schnorr
+    /// signature, or None if it's a different signature type.
     ///
     /// # Examples
     ///
@@ -296,8 +298,8 @@ impl Signature {
     ///
     /// # Returns
     ///
-    /// Some reference to the 64-byte signature data if this is an ECDSA signature,
-    /// or None if it's a different signature type.
+    /// Some reference to the 64-byte signature data if this is an ECDSA
+    /// signature, or None if it's a different signature type.
     pub fn to_ecdsa(&self) -> Option<&[u8; ECDSA_SIGNATURE_SIZE]> {
         match self {
             Self::ECDSA(sig) => Some(sig),
@@ -323,7 +325,8 @@ impl Signature {
     /// # Returns
     ///
     /// A `Result` containing the signature scheme, or an error if the
-    /// signature scheme cannot be determined (e.g., for unsupported SSH algorithms).
+    /// signature scheme cannot be determined (e.g., for unsupported SSH
+    /// algorithms).
     ///
     /// # Examples
     ///
@@ -347,8 +350,12 @@ impl Signature {
             Self::SSH(sig) => match sig.algorithm() {
                 ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
                 ssh_key::Algorithm::Ecdsa { curve } => match curve {
-                    ssh_key::EcdsaCurve::NistP256 => Ok(SignatureScheme::SshEcdsaP256),
-                    ssh_key::EcdsaCurve::NistP384 => Ok(SignatureScheme::SshEcdsaP384),
+                    ssh_key::EcdsaCurve::NistP256 => {
+                        Ok(SignatureScheme::SshEcdsaP256)
+                    }
+                    ssh_key::EcdsaCurve::NistP384 => {
+                        Ok(SignatureScheme::SshEcdsaP384)
+                    }
                     _ => bail!("Unsupported SSH ECDSA curve"),
                 },
                 ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
@@ -367,8 +374,9 @@ impl Signature {
 impl std::fmt::Debug for Signature {
     /// Formats the signature for display.
     ///
-    /// For binary signatures (Schnorr, ECDSA, Ed25519), displays the hex-encoded signature data.
-    /// For SSH and ML-DSA signatures, displays the signature object.
+    /// For binary signatures (Schnorr, ECDSA, Ed25519), displays the
+    /// hex-encoded signature data. For SSH and ML-DSA signatures, displays
+    /// the signature object.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Signature::Schnorr(data) => f
@@ -383,8 +391,12 @@ impl std::fmt::Debug for Signature {
                 .debug_struct("Ed25519")
                 .field("data", &hex::encode(data))
                 .finish(),
-            Signature::SSH(sig) => f.debug_struct("SSH").field("sig", sig).finish(),
-            Signature::MLDSA(sig) => f.debug_struct("MLDSA").field("sig", sig).finish(),
+            Signature::SSH(sig) => {
+                f.debug_struct("SSH").field("sig", sig).finish()
+            }
+            Signature::MLDSA(sig) => {
+                f.debug_struct("MLDSA").field("sig", sig).finish()
+            }
         }
     }
 }
@@ -392,9 +404,7 @@ impl std::fmt::Debug for Signature {
 /// Implementation of AsRef for Signature
 impl AsRef<Signature> for Signature {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &Signature {
-        self
-    }
+    fn as_ref(&self) -> &Signature { self }
 }
 
 /// Implementation of the CBORTagged trait for Signature
@@ -410,9 +420,7 @@ impl CBORTagged for Signature {
 /// Conversion from Signature to CBOR
 impl From<Signature> for CBOR {
     /// Converts a Signature to a tagged CBOR value.
-    fn from(value: Signature) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Signature) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for Signature
@@ -422,15 +430,21 @@ impl CBORTaggedEncodable for Signature {
     /// The CBOR encoding depends on the signature type:
     ///
     /// - Schnorr: A byte string containing the 64-byte signature
-    /// - ECDSA: An array containing the discriminator 1 and the 64-byte signature
-    /// - Ed25519: An array containing the discriminator 2 and the 64-byte signature
+    /// - ECDSA: An array containing the discriminator 1 and the 64-byte
+    ///   signature
+    /// - Ed25519: An array containing the discriminator 2 and the 64-byte
+    ///   signature
     /// - SSH: A tagged text string containing the PEM-encoded signature
     /// - ML-DSA: Delegates to the MLDSASignature implementation
     fn untagged_cbor(&self) -> CBOR {
         match self {
             Signature::Schnorr(data) => CBOR::to_byte_string(data),
-            Signature::ECDSA(data) => vec![(1).into(), CBOR::to_byte_string(data)].into(),
-            Signature::Ed25519(data) => vec![(2).into(), CBOR::to_byte_string(data)].into(),
+            Signature::ECDSA(data) => {
+                vec![(1).into(), CBOR::to_byte_string(data)].into()
+            }
+            Signature::Ed25519(data) => {
+                vec![(2).into(), CBOR::to_byte_string(data)].into()
+            }
             Signature::SSH(sig) => {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_SIGNATURE, pem)
@@ -468,12 +482,15 @@ impl CBORTaggedDecodable for Signature {
     ///
     /// The CBOR value must be one of:
     /// - A byte string (interpreted as a Schnorr signature)
-    /// - An array of length 2, where the first element is 1 (ECDSA) or 2 (Ed25519)
-    ///   and the second element is a byte string containing the signature data
+    /// - An array of length 2, where the first element is 1 (ECDSA) or 2
+    ///   (Ed25519) and the second element is a byte string containing the
+    ///   signature data
     /// - A tagged value with a tag for MLDSA or SSH signatures
     fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         match cbor.clone().into_case() {
-            CBORCase::ByteString(bytes) => Ok(Self::schnorr_from_data_ref(bytes)?),
+            CBORCase::ByteString(bytes) => {
+                Ok(Self::schnorr_from_data_ref(bytes)?)
+            }
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
@@ -496,7 +513,7 @@ impl CBORTaggedDecodable for Signature {
                         _ => (),
                     }
                 }
-                return Err("Invalid signature format".into());
+                Err("Invalid signature format".into())
             }
             CBORCase::Tagged(tag, item) => match tag.value() {
                 tags::TAG_MLDSA_SIGNATURE => {
@@ -509,9 +526,9 @@ impl CBORTaggedDecodable for Signature {
                         .map_err(|_| "Invalid PEM format")?;
                     Ok(Self::SSH(pem))
                 }
-                _ => return Err("Invalid signature format".into()),
+                _ => Err("Invalid signature format".into()),
             },
-            _ => return Err("Invalid signature format".into()),
+            _ => Err("Invalid signature format".into()),
         }
     }
 }

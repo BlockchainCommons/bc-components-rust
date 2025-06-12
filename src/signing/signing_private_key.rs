@@ -1,21 +1,15 @@
-use std::{ cell::RefCell, rc::Rc };
+use std::{cell::RefCell, rc::Rc};
 
-use crate::{
-    tags,
-    ECKey,
-    ECPrivateKey,
-    Ed25519PrivateKey,
-    MLDSAPrivateKey,
-    Signature,
-    Signer,
-    SigningPublicKey,
-};
-use anyhow::{ bail, Result };
-use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
+use anyhow::{Result, bail};
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
-use ssh_key::{ private::PrivateKey as SSHPrivateKey, HashAlg, LineEnding };
+use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
+use crate::{
+    ECKey, ECPrivateKey, Ed25519PrivateKey, MLDSAPrivateKey, Signature, Signer,
+    SigningPublicKey, tags,
+};
 
 /// Options for configuring signature creation.
 ///
@@ -32,6 +26,7 @@ use super::Verifier;
 ///
 /// ```
 /// use std::{cell::RefCell, rc::Rc};
+///
 /// use bc_components::SigningOptions;
 /// use bc_rand::SecureRandomNumberGenerator;
 ///
@@ -70,9 +65,9 @@ pub enum SigningOptions {
 
 /// A private key used for creating digital signatures.
 ///
-/// `SigningPrivateKey` is an enum representing different types of signing private keys,
-/// including elliptic curve schemes (ECDSA, Schnorr), Edwards curve schemes (Ed25519),
-/// post-quantum schemes (ML-DSA), and SSH keys.
+/// `SigningPrivateKey` is an enum representing different types of signing
+/// private keys, including elliptic curve schemes (ECDSA, Schnorr), Edwards
+/// curve schemes (Ed25519), post-quantum schemes (ML-DSA), and SSH keys.
 ///
 /// This type implements the `Signer` trait, allowing it to create signatures of
 /// the appropriate type.
@@ -82,7 +77,7 @@ pub enum SigningOptions {
 /// Creating a new Schnorr signing key and using it to sign a message:
 ///
 /// ```
-/// use bc_components::{ECPrivateKey, SigningPrivateKey, Signer, Verifier};
+/// use bc_components::{ECPrivateKey, Signer, SigningPrivateKey, Verifier};
 ///
 /// // Create a new Schnorr signing key
 /// let private_key = SigningPrivateKey::new_schnorr(ECPrivateKey::new());
@@ -100,7 +95,8 @@ pub enum SigningOptions {
 ///
 /// # CBOR Serialization
 ///
-/// `SigningPrivateKey` can be serialized to and from CBOR with appropriate tags:
+/// `SigningPrivateKey` can be serialized to and from CBOR with appropriate
+/// tags:
 ///
 /// ```
 /// use bc_components::{ECPrivateKey, SigningPrivateKey};
@@ -177,9 +173,7 @@ impl SigningPrivateKey {
     /// // Create a Schnorr signing key from it
     /// let signing_key = SigningPrivateKey::new_schnorr(ec_key);
     /// ```
-    pub const fn new_schnorr(key: ECPrivateKey) -> Self {
-        Self::Schnorr(key)
-    }
+    pub const fn new_schnorr(key: ECPrivateKey) -> Self { Self::Schnorr(key) }
 
     /// Creates a new ECDSA signing private key from an `ECPrivateKey`.
     ///
@@ -202,9 +196,7 @@ impl SigningPrivateKey {
     /// // Create an ECDSA signing key from it
     /// let signing_key = SigningPrivateKey::new_ecdsa(ec_key);
     /// ```
-    pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
-        Self::ECDSA(key)
-    }
+    pub const fn new_ecdsa(key: ECPrivateKey) -> Self { Self::ECDSA(key) }
 
     /// Creates a new Ed25519 signing private key from an `Ed25519PrivateKey`.
     ///
@@ -240,9 +232,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// A new SSH signing private key
-    pub fn new_ssh(key: SSHPrivateKey) -> Self {
-        Self::SSH(Box::new(key))
-    }
+    pub fn new_ssh(key: SSHPrivateKey) -> Self { Self::SSH(Box::new(key)) }
 
     /// Returns the underlying Schnorr private key if this is a Schnorr key.
     ///
@@ -276,9 +266,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is a Schnorr key, `false` otherwise
-    pub fn is_schnorr(&self) -> bool {
-        self.to_schnorr().is_some()
-    }
+    pub fn is_schnorr(&self) -> bool { self.to_schnorr().is_some() }
 
     /// Returns the underlying ECDSA private key if this is an ECDSA key.
     ///
@@ -298,9 +286,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an ECDSA key, `false` otherwise
-    pub fn is_ecdsa(&self) -> bool {
-        self.to_ecdsa().is_some()
-    }
+    pub fn is_ecdsa(&self) -> bool { self.to_ecdsa().is_some() }
 
     /// Returns the underlying SSH private key if this is an SSH key.
     ///
@@ -320,9 +306,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an SSH key, `false` otherwise
-    pub fn is_ssh(&self) -> bool {
-        self.to_ssh().is_some()
-    }
+    pub fn is_ssh(&self) -> bool { self.to_ssh().is_some() }
 
     /// Derives the corresponding public key for this private key.
     ///
@@ -344,10 +328,18 @@ impl SigningPrivateKey {
     /// ```
     pub fn public_key(&self) -> Result<SigningPublicKey> {
         match self {
-            Self::Schnorr(key) => Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key())),
-            Self::ECDSA(key) => Ok(SigningPublicKey::from_ecdsa(key.public_key())),
-            Self::Ed25519(key) => Ok(SigningPublicKey::from_ed25519(key.public_key())),
-            Self::SSH(key) => Ok(SigningPublicKey::from_ssh(key.public_key().clone())),
+            Self::Schnorr(key) => {
+                Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key()))
+            }
+            Self::ECDSA(key) => {
+                Ok(SigningPublicKey::from_ecdsa(key.public_key()))
+            }
+            Self::Ed25519(key) => {
+                Ok(SigningPublicKey::from_ed25519(key.public_key()))
+            }
+            Self::SSH(key) => {
+                Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
+            }
             Self::MLDSA(_) => bail!("Deriving MLDSA public key not supported"),
         }
     }
@@ -364,12 +356,13 @@ impl SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the ECDSA signature, or an error if the key is not an ECDSA key.
+    /// A `Result` containing the ECDSA signature, or an error if the key is not
+    /// an ECDSA key.
     ///
     /// # Examples
     ///
     /// ```
-    /// use bc_components::{ECPrivateKey, SigningPrivateKey, Signer};
+    /// use bc_components::{ECPrivateKey, Signer, SigningPrivateKey};
     ///
     /// // Create an ECDSA key
     /// let private_key = SigningPrivateKey::new_ecdsa(ECPrivateKey::new());
@@ -398,12 +391,14 @@ impl SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the Schnorr signature, or an error if the key is not a Schnorr key.
+    /// A `Result` containing the Schnorr signature, or an error if the key is
+    /// not a Schnorr key.
     ///
     /// # Examples
     ///
     /// ```
     /// use std::{cell::RefCell, rc::Rc};
+    ///
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
     /// use bc_rand::SecureRandomNumberGenerator;
     ///
@@ -420,10 +415,11 @@ impl SigningPrivateKey {
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
-        rng: Rc<RefCell<dyn RandomNumberGenerator>>
+        rng: Rc<RefCell<dyn RandomNumberGenerator>>,
     ) -> Result<Signature> {
         if let Some(private_key) = self.to_schnorr() {
-            let sig = private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
+            let sig =
+                private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
             Ok(Signature::schnorr_from_data(sig))
         } else {
             bail!("Invalid key type for Schnorr signing");
@@ -440,12 +436,13 @@ impl SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the Ed25519 signature, or an error if the key is not an Ed25519 key.
+    /// A `Result` containing the Ed25519 signature, or an error if the key is
+    /// not an Ed25519 key.
     ///
     /// # Examples
     ///
     /// ```
-    /// use bc_components::{Ed25519PrivateKey, SigningPrivateKey, Signer};
+    /// use bc_components::{Ed25519PrivateKey, Signer, SigningPrivateKey};
     ///
     /// // Create an Ed25519 key
     /// let private_key = SigningPrivateKey::new_ed25519(Ed25519PrivateKey::new());
@@ -475,15 +472,17 @@ impl SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the SSH signature, or an error if the key is not an SSH key.
+    /// A `Result` containing the SSH signature, or an error if the key is not
+    /// an SSH key.
     fn ssh_sign(
         &self,
         message: impl AsRef<[u8]>,
         namespace: impl AsRef<str>,
-        hash_alg: HashAlg
+        hash_alg: HashAlg,
     ) -> Result<Signature> {
         if let Some(private) = self.to_ssh() {
-            let sig = private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
+            let sig =
+                private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
             Ok(Signature::from_ssh(sig))
         } else {
             bail!("Invalid key type for SSH signing");
@@ -500,7 +499,8 @@ impl SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the ML-DSA signature, or an error if the key is not an ML-DSA key.
+    /// A `Result` containing the ML-DSA signature, or an error if the key is
+    /// not an ML-DSA key.
     fn mldsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
         if let Self::MLDSA(key) = self {
             let sig = key.sign(message.as_ref());
@@ -515,8 +515,8 @@ impl SigningPrivateKey {
 impl Signer for SigningPrivateKey {
     /// Signs a message with the appropriate algorithm based on the key type.
     ///
-    /// This method dispatches to the appropriate signing method based on the key type
-    /// and provided options.
+    /// This method dispatches to the appropriate signing method based on the
+    /// key type and provided options.
     ///
     /// # Arguments
     ///
@@ -531,7 +531,10 @@ impl Signer for SigningPrivateKey {
     ///
     /// ```
     /// use std::{cell::RefCell, rc::Rc};
-    /// use bc_components::{ECPrivateKey, SigningOptions, SigningPrivateKey, Signer};
+    ///
+    /// use bc_components::{
+    ///     ECPrivateKey, Signer, SigningOptions, SigningPrivateKey,
+    /// };
     /// use bc_rand::SecureRandomNumberGenerator;
     ///
     /// // Create a Schnorr key
@@ -543,28 +546,37 @@ impl Signer for SigningPrivateKey {
     ///
     /// // Sign a message with options
     /// let message = b"Hello, world!";
-    /// let signature = private_key.sign_with_options(&message, Some(options)).unwrap();
+    /// let signature = private_key
+    ///     .sign_with_options(&message, Some(options))
+    ///     .unwrap();
     /// ```
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>
+        options: Option<SigningOptions>,
     ) -> Result<Signature> {
         match self {
             Self::Schnorr(_) => {
                 if let Some(SigningOptions::Schnorr { rng }) = options {
                     self.schnorr_sign(message, rng)
                 } else {
-                    self.schnorr_sign(message, Rc::new(RefCell::new(SecureRandomNumberGenerator)))
+                    self.schnorr_sign(
+                        message,
+                        Rc::new(RefCell::new(SecureRandomNumberGenerator)),
+                    )
                 }
             }
             Self::ECDSA(_) => self.ecdsa_sign(message),
             Self::Ed25519(_) => self.ed25519_sign(message),
             Self::SSH(_) => {
-                if let Some(SigningOptions::Ssh { namespace, hash_alg }) = options {
+                if let Some(SigningOptions::Ssh { namespace, hash_alg }) =
+                    options
+                {
                     self.ssh_sign(message, namespace, hash_alg)
                 } else {
-                    bail!("Missing namespace and hash algorithm for SSH signing");
+                    bail!(
+                        "Missing namespace and hash algorithm for SSH signing"
+                    );
                 }
             }
             Self::MLDSA(_) => self.mldsa_sign(message),
@@ -615,9 +627,7 @@ impl CBORTagged for SigningPrivateKey {
 /// Conversion from SigningPrivateKey to CBOR
 impl From<SigningPrivateKey> for CBOR {
     /// Converts a SigningPrivateKey to a tagged CBOR value.
-    fn from(value: SigningPrivateKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SigningPrivateKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPrivateKey
@@ -627,8 +637,10 @@ impl CBORTaggedEncodable for SigningPrivateKey {
     /// The CBOR encoding depends on the key type:
     ///
     /// - Schnorr: A byte string containing the 32-byte private key
-    /// - ECDSA: An array containing the discriminator 1 and the 32-byte private key
-    /// - Ed25519: An array containing the discriminator 2 and the 32-byte private key
+    /// - ECDSA: An array containing the discriminator 1 and the 32-byte private
+    ///   key
+    /// - Ed25519: An array containing the discriminator 2 and the 32-byte
+    ///   private key
     /// - SSH: A tagged text string containing the OpenSSH-encoded private key
     /// - ML-DSA: Delegates to the MLDSAPrivateKey implementation
     fn untagged_cbor(&self) -> CBOR {
@@ -642,7 +654,10 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             }
             SigningPrivateKey::SSH(key) => {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
-                CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PRIVATE_KEY, (*string).clone())
+                CBOR::to_tagged_value(
+                    tags::TAG_SSH_TEXT_PRIVATE_KEY,
+                    (*string).clone(),
+                )
             }
             SigningPrivateKey::MLDSA(key) => key.clone().into(),
         }
@@ -671,18 +686,22 @@ impl CBORTaggedDecodable for SigningPrivateKey {
     ///
     /// # Returns
     ///
-    /// A Result containing the decoded SigningPrivateKey or an error if decoding fails.
+    /// A Result containing the decoded SigningPrivateKey or an error if
+    /// decoding fails.
     ///
     /// # Format
     ///
     /// The CBOR value must be one of:
     /// - A byte string (interpreted as a Schnorr private key)
-    /// - An array where the first element is a discriminator (1 for ECDSA, 2 for Ed25519)
-    ///   and the second element is a byte string containing the key data
+    /// - An array where the first element is a discriminator (1 for ECDSA, 2
+    ///   for Ed25519) and the second element is a byte string containing the
+    ///   key data
     /// - A tagged value with a tag for ML-DSA or SSH keys
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.into_case() {
-            CBORCase::ByteString(data) => Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?)),
+            CBORCase::ByteString(data) => {
+                Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?))
+            }
             CBORCase::Array(mut elements) => {
                 let discriminator = usize::try_from(elements.remove(0))?;
                 match discriminator {
@@ -696,11 +715,11 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                         let key = Ed25519PrivateKey::from_data_ref(data)?;
                         Ok(Self::Ed25519(key))
                     }
-                    _ => {
-                        return Err(
-                            format!("Invalid discriminator for SigningPrivateKey: {}", discriminator).into()
-                        );
-                    }
+                    _ => Err(format!(
+                        "Invalid discriminator for SigningPrivateKey: {}",
+                        discriminator
+                    )
+                    .into()),
                 }
             }
             CBORCase::Tagged(tag, item) => {
@@ -708,20 +727,22 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                 match value {
                     tags::TAG_SSH_TEXT_PRIVATE_KEY => {
                         let string = item.try_into_text()?;
-                        let key = SSHPrivateKey::from_openssh(string)
-                            .map_err(|_| dcbor::Error::msg("Invalid SSH private key"))?;
+                        let key = SSHPrivateKey::from_openssh(string).map_err(
+                            |_| dcbor::Error::msg("Invalid SSH private key"),
+                        )?;
                         Ok(Self::SSH(Box::new(key)))
                     }
                     tags::TAG_MLDSA_PRIVATE_KEY => {
                         let key = MLDSAPrivateKey::from_untagged_cbor(item)?;
                         Ok(Self::MLDSA(key))
                     }
-                    _ => return Err(format!("Invalid CBOR tag for SigningPrivateKey: {value}").into()),
+                    _ => Err(format!(
+                        "Invalid CBOR tag for SigningPrivateKey: {value}"
+                    )
+                    .into()),
                 }
             }
-            _ => {
-                return Err("Invalid CBOR case for SigningPrivateKey".into());
-            }
+            _ => Err("Invalid CBOR case for SigningPrivateKey".into()),
         }
     }
 }
@@ -739,7 +760,5 @@ impl std::fmt::Debug for SigningPrivateKey {
 /// Implementation of the From trait for reference to SigningPrivateKey
 impl From<&SigningPrivateKey> for SigningPrivateKey {
     /// Clones a SigningPrivateKey from a reference.
-    fn from(key: &SigningPrivateKey) -> Self {
-        key.clone()
-    }
+    fn from(key: &SigningPrivateKey) -> Self { key.clone() }
 }

@@ -116,6 +116,10 @@ impl SSHAgentParams {
     }
 }
 
+impl Default for SSHAgentParams {
+    fn default() -> Self { Self::new() }
+}
+
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
 pub fn connect_to_ssh_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
     let sock =
@@ -161,7 +165,9 @@ impl KeyDerivation for SSHAgentParams {
         let identity = if id.is_empty() {
             // If there is more than one identity, throw an error.
             if ids.len() > 1 {
-                bail!("Multiple identities available in SSH agent, but no ID provided");
+                bail!(
+                    "Multiple identities available in SSH agent, but no ID provided"
+                );
             }
             // Safe to unwrap because we checked that `ids` is not empty
             ids.first().unwrap()
@@ -175,7 +181,7 @@ impl KeyDerivation for SSHAgentParams {
         let salt = self.salt().clone();
         let sig = agent
             .borrow_mut()
-            .sign(identity, salt.data())
+            .sign(identity, salt.as_bytes())
             .context("SSH agent refused to sign")?;
 
         // Derive the symmetric key using HKDF with HMAC-SHA256.
@@ -249,7 +255,7 @@ impl KeyDerivation for SSHAgentParams {
         // Sign the salt with the identity.
         let sig = agent
             .borrow_mut()
-            .sign(identity, self.salt.data())
+            .sign(identity, self.salt.as_bytes())
             .context("SSH agent refused to sign")?;
 
         // Derive the symmetric key using HKDF with HMAC-SHA256.
@@ -280,9 +286,14 @@ impl std::fmt::Display for SSHAgentParams {
     }
 }
 
-impl Into<CBOR> for SSHAgentParams {
-    fn into(self) -> CBOR {
-        vec![CBOR::from(Self::INDEX), self.salt.into(), self.id.into()].into()
+impl From<SSHAgentParams> for CBOR {
+    fn from(val: SSHAgentParams) -> Self {
+        vec![
+            CBOR::from(SSHAgentParams::INDEX),
+            val.salt.into(),
+            val.id.into(),
+        ]
+        .into()
     }
 }
 

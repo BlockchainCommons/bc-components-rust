@@ -1,16 +1,19 @@
 use std::str::FromStr;
 
-use anyhow::{ Result, Error };
+use anyhow::{Error, Result};
 use dcbor::prelude::*;
+
 use crate::tags;
 
 /// A Universally Unique Identifier (UUID).
 ///
-/// UUIDs are 128-bit (16-byte) identifiers that are designed to be unique across space and time.
-/// This implementation creates type 4 (random) UUIDs, following the UUID specification:
+/// UUIDs are 128-bit (16-byte) identifiers that are designed to be unique
+/// across space and time. This implementation creates type 4 (random) UUIDs,
+/// following the UUID specification:
 ///
 /// - Version field (bits 48-51) is set to 4, indicating a random UUID
-/// - Variant field (bits 64-65) is set to 2, indicating RFC 4122/DCE 1.1 UUID variant
+/// - Variant field (bits 64-65) is set to 2, indicating RFC 4122/DCE 1.1 UUID
+///   variant
 ///
 /// Unlike ARIDs, UUIDs:
 /// - Are shorter (128 bits vs 256 bits)
@@ -18,7 +21,8 @@ use crate::tags;
 /// - Have a canonical string representation with 5 groups separated by hyphens
 ///
 /// The canonical textual representation of a UUID takes the form:
-/// `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` where each `x` is a hexadecimal digit.
+/// `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` where each `x` is a hexadecimal
+/// digit.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct UUID([u8; Self::UUID_SIZE]);
 
@@ -35,9 +39,7 @@ impl UUID {
     }
 
     /// Restores a UUID from data.
-    pub fn from_data(data: [u8; Self::UUID_SIZE]) -> Self {
-        Self(data)
-    }
+    pub fn from_data(data: [u8; Self::UUID_SIZE]) -> Self { Self(data) }
 
     /// Restores a UUID from data.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Option<Self> {
@@ -51,51 +53,40 @@ impl UUID {
     }
 
     /// Returns the data of the UUID.
-    pub fn data(&self) -> &[u8; Self::UUID_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::UUID_SIZE] { self.into() }
+
+    /// Get the data of the UUID as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 }
 
 /// Implements Default for UUID to create a new random UUID.
 impl Default for UUID {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 /// Implements conversion from a UUID reference to a byte array reference.
 impl<'a> From<&'a UUID> for &'a [u8; UUID::UUID_SIZE] {
-    fn from(value: &'a UUID) -> Self {
-        &value.0
-    }
+    fn from(value: &'a UUID) -> Self { &value.0 }
 }
 
 /// Implements AsRef<[u8]> to allow UUID to be treated as a byte slice.
 impl AsRef<[u8]> for UUID {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements CBORTagged trait to provide CBOR tag information.
 impl CBORTagged for UUID {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_UUID])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_UUID]) }
 }
 
 /// Implements conversion from UUID to CBOR for serialization.
 impl From<UUID> for CBOR {
-    fn from(value: UUID) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: UUID) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBORTaggedEncodable to provide CBOR encoding functionality.
 impl CBORTaggedEncodable for UUID {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.0) }
 }
 
 /// Implements `TryFrom<CBOR>` for UUID to support conversion from CBOR data.
@@ -127,19 +118,25 @@ impl std::fmt::Display for UUID {
     }
 }
 
-/// Implements conversion from UUID to String in the standard format with dashes.
+/// Implements conversion from UUID to String in the standard format with
+/// dashes.
 impl From<UUID> for String {
     fn from(uuid: UUID) -> Self {
         let hex = hex::encode(uuid.0);
-        format!("{}-{}-{}-{}-{}", &hex[0..8], &hex[8..12], &hex[12..16], &hex[16..20], &hex[20..32])
+        format!(
+            "{}-{}-{}-{}-{}",
+            &hex[0..8],
+            &hex[8..12],
+            &hex[12..16],
+            &hex[16..20],
+            &hex[20..32]
+        )
     }
 }
 
 /// Implements conversion from UUID reference to String.
 impl From<&UUID> for String {
-    fn from(uuid: &UUID) -> Self {
-        String::from(*uuid)
-    }
+    fn from(uuid: &UUID) -> Self { String::from(*uuid) }
 }
 
 /// Implements string parsing to create a UUID.

@@ -54,6 +54,7 @@ impl TryFrom<&CBOR> for KeyDerivationMethod {
 
     fn try_from(cbor: &CBOR) -> Result<Self> {
         let i: usize = cbor.clone().try_into()?;
-        KeyDerivationMethod::from_index(i).ok_or_else(|| Error::msg("Invalid KeyDerivationMethod"))
+        KeyDerivationMethod::from_index(i)
+            .ok_or_else(|| Error::msg("Invalid KeyDerivationMethod"))
     }
 }

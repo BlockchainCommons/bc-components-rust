@@ -1,17 +1,17 @@
-use anyhow::{ anyhow, bail, Result };
+use anyhow::{Result, anyhow, bail};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
+use super::{MLDSA, MLDSASignature};
 use crate::tags;
-
-use super::{ MLDSASignature, MLDSA };
 
 /// A public key for the ML-DSA post-quantum digital signature algorithm.
 ///
 /// `MLDSAPublicKey` represents a public key that can be used to verify digital
-/// signatures created with the ML-DSA (Module Lattice-based Digital Signature Algorithm)
-/// post-quantum algorithm. It supports multiple security levels through the variants:
+/// signatures created with the ML-DSA (Module Lattice-based Digital Signature
+/// Algorithm) post-quantum algorithm. It supports multiple security levels
+/// through the variants:
 ///
 /// - `MLDSA44`: NIST security level 2 (roughly equivalent to AES-128)
 /// - `MLDSA65`: NIST security level 3 (roughly equivalent to AES-192)
@@ -74,14 +74,14 @@ impl MLDSAPublicKey {
     ///
     /// # Returns
     ///
-    /// `Ok(true)` if the signature is valid for the message and this public key,
-    /// `Ok(false)` if the signature is invalid, or an error if the security levels
-    /// of the signature and public key don't match.
+    /// `Ok(true)` if the signature is valid for the message and this public
+    /// key, `Ok(false)` if the signature is invalid, or an error if the
+    /// security levels of the signature and public key don't match.
     ///
     /// # Errors
     ///
-    /// Returns an error if the security level of the signature doesn't match the
-    /// security level of this public key.
+    /// Returns an error if the security level of the signature doesn't match
+    /// the security level of this public key.
     ///
     /// # Examples
     ///
@@ -94,20 +94,27 @@ impl MLDSAPublicKey {
     ///
     /// assert!(public_key.verify(&signature, message).unwrap());
     /// ```
-    pub fn verify(&self, signature: &MLDSASignature, message: impl AsRef<[u8]>) -> Result<bool> {
+    pub fn verify(
+        &self,
+        signature: &MLDSASignature,
+        message: impl AsRef<[u8]>,
+    ) -> Result<bool> {
         if signature.level() != self.level() {
             bail!("Signature level does not match public key level");
         }
 
         let verifies = match (self, signature) {
             (MLDSAPublicKey::MLDSA44(pk), MLDSASignature::MLDSA44(sig)) => {
-                mldsa44::verify_detached_signature(sig, message.as_ref(), pk).is_ok()
+                mldsa44::verify_detached_signature(sig, message.as_ref(), pk)
+                    .is_ok()
             }
             (MLDSAPublicKey::MLDSA65(pk), MLDSASignature::MLDSA65(sig)) => {
-                mldsa65::verify_detached_signature(sig, message.as_ref(), pk).is_ok()
+                mldsa65::verify_detached_signature(sig, message.as_ref(), pk)
+                    .is_ok()
             }
             (MLDSAPublicKey::MLDSA87(pk), MLDSASignature::MLDSA87(sig)) => {
-                mldsa87::verify_detached_signature(sig, message.as_ref(), pk).is_ok()
+                mldsa87::verify_detached_signature(sig, message.as_ref(), pk)
+                    .is_ok()
             }
             _ => false,
         };
@@ -125,18 +132,10 @@ impl MLDSAPublicKey {
     }
 
     /// Returns the size of this ML-DSA public key in bytes.
-    pub fn size(&self) -> usize {
-        self.level().public_key_size()
-    }
+    pub fn size(&self) -> usize { self.level().public_key_size() }
 
     /// Returns the raw bytes of this ML-DSA public key.
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            MLDSAPublicKey::MLDSA44(key) => key.as_bytes(),
-            MLDSAPublicKey::MLDSA65(key) => key.as_bytes(),
-            MLDSAPublicKey::MLDSA87(key) => key.as_bytes(),
-        }
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates an ML-DSA public key from raw bytes and a security level.
     ///
@@ -147,8 +146,8 @@ impl MLDSAPublicKey {
     ///
     /// # Returns
     ///
-    /// An `MLDSAPublicKey` if the bytes represent a valid key for the given level,
-    /// or an error otherwise.
+    /// An `MLDSAPublicKey` if the bytes represent a valid key for the given
+    /// level, or an error otherwise.
     ///
     /// # Errors
     ///
@@ -156,24 +155,29 @@ impl MLDSAPublicKey {
     /// for the specified security level.
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLDSA::MLDSA44 =>
-                Ok(
-                    MLDSAPublicKey::MLDSA44(
-                        Box::new(mldsa44::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLDSA::MLDSA65 =>
-                Ok(
-                    MLDSAPublicKey::MLDSA65(
-                        Box::new(mldsa65::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
-            MLDSA::MLDSA87 =>
-                Ok(
-                    MLDSAPublicKey::MLDSA87(
-                        Box::new(mldsa87::PublicKey::from_bytes(bytes).map_err(|e| anyhow!(e))?)
-                    )
-                ),
+            MLDSA::MLDSA44 => Ok(MLDSAPublicKey::MLDSA44(Box::new(
+                mldsa44::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLDSA::MLDSA65 => Ok(MLDSAPublicKey::MLDSA65(Box::new(
+                mldsa65::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLDSA::MLDSA87 => Ok(MLDSAPublicKey::MLDSA87(Box::new(
+                mldsa87::PublicKey::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+        }
+    }
+}
+
+impl AsRef<[u8]> for MLDSAPublicKey {
+    /// Returns the public key as a byte slice.
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            MLDSAPublicKey::MLDSA44(key) => key.as_bytes(),
+            MLDSAPublicKey::MLDSA65(key) => key.as_bytes(),
+            MLDSAPublicKey::MLDSA87(key) => key.as_bytes(),
         }
     }
 }
@@ -201,14 +205,13 @@ impl CBORTagged for MLDSAPublicKey {
 /// Converts an `MLDSAPublicKey` to CBOR.
 impl From<MLDSAPublicKey> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: MLDSAPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: MLDSAPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for ML-DSA public keys.
 impl CBORTaggedEncodable for MLDSAPublicKey {
-    /// Creates the untagged CBOR representation as an array with level and key bytes.
+    /// Creates the untagged CBOR representation as an array with level and key
+    /// bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
@@ -229,7 +232,8 @@ impl CBORTaggedDecodable for MLDSAPublicKey {
     /// Creates an `MLDSAPublicKey` from untagged CBOR.
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA public key.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA
+    /// public key.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
@@ -241,9 +245,7 @@ impl CBORTaggedDecodable for MLDSAPublicKey {
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
                 Ok(MLDSAPublicKey::from_bytes(level, &data)?)
             }
-            _ => {
-                return Err("MLDSAPublicKey must be an array".into());
-            }
+            _ => Err("MLDSAPublicKey must be an array".into()),
         }
     }
 }

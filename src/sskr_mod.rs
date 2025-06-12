@@ -1,29 +1,33 @@
-use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
+use anyhow::Result;
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use sskr::SSKRError;
-use anyhow::Result;
-use crate::tags;
-
 /// Re-export of the `Spec` type from the `sskr` crate.
 ///
-/// Describes the configuration for a Sharded Secret Key Reconstruction (SSKR) split,
-/// including the group threshold and specifications for each group.
-pub use sskr::{ Spec as SSKRSpec, GroupSpec as SSKRGroupSpec, Secret as SSKRSecret };
+/// Describes the configuration for a Sharded Secret Key Reconstruction
+/// (SSKR) split, including the group threshold and specifications for each
+/// group.
+pub use sskr::{
+    GroupSpec as SSKRGroupSpec, Secret as SSKRSecret, Spec as SSKRSpec,
+};
+
+use crate::tags;
 
 /// A share of a secret split using Sharded Secret Key Reconstruction (SSKR).
 ///
-/// SSKR is a protocol for splitting a secret into multiple shares across one or more
-/// groups, such that the secret can be reconstructed only when a threshold number of
-/// shares from a threshold number of groups are combined.
+/// SSKR is a protocol for splitting a secret into multiple shares across one or
+/// more groups, such that the secret can be reconstructed only when a threshold
+/// number of shares from a threshold number of groups are combined.
 ///
 /// Each SSKR share contains:
 /// - A unique identifier for the split
 /// - Metadata about the group structure (thresholds, counts, indices)
 /// - A portion of the secret data
 ///
-/// SSKR shares follow a specific binary format that includes a 5-byte metadata header
-/// followed by the share value. The metadata encodes information about group thresholds,
-/// member thresholds, and the position of this share within the overall structure.
+/// SSKR shares follow a specific binary format that includes a 5-byte metadata
+/// header followed by the share value. The metadata encodes information about
+/// group thresholds, member thresholds, and the position of this share within
+/// the overall structure.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub struct SSKRShare(Vec<u8>);
 
@@ -32,8 +36,8 @@ impl SSKRShare {
     ///
     /// # Parameters
     ///
-    /// * `data` - The raw binary data of the SSKR share, including both metadata (5 bytes)
-    ///   and share value.
+    /// * `data` - The raw binary data of the SSKR share, including both
+    ///   metadata (5 bytes) and share value.
     ///
     /// # Returns
     ///
@@ -65,11 +69,9 @@ impl SSKRShare {
     ///
     /// let data = vec![0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC]; // Example data
     /// let share = SSKRShare::from_data(data.clone());
-    /// assert_eq!(share.data(), &data);
+    /// assert_eq!(share.as_bytes(), &data);
     /// ```
-    pub fn data(&self) -> &[u8] {
-        &self.0
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates a new `SSKRShare` from a hexadecimal string.
     ///
@@ -108,17 +110,18 @@ impl SSKRShare {
     /// ```
     /// use bc_components::SSKRShare;
     ///
-    /// let share = SSKRShare::from_data(vec![0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC]);
+    /// let share = SSKRShare::from_data(vec![
+    ///     0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC,
+    /// ]);
     /// assert_eq!(share.hex(), "1234213101aabbcc");
     /// ```
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.as_bytes()) }
 
     /// Returns the unique identifier of the split to which this share belongs.
     ///
-    /// The identifier is a 16-bit value that is the same for all shares in a split
-    /// and is used to verify that shares belong together when combining them.
+    /// The identifier is a 16-bit value that is the same for all shares in a
+    /// split and is used to verify that shares belong together when
+    /// combining them.
     ///
     /// # Returns
     ///
@@ -129,7 +132,9 @@ impl SSKRShare {
     /// ```
     /// use bc_components::SSKRShare;
     ///
-    /// let share = SSKRShare::from_data(vec![0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC]);
+    /// let share = SSKRShare::from_data(vec![
+    ///     0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC,
+    /// ]);
     /// assert_eq!(share.identifier(), 0x1234);
     /// ```
     pub fn identifier(&self) -> u16 {
@@ -147,18 +152,18 @@ impl SSKRShare {
     /// ```
     /// use bc_components::SSKRShare;
     ///
-    /// let share = SSKRShare::from_data(vec![0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC]);
+    /// let share = SSKRShare::from_data(vec![
+    ///     0x12, 0x34, 0x21, 0x31, 0x01, 0xAA, 0xBB, 0xCC,
+    /// ]);
     /// assert_eq!(share.identifier_hex(), "1234");
     /// ```
-    pub fn identifier_hex(&self) -> String {
-        hex::encode(&self.0[0..=1])
-    }
+    pub fn identifier_hex(&self) -> String { hex::encode(&self.0[0..=1]) }
 
     /// Returns the minimum number of groups whose quorum must be met to
     /// reconstruct the secret.
     ///
-    /// This value is encoded as GroupThreshold - 1 in the metadata, so the actual
-    /// threshold value is one more than the encoded value.
+    /// This value is encoded as GroupThreshold - 1 in the metadata, so the
+    /// actual threshold value is one more than the encoded value.
     ///
     /// # Returns
     ///
@@ -173,9 +178,7 @@ impl SSKRShare {
     /// // The encoded value 0x2 in the third byte's high nibble represents a threshold of 3
     /// assert_eq!(share.group_threshold(), 3);
     /// ```
-    pub fn group_threshold(&self) -> usize {
-        usize::from(self.0[2] >> 4) + 1
-    }
+    pub fn group_threshold(&self) -> usize { usize::from(self.0[2] >> 4) + 1 }
 
     /// Returns the total number of groups in the split.
     ///
@@ -195,9 +198,7 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the third byte's low nibble represents a count of 2
     /// assert_eq!(share.group_count(), 2);
     /// ```
-    pub fn group_count(&self) -> usize {
-        usize::from(self.0[2] & 0xf) + 1
-    }
+    pub fn group_count(&self) -> usize { usize::from(self.0[2] & 0xf) + 1 }
 
     /// Returns the index of the group to which this share belongs.
     ///
@@ -217,19 +218,18 @@ impl SSKRShare {
     /// // The encoded value 0x3 in the fourth byte's high nibble represents group index 3
     /// assert_eq!(share.group_index(), 3);
     /// ```
-    pub fn group_index(&self) -> usize {
-        usize::from(self.0[3] >> 4)
-    }
+    pub fn group_index(&self) -> usize { usize::from(self.0[3] >> 4) }
 
-    /// Returns the minimum number of shares within the group to which this share
-    /// belongs that must be combined to meet the group threshold.
+    /// Returns the minimum number of shares within the group to which this
+    /// share belongs that must be combined to meet the group threshold.
     ///
-    /// This value is encoded as MemberThreshold - 1 in the metadata, so the actual
-    /// threshold value is one more than the encoded value.
+    /// This value is encoded as MemberThreshold - 1 in the metadata, so the
+    /// actual threshold value is one more than the encoded value.
     ///
     /// # Returns
     ///
-    /// The member threshold value (minimum number of shares required within this group).
+    /// The member threshold value (minimum number of shares required within
+    /// this group).
     ///
     /// # Example
     ///
@@ -240,9 +240,7 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the fourth byte's low nibble represents a threshold of 2
     /// assert_eq!(share.member_threshold(), 2);
     /// ```
-    pub fn member_threshold(&self) -> usize {
-        usize::from(self.0[3] & 0xf) + 1
-    }
+    pub fn member_threshold(&self) -> usize { usize::from(self.0[3] & 0xf) + 1 }
 
     /// Returns the index of this share within the group to which it belongs.
     ///
@@ -262,9 +260,11 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the fifth byte's low nibble represents member index 1
     /// assert_eq!(share.member_index(), 1);
     /// ```
-    pub fn member_index(&self) -> usize {
-        usize::from(self.0[4] & 0xf)
-    }
+    pub fn member_index(&self) -> usize { usize::from(self.0[4] & 0xf) }
+}
+
+impl AsRef<[u8]> for SSKRShare {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implementation of the CBOR Tagged trait for SSKRShare.
@@ -279,16 +279,12 @@ impl CBORTagged for SSKRShare {
 
 /// Conversion from SSKRShare to CBOR for serialization.
 impl From<SSKRShare> for CBOR {
-    fn from(value: SSKRShare) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SSKRShare) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of CBOR encoding for SSKRShare.
 impl CBORTaggedEncodable for SSKRShare {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(&self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(&self.0) }
 }
 
 /// Conversion from CBOR to SSKRShare for deserialization.
@@ -311,19 +307,20 @@ impl CBORTaggedDecodable for SSKRShare {
 /// Generates SSKR shares for the given `Spec` and `Secret`.
 ///
 /// This function splits a master secret into multiple shares according to the
-/// specified group and member thresholds, using a secure random number generator.
+/// specified group and member thresholds, using a secure random number
+/// generator.
 ///
 /// # Parameters
 ///
-/// * `spec` - The `SSKRSpec` instance that defines the group threshold, number of groups,
-///   and the member thresholds for each group.
+/// * `spec` - The `SSKRSpec` instance that defines the group threshold, number
+///   of groups, and the member thresholds for each group.
 /// * `master_secret` - The `SSKRSecret` instance to be split into shares.
 ///
 /// # Returns
 ///
 /// A result containing a nested vector of `SSKRShare` instances if successful,
-/// or an `SSKRError` if the operation fails. The outer vector contains one vector
-/// per group, and each inner vector contains the shares for that group.
+/// or an `SSKRError` if the operation fails. The outer vector contains one
+/// vector per group, and each inner vector contains the shares for that group.
 ///
 /// # Errors
 ///
@@ -358,7 +355,7 @@ impl CBORTaggedDecodable for SSKRShare {
 /// ```
 pub fn sskr_generate(
     spec: &SSKRSpec,
-    master_secret: &SSKRSecret
+    master_secret: &SSKRSecret,
 ) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let mut rng = SecureRandomNumberGenerator;
     sskr_generate_using(spec, master_secret, &mut rng)
@@ -367,20 +364,21 @@ pub fn sskr_generate(
 /// Generates SSKR shares using a custom random number generator.
 ///
 /// This function is similar to `sskr_generate`, but allows specifying a custom
-/// random number generator for deterministic testing or other specialized needs.
+/// random number generator for deterministic testing or other specialized
+/// needs.
 ///
 /// # Parameters
 ///
-/// * `spec` - The `SSKRSpec` instance that defines the group threshold, number of groups,
-///   and the member thresholds for each group.
+/// * `spec` - The `SSKRSpec` instance that defines the group threshold, number
+///   of groups, and the member thresholds for each group.
 /// * `master_secret` - The `SSKRSecret` instance to be split into shares.
 /// * `rng` - The random number generator to use for generating shares.
 ///
 /// # Returns
 ///
 /// A result containing a nested vector of `SSKRShare` instances if successful,
-/// or an `SSKRError` if the operation fails. The outer vector contains one vector
-/// per group, and each inner vector contains the shares for that group.
+/// or an `SSKRError` if the operation fails. The outer vector contains one
+/// vector per group, and each inner vector contains the shares for that group.
 ///
 /// # Errors
 ///
@@ -416,17 +414,12 @@ pub fn sskr_generate(
 pub fn sskr_generate_using(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
-    rng: &mut impl RandomNumberGenerator
+    rng: &mut impl RandomNumberGenerator,
 ) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let shares = sskr::sskr_generate_using(spec, master_secret, rng)?;
     let shares = shares
         .into_iter()
-        .map(|group| {
-            group
-                .into_iter()
-                .map(|share| { SSKRShare::from_data(share) })
-                .collect()
-        })
+        .map(|group| group.into_iter().map(SSKRShare::from_data).collect())
         .collect();
     Ok(shares)
 }
@@ -434,8 +427,8 @@ pub fn sskr_generate_using(
 /// Combines SSKR shares to reconstruct the original secret.
 ///
 /// This function takes a collection of shares and attempts to reconstruct the
-/// original secret. The shares must meet the group and member thresholds specified
-/// when the shares were generated.
+/// original secret. The shares must meet the group and member thresholds
+/// specified when the shares were generated.
 ///
 /// # Parameters
 ///
@@ -451,7 +444,8 @@ pub fn sskr_generate_using(
 /// Returns an error if:
 /// - The shares don't all belong to the same split (different identifiers)
 /// - There are insufficient shares to meet the group threshold
-/// - There are insufficient shares within each group to meet their member thresholds
+/// - There are insufficient shares within each group to meet their member
+///   thresholds
 /// - The shares are malformed or corrupted
 ///
 /// # Example
@@ -489,7 +483,7 @@ pub fn sskr_generate_using(
 pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError> {
     let shares: Vec<Vec<u8>> = shares
         .iter()
-        .map(|share| share.data().to_vec())
+        .map(|share| share.as_bytes().to_vec())
         .collect();
     sskr::sskr_combine(&shares)
 }

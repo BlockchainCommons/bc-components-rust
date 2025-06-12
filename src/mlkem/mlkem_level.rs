@@ -1,8 +1,8 @@
-use anyhow::{ bail, Error, Result };
-use pqcrypto_mlkem::*;
+use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
+use pqcrypto_mlkem::*;
 
-use super::{ MLKEMPrivateKey, MLKEMPublicKey };
+use super::{MLKEMPrivateKey, MLKEMPublicKey};
 
 /// Security levels for the ML-KEM post-quantum key encapsulation mechanism.
 ///
@@ -10,22 +10,22 @@ use super::{ MLKEMPrivateKey, MLKEMPublicKey };
 /// key encapsulation mechanism standardized by NIST. It provides resistance
 /// against attacks from both classical and quantum computers.
 ///
-/// Each security level offers different trade-offs between security, performance,
-/// and key/ciphertext sizes:
+/// Each security level offers different trade-offs between security,
+/// performance, and key/ciphertext sizes:
 ///
 /// - `MLKEM512`: NIST security level 1 (roughly equivalent to AES-128)
 /// - `MLKEM768`: NIST security level 3 (roughly equivalent to AES-192)
 /// - `MLKEM1024`: NIST security level 5 (roughly equivalent to AES-256)
 ///
-/// The numeric values (512, 768, 1024) correspond to the parameter sets and are used
-/// in CBOR serialization.
+/// The numeric values (512, 768, 1024) correspond to the parameter sets and are
+/// used in CBOR serialization.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u32)]
 pub enum MLKEM {
     /// ML-KEM-512 (NIST security level 1, roughly equivalent to AES-128)
-    MLKEM512 = 512,
+    MLKEM512  = 512,
     /// ML-KEM-768 (NIST security level 3, roughly equivalent to AES-192)
-    MLKEM768 = 768,
+    MLKEM768  = 768,
     /// ML-KEM-1024 (NIST security level 5, roughly equivalent to AES-256)
     MLKEM1024 = 1024,
 }
@@ -50,15 +50,24 @@ impl MLKEM {
         match self {
             MLKEM::MLKEM512 => {
                 let (pk, sk) = mlkem512::keypair();
-                (MLKEMPrivateKey::MLKEM512(sk.into()), MLKEMPublicKey::MLKEM512(pk.into()))
+                (
+                    MLKEMPrivateKey::MLKEM512(sk.into()),
+                    MLKEMPublicKey::MLKEM512(pk.into()),
+                )
             }
             MLKEM::MLKEM768 => {
                 let (pk, sk) = mlkem768::keypair();
-                (MLKEMPrivateKey::MLKEM768(sk.into()), MLKEMPublicKey::MLKEM768(pk.into()))
+                (
+                    MLKEMPrivateKey::MLKEM768(sk.into()),
+                    MLKEMPublicKey::MLKEM768(pk.into()),
+                )
             }
             MLKEM::MLKEM1024 => {
                 let (pk, sk) = mlkem1024::keypair();
-                (MLKEMPrivateKey::MLKEM1024(sk.into()), MLKEMPublicKey::MLKEM1024(pk.into()))
+                (
+                    MLKEMPrivateKey::MLKEM1024(sk.into()),
+                    MLKEMPublicKey::MLKEM1024(pk.into()),
+                )
             }
         }
     }
@@ -120,9 +129,7 @@ impl MLKEM {
 /// Converts an `MLKEM` value to CBOR.
 impl From<MLKEM> for CBOR {
     /// Converts to the numeric security level value (512, 768, or 1024).
-    fn from(mlkem: MLKEM) -> Self {
-        (mlkem as u32).into()
-    }
+    fn from(mlkem: MLKEM) -> Self { (mlkem as u32).into() }
 }
 
 /// Attempts to convert CBOR to an `MLKEM` value.
@@ -132,7 +139,8 @@ impl TryFrom<CBOR> for MLKEM {
     /// Converts from a CBOR-encoded security level (512, 768, or 1024).
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM level.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-KEM
+    /// level.
     fn try_from(cbor: CBOR) -> Result<Self> {
         let level = u32::try_from(cbor)?;
         match level {

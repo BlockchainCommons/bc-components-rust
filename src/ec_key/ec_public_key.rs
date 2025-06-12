@@ -1,17 +1,18 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
-use crate::{tags, ECKey, ECKeyBase, ECPublicKeyBase, Signature, Verifier};
+use crate::{ECKey, ECKeyBase, ECPublicKeyBase, Signature, Verifier, tags};
 
 /// The size of an ECDSA compressed public key in bytes (33 bytes).
 pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
 /// A compressed elliptic curve digital signature algorithm (ECDSA) public key.
 ///
-/// An `ECPublicKey` is a 33-byte compressed representation of a public key on the
-/// secp256k1 curve. The first byte is a prefix (0x02 or 0x03) that indicates the
-/// parity of the y-coordinate, followed by the 32-byte x-coordinate.
+/// An `ECPublicKey` is a 33-byte compressed representation of a public key on
+/// the secp256k1 curve. The first byte is a prefix (0x02 or 0x03) that
+/// indicates the parity of the y-coordinate, followed by the 32-byte
+/// x-coordinate.
 ///
 /// These public keys are used to:
 /// - Verify ECDSA signatures
@@ -19,14 +20,15 @@ pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 /// - Derive shared secrets (when combined with another party's private key)
 ///
 /// Unlike the larger 65-byte uncompressed format (`ECUncompressedPublicKey`),
-/// compressed public keys save space while providing the same cryptographic security.
+/// compressed public keys save space while providing the same cryptographic
+/// security.
 ///
 /// # Examples
 ///
 /// Verifying an ECDSA signature:
 ///
 /// ```
-/// use bc_components::{ECPrivateKey, ECPublicKey, ECKey};
+/// use bc_components::{ECKey, ECPrivateKey, ECPublicKey};
 ///
 /// // Generate a keypair
 /// let private_key = ECPrivateKey::new();
@@ -51,23 +53,32 @@ impl ECPublicKey {
     }
 
     /// Returns the ECDSA public key as an array of bytes.
-    pub fn data(&self) -> &[u8; ECDSA_PUBLIC_KEY_SIZE] {
-        &self.0
-    }
+    pub fn data(&self) -> &[u8; ECDSA_PUBLIC_KEY_SIZE] { &self.0 }
+
+    /// Get the ECDSA public key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 }
 
 impl ECPublicKey {
     /// Verifies an ECDSA signature for a message using this public key.
     ///
-    /// Returns `true` if the signature is valid for the given message and this public key,
-    /// and `false` otherwise.
+    /// Returns `true` if the signature is valid for the given message and this
+    /// public key, and `false` otherwise.
     ///
     /// # Parameters
     /// - `signature`: A 70-72 byte DER-encoded ECDSA signature
     /// - `message`: The message that was signed
-    pub fn verify(&self, signature: &[u8; ECDSA_SIGNATURE_SIZE], message: impl AsRef<[u8]>) -> bool {
+    pub fn verify(
+        &self,
+        signature: &[u8; ECDSA_SIGNATURE_SIZE],
+        message: impl AsRef<[u8]>,
+    ) -> bool {
         bc_crypto::ecdsa_verify(&self.0, signature, message)
     }
+}
+
+impl AsRef<[u8]> for ECPublicKey {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Formats the key as a hexadecimal string.
@@ -92,7 +103,10 @@ impl ECKeyBase for ECPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 
     /// Creates a key from a byte slice, with validation.
-    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self>
+    where
+        Self: Sized,
+    {
         let data = data.as_ref();
         if data.len() != ECDSA_PUBLIC_KEY_SIZE {
             bail!("Invalid ECDSA public key size");
@@ -103,16 +117,15 @@ impl ECKeyBase for ECPublicKey {
     }
 
     /// Returns the key as a byte slice.
-    fn data(&self) -> &[u8] {
-        self.into()
-    }
+    fn data(&self) -> &[u8] { self.into() }
 }
 
 /// Implements the `Verifier` trait for verifying signatures.
 impl Verifier for ECPublicKey {
     /// Verifies a signature for a message using this public key.
     ///
-    /// Only supports ECDSA signatures; returns `false` for other signature types.
+    /// Only supports ECDSA signatures; returns `false` for other signature
+    /// types.
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         match signature {
             Signature::ECDSA(sig) => self.verify(sig, message),
@@ -124,12 +137,11 @@ impl Verifier for ECPublicKey {
 /// Implements the `ECKey` trait for `ECPublicKey`.
 impl ECKey for ECPublicKey {
     /// Returns the public key (self).
-    fn public_key(&self) -> ECPublicKey {
-        self.clone()
-    }
+    fn public_key(&self) -> ECPublicKey { self.clone() }
 }
 
-/// Implements the `ECPublicKeyBase` trait for converting to uncompressed format.
+/// Implements the `ECPublicKeyBase` trait for converting to uncompressed
+/// format.
 impl ECPublicKeyBase for ECPublicKey {
     /// Converts this compressed public key to its uncompressed form.
     fn uncompressed_public_key(&self) -> crate::ECUncompressedPublicKey {
@@ -137,12 +149,11 @@ impl ECPublicKeyBase for ECPublicKey {
     }
 }
 
-/// Converts a reference to an `ECPublicKey` to a reference to a fixed-size byte array.
+/// Converts a reference to an `ECPublicKey` to a reference to a fixed-size byte
+/// array.
 impl<'a> From<&'a ECPublicKey> for &'a [u8; ECPublicKey::KEY_SIZE] {
     /// Returns a reference to the underlying byte array.
-    fn from(value: &'a ECPublicKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a ECPublicKey) -> Self { &value.0 }
 }
 
 /// Converts a fixed-size byte array to an `ECPublicKey`.
@@ -156,9 +167,7 @@ impl From<[u8; ECDSA_PUBLIC_KEY_SIZE]> for ECPublicKey {
 /// Converts a reference to an `ECPublicKey` to a reference to a byte slice.
 impl<'a> From<&'a ECPublicKey> for &'a [u8] {
     /// Returns a reference to the key as a byte slice.
-    fn from(value: &'a ECPublicKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a ECPublicKey) -> Self { &value.0 }
 }
 
 /// Defines CBOR tags for EC keys.
@@ -172,9 +181,7 @@ impl CBORTagged for ECPublicKey {
 /// Converts an `ECPublicKey` to CBOR.
 impl From<ECPublicKey> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: ECPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: ECPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for EC public keys.
@@ -182,8 +189,8 @@ impl CBORTaggedEncodable for ECPublicKey {
     /// Creates the untagged CBOR representation.
     ///
     /// The format is a map with:
-    /// - Key 3: byte string of the key data
-    ///   (Note the absence of key 2, which would indicate a private key)
+    /// - Key 3: byte string of the key data (Note the absence of key 2, which
+    ///   would indicate a private key)
     fn untagged_cbor(&self) -> CBOR {
         let mut m = Map::new();
         m.insert(3, CBOR::to_byte_string(self.0));

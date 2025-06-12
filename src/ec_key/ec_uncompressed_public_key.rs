@@ -1,23 +1,25 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use bc_ur::prelude::*;
 
-use crate::{ECKeyBase, ECKey, tags, ECPublicKeyBase, ECPublicKey};
+use crate::{ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, tags};
 
 /// The size of an ECDSA uncompressed public key in bytes (65 bytes).
-pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
+pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize =
+    bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
 
-/// An uncompressed elliptic curve digital signature algorithm (ECDSA) public key.
+/// An uncompressed elliptic curve digital signature algorithm (ECDSA) public
+/// key.
 ///
-/// An `ECUncompressedPublicKey` is a 65-byte representation of a public key on the
-/// secp256k1 curve. It consists of:
+/// An `ECUncompressedPublicKey` is a 65-byte representation of a public key on
+/// the secp256k1 curve. It consists of:
 ///
 /// - 1 byte prefix (0x04)
 /// - 32 bytes for the x-coordinate
 /// - 32 bytes for the y-coordinate
 ///
-/// This format explicitly includes both coordinates of the elliptic curve point,
-/// unlike the compressed format which only includes the x-coordinate and a single
-/// byte to indicate the parity of the y-coordinate.
+/// This format explicitly includes both coordinates of the elliptic curve
+/// point, unlike the compressed format which only includes the x-coordinate and
+/// a single byte to indicate the parity of the y-coordinate.
 ///
 /// This is considered a legacy key type and is not recommended for general use.
 /// The compressed format (`ECPublicKey`) is more space-efficient and provides
@@ -29,7 +31,10 @@ pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRES
 /// Converting between compressed and uncompressed formats:
 ///
 /// ```
-/// use bc_components::{ECPrivateKey, ECPublicKey, ECUncompressedPublicKey, ECKey, ECPublicKeyBase};
+/// use bc_components::{
+///     ECKey, ECPrivateKey, ECPublicKey, ECPublicKeyBase,
+///     ECUncompressedPublicKey,
+/// };
 ///
 /// // Generate a keypair
 /// let private_key = ECPrivateKey::new();
@@ -51,7 +56,9 @@ impl ECUncompressedPublicKey {
     /// Restores an ECDSA uncompressed public key from an array of bytes.
     ///
     /// This method performs no validation on the input data.
-    pub const fn from_data(data: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]) -> Self {
+    pub const fn from_data(
+        data: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE],
+    ) -> Self {
         Self(data)
     }
 }
@@ -78,7 +85,10 @@ impl ECKeyBase for ECUncompressedPublicKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE;
 
     /// Creates a key from a byte slice, with validation.
-    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self>
+    where
+        Self: Sized,
+    {
         let data = data.as_ref();
         if data.len() != ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE {
             bail!("Invalid ECDSA uncompressed public key size");
@@ -89,9 +99,7 @@ impl ECKeyBase for ECUncompressedPublicKey {
     }
 
     /// Returns the key as a byte slice.
-    fn data(&self) -> &[u8] {
-        &self.0
-    }
+    fn data(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements the `ECKey` trait for converting to compressed format.
@@ -111,7 +119,9 @@ impl ECPublicKeyBase for ECUncompressedPublicKey {
 }
 
 /// Converts a fixed-size byte array to an `ECUncompressedPublicKey`.
-impl From<[u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]> for ECUncompressedPublicKey {
+impl From<[u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]>
+    for ECUncompressedPublicKey
+{
     /// Converts a 65-byte array into an EC uncompressed public key.
     fn from(value: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]) -> Self {
         Self::from_data(value)
@@ -121,9 +131,7 @@ impl From<[u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]> for ECUncompressedPublicKey 
 /// Provides a reference to the key data as a byte slice.
 impl AsRef<[u8]> for ECUncompressedPublicKey {
     /// Returns a reference to the key as a byte slice.
-    fn as_ref(&self) -> &[u8] {
-        self.data()
-    }
+    fn as_ref(&self) -> &[u8] { self.data() }
 }
 
 /// Defines CBOR tags for EC keys.
@@ -137,9 +145,7 @@ impl CBORTagged for ECUncompressedPublicKey {
 /// Converts an `ECUncompressedPublicKey` to CBOR.
 impl From<ECUncompressedPublicKey> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: ECUncompressedPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: ECUncompressedPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for EC uncompressed public keys.

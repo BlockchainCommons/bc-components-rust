@@ -1,16 +1,21 @@
 use std::borrow::Cow;
-use bc_ur::prelude::*;
-use crate::{ digest_provider::DigestProvider, tags, Digest };
-use anyhow::{ bail, Result };
 
-/// Implementers of this trait provide a globally unique reference to themselves.
+use anyhow::{Result, bail};
+use bc_ur::prelude::*;
+
+use crate::{Digest, digest_provider::DigestProvider, tags};
+
+/// Implementers of this trait provide a globally unique reference to
+/// themselves.
 ///
-/// The `ReferenceProvider` trait is used to create a unique, cryptographic reference
-/// to an object. This is particularly useful for distributed systems where objects need
-/// to be uniquely identified across networks or storage systems.
+/// The `ReferenceProvider` trait is used to create a unique, cryptographic
+/// reference to an object. This is particularly useful for distributed systems
+/// where objects need to be uniquely identified across networks or storage
+/// systems.
 ///
-/// The reference is derived from a cryptographic digest of the object's serialized form,
-/// ensuring that the reference uniquely identifies the object's contents.
+/// The reference is derived from a cryptographic digest of the object's
+/// serialized form, ensuring that the reference uniquely identifies the
+/// object's contents.
 pub trait ReferenceProvider {
     /// Returns a cryptographic reference that uniquely identifies this object.
     ///
@@ -22,34 +27,30 @@ pub trait ReferenceProvider {
     ///
     /// This is a convenience method that returns the full 32-byte reference
     /// as a 64-character hexadecimal string.
-    fn ref_hex(&self) -> String {
-        self.reference().ref_hex()
-    }
+    fn ref_hex(&self) -> String { self.reference().ref_hex() }
 
     /// Returns the first four bytes of the reference.
     ///
     /// This is a convenience method for when a shorter, more user-friendly
     /// representation is needed, such as for display or comparison purposes.
-    fn ref_data_short(&self) -> [u8; 4] {
-        self.reference().ref_data_short()
-    }
+    fn ref_data_short(&self) -> [u8; 4] { self.reference().ref_data_short() }
 
     /// Returns the first four bytes of the reference as a hexadecimal string.
     ///
     /// This produces an 8-character string that is useful for display purposes,
     /// such as in debug output or logs.
-    fn ref_hex_short(&self) -> String {
-        self.reference().ref_hex_short()
-    }
+    fn ref_hex_short(&self) -> String { self.reference().ref_hex_short() }
 
     /// Returns the first four bytes of the reference as upper-case ByteWords.
     ///
-    /// ByteWords is a human-readable encoding format that uses common English words
-    /// to represent binary data, making it easier to communicate verbally or in text.
+    /// ByteWords is a human-readable encoding format that uses common English
+    /// words to represent binary data, making it easier to communicate
+    /// verbally or in text.
     ///
     /// # Parameters
     ///
-    /// * `prefix` - An optional prefix to add before the ByteWords representation
+    /// * `prefix` - An optional prefix to add before the ByteWords
+    ///   representation
     fn ref_bytewords(&self, prefix: Option<&str>) -> String {
         self.reference().bytewords_identifier(prefix)
     }
@@ -61,7 +62,8 @@ pub trait ReferenceProvider {
     ///
     /// # Parameters
     ///
-    /// * `prefix` - An optional prefix to add before the Bytemoji representation
+    /// * `prefix` - An optional prefix to add before the Bytemoji
+    ///   representation
     fn ref_bytemoji(&self, prefix: Option<&str>) -> String {
         self.reference().bytemoji_identifier(prefix)
     }
@@ -89,9 +91,7 @@ impl Reference {
     pub const REFERENCE_SIZE: usize = 32;
 
     /// Create a new reference from data.
-    pub fn from_data(data: [u8; Self::REFERENCE_SIZE]) -> Self {
-        Self(data)
-    }
+    pub fn from_data(data: [u8; Self::REFERENCE_SIZE]) -> Self { Self(data) }
 
     /// Create a new reference from data.
     ///
@@ -112,9 +112,10 @@ impl Reference {
     }
 
     /// Get the data of the reference.
-    pub fn data(&self) -> &[u8; Self::REFERENCE_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::REFERENCE_SIZE] { self.into() }
+
+    /// Get the data of the reference as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Create a new reference from the given hexadecimal string.
     ///
@@ -125,19 +126,13 @@ impl Reference {
     }
 
     /// The data as a hexadecimal string.
-    pub fn ref_hex(&self) -> String {
-        hex::encode(self.0)
-    }
+    pub fn ref_hex(&self) -> String { hex::encode(self.0) }
 
     /// The first four bytes of the reference
-    pub fn ref_data_short(&self) -> [u8; 4] {
-        self.0[0..4].try_into().unwrap()
-    }
+    pub fn ref_data_short(&self) -> [u8; 4] { self.0[0..4].try_into().unwrap() }
 
     /// The first four bytes of the reference as a hexadecimal string.
-    pub fn ref_hex_short(&self) -> String {
-        hex::encode(self.ref_data_short())
-    }
+    pub fn ref_hex_short(&self) -> String { hex::encode(self.ref_data_short()) }
 
     /// The first four bytes of the XID as upper-case ByteWords.
     pub fn bytewords_identifier(&self, prefix: Option<&str>) -> String {
@@ -151,7 +146,9 @@ impl Reference {
 
     /// The first four bytes of the XID as Bytemoji.
     pub fn bytemoji_identifier(&self, prefix: Option<&str>) -> String {
-        let s = bytewords::bytemoji_identifier(&self.0[..4].try_into().unwrap()).to_uppercase();
+        let s =
+            bytewords::bytemoji_identifier(&self.0[..4].try_into().unwrap())
+                .to_uppercase();
         if let Some(prefix) = prefix {
             format!("{prefix} {s}")
         } else {
@@ -170,27 +167,19 @@ impl ReferenceProvider for Reference {
 }
 
 impl<'a> From<&'a Reference> for &'a [u8; Reference::REFERENCE_SIZE] {
-    fn from(value: &'a Reference) -> Self {
-        &value.0
-    }
+    fn from(value: &'a Reference) -> Self { &value.0 }
 }
 
 impl<'a> From<&'a Reference> for &'a [u8] {
-    fn from(value: &'a Reference) -> Self {
-        &value.0
-    }
+    fn from(value: &'a Reference) -> Self { &value.0 }
 }
 
 impl AsRef<[u8]> for Reference {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 impl AsRef<Reference> for Reference {
-    fn as_ref(&self) -> &Reference {
-        self
-    }
+    fn as_ref(&self) -> &Reference { self }
 }
 
 impl std::cmp::PartialOrd for Reference {
@@ -200,9 +189,7 @@ impl std::cmp::PartialOrd for Reference {
 }
 
 impl std::cmp::Ord for Reference {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.cmp(&other.0)
-    }
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering { self.0.cmp(&other.0) }
 }
 
 impl DigestProvider for Reference {
@@ -224,21 +211,15 @@ impl std::fmt::Display for Reference {
 }
 
 impl CBORTagged for Reference {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_REFERENCE])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_REFERENCE]) }
 }
 
 impl From<Reference> for CBOR {
-    fn from(value: Reference) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Reference) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for Reference {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.0) }
 }
 
 impl TryFrom<CBOR> for Reference {
@@ -258,21 +239,15 @@ impl CBORTaggedDecodable for Reference {
 
 // Convert from an instance reference to an instance.
 impl From<&Reference> for Reference {
-    fn from(digest: &Reference) -> Self {
-        digest.clone()
-    }
+    fn from(digest: &Reference) -> Self { digest.clone() }
 }
 
 // Convert from a byte vector to an instance.
 impl From<Reference> for Vec<u8> {
-    fn from(digest: Reference) -> Self {
-        digest.0.to_vec()
-    }
+    fn from(digest: Reference) -> Self { digest.0.to_vec() }
 }
 
 // Convert a reference to an instance to a byte vector.
 impl From<&Reference> for Vec<u8> {
-    fn from(digest: &Reference) -> Self {
-        digest.0.to_vec()
-    }
+    fn from(digest: &Reference) -> Self { digest.0.to_vec() }
 }

@@ -125,40 +125,36 @@ impl EncryptedKey {
         let cbor = self.aad_cbor()?;
         let array = cbor.clone().try_into_array()?;
         let method = array
-            .get(0)
+            .first()
             .ok_or_else(|| Error::msg("Missing method"))?
             .try_into()?;
         match method {
             KeyDerivationMethod::HKDF => {
                 let params = HKDFParams::try_from(cbor)?;
-                params.unlock(&encrypted_message, secret)
+                params.unlock(encrypted_message, secret)
             }
             KeyDerivationMethod::PBKDF2 => {
                 let params = PBKDF2Params::try_from(cbor)?;
-                params.unlock(&encrypted_message, secret)
+                params.unlock(encrypted_message, secret)
             }
             KeyDerivationMethod::Scrypt => {
                 let params = ScryptParams::try_from(cbor)?;
-                params.unlock(&encrypted_message, secret)
+                params.unlock(encrypted_message, secret)
             }
             KeyDerivationMethod::Argon2id => {
                 let params = Argon2idParams::try_from(cbor)?;
-                params.unlock(&encrypted_message, secret)
+                params.unlock(encrypted_message, secret)
             }
             KeyDerivationMethod::SSHAgent => {
                 let params = SSHAgentParams::try_from(cbor)?;
-                params.unlock(&encrypted_message, secret)
+                params.unlock(encrypted_message, secret)
             }
         }
     }
 
-    pub fn is_password_based(&self) -> bool {
-        self.params.is_password_based()
-    }
+    pub fn is_password_based(&self) -> bool { self.params.is_password_based() }
 
-    pub fn is_ssh_agent(&self) -> bool {
-        self.params.is_ssh_agent()
-    }
+    pub fn is_ssh_agent(&self) -> bool { self.params.is_ssh_agent() }
 }
 
 impl std::fmt::Display for EncryptedKey {
@@ -176,9 +172,7 @@ impl From<EncryptedKey> for CBOR {
 }
 
 impl CBORTaggedEncodable for EncryptedKey {
-    fn untagged_cbor(&self) -> CBOR {
-        return self.encrypted_message().clone().into();
-    }
+    fn untagged_cbor(&self) -> CBOR { self.encrypted_message().clone().into() }
 }
 
 impl TryFrom<CBOR> for EncryptedKey {

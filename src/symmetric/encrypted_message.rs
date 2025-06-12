@@ -177,7 +177,7 @@ impl CBORTaggedDecodable for EncryptedMessage {
                 };
                 Ok(Self::new(ciphertext, aad, nonce, auth))
             }
-            _ => return Err("EncryptedMessage must be an array".into()),
+            _ => Err("EncryptedMessage must be an array".into()),
         }
     }
 }

@@ -1,8 +1,9 @@
-//! Module Lattice-based Digital Signature Algorithm (ML-DSA) types and operations.
+//! Module Lattice-based Digital Signature Algorithm (ML-DSA) types and
+//! operations.
 //!
-//! This module provides types and operations for the ML-DSA post-quantum digital
-//! signature algorithm, standardized by NIST. ML-DSA offers resistance against
-//! attacks from both classical and quantum computers.
+//! This module provides types and operations for the ML-DSA post-quantum
+//! digital signature algorithm, standardized by NIST. ML-DSA offers resistance
+//! against attacks from both classical and quantum computers.
 //!
 //! The main components are:
 //!
@@ -15,12 +16,15 @@
 //!
 //! ML-DSA is implemented with three security levels:
 //!
-//! - **MLDSA44**: Provides NIST security level 2 (roughly equivalent to AES-128)
-//! - **MLDSA65**: Provides NIST security level 3 (roughly equivalent to AES-192)
-//! - **MLDSA87**: Provides NIST security level 5 (roughly equivalent to AES-256)
+//! - **MLDSA44**: Provides NIST security level 2 (roughly equivalent to
+//!   AES-128)
+//! - **MLDSA65**: Provides NIST security level 3 (roughly equivalent to
+//!   AES-192)
+//! - **MLDSA87**: Provides NIST security level 5 (roughly equivalent to
+//!   AES-256)
 //!
-//! Higher security levels provide stronger security guarantees but result in larger
-//! key and signature sizes.
+//! Higher security levels provide stronger security guarantees but result in
+//! larger key and signature sizes.
 //!
 //! ## Usage
 //!
@@ -64,9 +68,11 @@ mod tests {
         let (private_key, public_key) = MLDSA::MLDSA44.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
-        assert!(!public_key
-            .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
-            .unwrap());
+        assert!(
+            !public_key
+                .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
+                .unwrap()
+        );
     }
 
     #[test]
@@ -74,9 +80,11 @@ mod tests {
         let (private_key, public_key) = MLDSA::MLDSA65.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
-        assert!(!public_key
-            .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
-            .unwrap());
+        assert!(
+            !public_key
+                .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
+                .unwrap()
+        );
     }
 
     #[test]
@@ -84,8 +92,10 @@ mod tests {
         let (private_key, public_key) = MLDSA::MLDSA87.keypair();
         let signature = private_key.sign(MESSAGE);
         assert!(public_key.verify(&signature, MESSAGE).unwrap());
-        assert!(!public_key
-            .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
-            .unwrap());
+        assert!(
+            !public_key
+                .verify(&signature, &MESSAGE[..MESSAGE.len() - 1])
+                .unwrap()
+        );
     }
 }

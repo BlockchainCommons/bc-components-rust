@@ -1,13 +1,13 @@
-use anyhow::{ anyhow, Result };
+use anyhow::{Result, anyhow};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
+use super::MLDSA;
 use crate::tags;
 
-use super::MLDSA;
-
-/// A digital signature created with the ML-DSA post-quantum signature algorithm.
+/// A digital signature created with the ML-DSA post-quantum signature
+/// algorithm.
 ///
 /// `MLDSASignature` represents a digital signature created using the ML-DSA
 /// (Module Lattice-based Digital Signature Algorithm) post-quantum algorithm.
@@ -48,10 +48,9 @@ pub enum MLDSASignature {
 impl PartialEq for MLDSASignature {
     /// Compares two ML-DSA signatures for equality.
     ///
-    /// Two ML-DSA signatures are equal if they have the same raw byte representation.
-    fn eq(&self, other: &Self) -> bool {
-        self.as_bytes() == other.as_bytes()
-    }
+    /// Two ML-DSA signatures are equal if they have the same raw byte
+    /// representation.
+    fn eq(&self, other: &Self) -> bool { self.as_bytes() == other.as_bytes() }
 }
 
 impl MLDSASignature {
@@ -65,18 +64,10 @@ impl MLDSASignature {
     }
 
     /// Returns the size of this ML-DSA signature in bytes.
-    pub fn size(&self) -> usize {
-        self.level().signature_size()
-    }
+    pub fn size(&self) -> usize { self.level().signature_size() }
 
     /// Returns the raw bytes of this ML-DSA signature.
-    pub fn as_bytes(&self) -> &[u8] {
-        match self {
-            MLDSASignature::MLDSA44(sig) => sig.as_bytes(),
-            MLDSASignature::MLDSA65(sig) => sig.as_bytes(),
-            MLDSASignature::MLDSA87(sig) => sig.as_bytes(),
-        }
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates an ML-DSA signature from raw bytes and a security level.
     ///
@@ -87,8 +78,8 @@ impl MLDSASignature {
     ///
     /// # Returns
     ///
-    /// An `MLDSASignature` if the bytes represent a valid signature for the given level,
-    /// or an error otherwise.
+    /// An `MLDSASignature` if the bytes represent a valid signature for the
+    /// given level, or an error otherwise.
     ///
     /// # Errors
     ///
@@ -96,30 +87,29 @@ impl MLDSASignature {
     /// for the specified security level.
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
-            MLDSA::MLDSA44 =>
-                Ok(
-                    MLDSASignature::MLDSA44(
-                        Box::new(
-                            mldsa44::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
-                        )
-                    )
-                ),
-            MLDSA::MLDSA65 =>
-                Ok(
-                    MLDSASignature::MLDSA65(
-                        Box::new(
-                            mldsa65::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
-                        )
-                    )
-                ),
-            MLDSA::MLDSA87 =>
-                Ok(
-                    MLDSASignature::MLDSA87(
-                        Box::new(
-                            mldsa87::DetachedSignature::from_bytes(bytes).map_err(|e| anyhow!(e))?
-                        )
-                    )
-                ),
+            MLDSA::MLDSA44 => Ok(MLDSASignature::MLDSA44(Box::new(
+                mldsa44::DetachedSignature::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLDSA::MLDSA65 => Ok(MLDSASignature::MLDSA65(Box::new(
+                mldsa65::DetachedSignature::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+            MLDSA::MLDSA87 => Ok(MLDSASignature::MLDSA87(Box::new(
+                mldsa87::DetachedSignature::from_bytes(bytes)
+                    .map_err(|e| anyhow!(e))?,
+            ))),
+        }
+    }
+}
+
+impl AsRef<[u8]> for MLDSASignature {
+    /// Returns the raw bytes of the signature.
+    fn as_ref(&self) -> &[u8] {
+        match self {
+            MLDSASignature::MLDSA44(sig) => sig.as_bytes(),
+            MLDSASignature::MLDSA65(sig) => sig.as_bytes(),
+            MLDSASignature::MLDSA87(sig) => sig.as_bytes(),
         }
     }
 }
@@ -139,22 +129,19 @@ impl std::fmt::Debug for MLDSASignature {
 /// Defines CBOR tags for ML-DSA signatures.
 impl CBORTagged for MLDSASignature {
     /// Returns the CBOR tag for ML-DSA signatures.
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_MLDSA_SIGNATURE])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_MLDSA_SIGNATURE]) }
 }
 
 /// Converts an `MLDSASignature` to CBOR.
 impl From<MLDSASignature> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: MLDSASignature) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: MLDSASignature) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for ML-DSA signatures.
 impl CBORTaggedEncodable for MLDSASignature {
-    /// Creates the untagged CBOR representation as an array with level and signature bytes.
+    /// Creates the untagged CBOR representation as an array with level and
+    /// signature bytes.
     fn untagged_cbor(&self) -> CBOR {
         vec![self.level().into(), CBOR::to_byte_string(self.as_bytes())].into()
     }
@@ -175,7 +162,8 @@ impl CBORTaggedDecodable for MLDSASignature {
     /// Creates an `MLDSASignature` from untagged CBOR.
     ///
     /// # Errors
-    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA signature.
+    /// Returns an error if the CBOR value doesn't represent a valid ML-DSA
+    /// signature.
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.as_case() {
             CBORCase::Array(elements) => {
@@ -187,9 +175,7 @@ impl CBORTaggedDecodable for MLDSASignature {
                 let data = CBOR::try_into_byte_string(elements[1].clone())?;
                 Ok(MLDSASignature::from_bytes(level, &data)?)
             }
-            _ => {
-                return Err("MLDSASignature must be an array".into());
-            }
+            _ => Err("MLDSASignature must be an array".into()),
         }
     }
 }

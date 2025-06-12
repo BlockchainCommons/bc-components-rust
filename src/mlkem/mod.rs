@@ -1,8 +1,9 @@
-//! Module Lattice-based Key Encapsulation Mechanism (ML-KEM) types and operations.
+//! Module Lattice-based Key Encapsulation Mechanism (ML-KEM) types and
+//! operations.
 //!
 //! This module provides types and operations for the ML-KEM post-quantum key
-//! encapsulation mechanism, standardized by NIST. ML-KEM offers resistance against
-//! attacks from both classical and quantum computers.
+//! encapsulation mechanism, standardized by NIST. ML-KEM offers resistance
+//! against attacks from both classical and quantum computers.
 //!
 //! The main components are:
 //!
@@ -15,12 +16,15 @@
 //!
 //! ML-KEM is implemented with three security levels:
 //!
-//! - **MLKEM512**: Provides NIST security level 1 (roughly equivalent to AES-128)
-//! - **MLKEM768**: Provides NIST security level 3 (roughly equivalent to AES-192)
-//! - **MLKEM1024**: Provides NIST security level 5 (roughly equivalent to AES-256)
+//! - **MLKEM512**: Provides NIST security level 1 (roughly equivalent to
+//!   AES-128)
+//! - **MLKEM768**: Provides NIST security level 3 (roughly equivalent to
+//!   AES-192)
+//! - **MLKEM1024**: Provides NIST security level 5 (roughly equivalent to
+//!   AES-256)
 //!
-//! Higher security levels provide stronger security guarantees but result in larger
-//! key and ciphertext sizes.
+//! Higher security levels provide stronger security guarantees but result in
+//! larger key and ciphertext sizes.
 //!
 //! ## Usage
 //!
@@ -61,33 +65,39 @@ mod tests {
     #[test]
     pub fn test_mlkem512() {
         let (private_key, public_key) = MLKEM::MLKEM512.keypair();
-        let (shared_secret_1, ciphertext) = public_key.encapsulate_new_shared_secret();
+        let (shared_secret_1, ciphertext) =
+            public_key.encapsulate_new_shared_secret();
         assert_eq!(private_key.size(), 1632);
         assert_eq!(public_key.size(), 800);
         assert_eq!(ciphertext.size(), 768);
-        let shared_secret_2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+        let shared_secret_2 =
+            private_key.decapsulate_shared_secret(&ciphertext).unwrap();
         assert_eq!(shared_secret_1, shared_secret_2);
     }
 
     #[test]
     pub fn test_mlkem768() {
         let (private_key, public_key) = MLKEM::MLKEM768.keypair();
-        let (shared_secret_1, ciphertext) = public_key.encapsulate_new_shared_secret();
+        let (shared_secret_1, ciphertext) =
+            public_key.encapsulate_new_shared_secret();
         assert_eq!(private_key.size(), 2400);
         assert_eq!(public_key.size(), 1184);
         assert_eq!(ciphertext.size(), 1088);
-        let shared_secret_2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+        let shared_secret_2 =
+            private_key.decapsulate_shared_secret(&ciphertext).unwrap();
         assert_eq!(shared_secret_1, shared_secret_2);
     }
 
     #[test]
     pub fn test_mlkem1024() {
         let (private_key, public_key) = MLKEM::MLKEM1024.keypair();
-        let (shared_secret_1, ciphertext) = public_key.encapsulate_new_shared_secret();
+        let (shared_secret_1, ciphertext) =
+            public_key.encapsulate_new_shared_secret();
         assert_eq!(private_key.size(), 3168);
         assert_eq!(public_key.size(), 1568);
         assert_eq!(ciphertext.size(), 1568);
-        let shared_secret_2 = private_key.decapsulate_shared_secret(&ciphertext).unwrap();
+        let shared_secret_2 =
+            private_key.decapsulate_shared_secret(&ciphertext).unwrap();
         assert_eq!(shared_secret_1, shared_secret_2);
     }
 }

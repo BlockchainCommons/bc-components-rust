@@ -1,11 +1,11 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 
 pub const ED25519_PUBLIC_KEY_SIZE: usize = bc_crypto::ED25519_PUBLIC_KEY_SIZE;
 
 /// An Ed25519 public key for verifying digital signatures.
 ///
-/// Ed25519 public keys are used to verify signatures created with the corresponding
-/// private key. The Ed25519 signature system provides:
+/// Ed25519 public keys are used to verify signatures created with the
+/// corresponding private key. The Ed25519 signature system provides:
 ///
 /// - Fast signature verification
 /// - Small public keys (32 bytes)
@@ -35,13 +35,12 @@ impl Ed25519PublicKey {
     }
 
     /// Returns the Ed25519 public key as an array of bytes.
-    pub fn data(&self) -> &[u8; ED25519_PUBLIC_KEY_SIZE] {
-        &self.0
-    }
+    pub fn data(&self) -> &[u8; ED25519_PUBLIC_KEY_SIZE] { &self.0 }
 
-    fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    /// Get the Ed25519 public key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
+
+    fn hex(&self) -> String { hex::encode(self.data()) }
 
     pub fn from_hex(hex: impl AsRef<str>) -> Result<Self> {
         let data = hex::decode(hex.as_ref())?;
@@ -50,10 +49,19 @@ impl Ed25519PublicKey {
 }
 
 impl Ed25519PublicKey {
-    /// Verifies the given Ed25519 signature for the given message using this Ed25519 public key.
-    pub fn verify(&self, signature: &[u8; bc_crypto::ED25519_SIGNATURE_SIZE], message: impl AsRef<[u8]>) -> bool {
+    /// Verifies the given Ed25519 signature for the given message using this
+    /// Ed25519 public key.
+    pub fn verify(
+        &self,
+        signature: &[u8; bc_crypto::ED25519_SIGNATURE_SIZE],
+        message: impl AsRef<[u8]>,
+    ) -> bool {
         bc_crypto::ed25519_verify(&self.0, message.as_ref(), signature)
     }
+}
+
+impl AsRef<[u8]> for Ed25519PublicKey {
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implements Display to output the key as a hex string.
@@ -70,11 +78,10 @@ impl std::fmt::Debug for Ed25519PublicKey {
     }
 }
 
-/// Implements conversion from an Ed25519PublicKey reference to a byte array reference.
+/// Implements conversion from an Ed25519PublicKey reference to a byte array
+/// reference.
 impl<'a> From<&'a Ed25519PublicKey> for &'a [u8; ED25519_PUBLIC_KEY_SIZE] {
-    fn from(value: &'a Ed25519PublicKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a Ed25519PublicKey) -> Self { &value.0 }
 }
 
 /// Implements conversion from a byte array to an Ed25519PublicKey.
@@ -86,7 +93,5 @@ impl From<[u8; ED25519_PUBLIC_KEY_SIZE]> for Ed25519PublicKey {
 
 /// Implements conversion from an Ed25519PublicKey reference to a byte slice.
 impl<'a> From<&'a Ed25519PublicKey> for &'a [u8] {
-    fn from(value: &'a Ed25519PublicKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a Ed25519PublicKey) -> Self { &value.0 }
 }

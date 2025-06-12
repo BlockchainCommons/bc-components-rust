@@ -1,27 +1,30 @@
-use bc_rand::{ rng_random_data, RandomNumberGenerator, SecureRandomNumberGenerator };
-use bc_ur::prelude::*;
-use anyhow::{ bail, Result };
-use ssh_key::private::{
-    DsaKeypair,
-    EcdsaKeypair,
-    Ed25519Keypair,
-    KeypairData,
-    PrivateKey as SSHPrivateKey,
-    RsaKeypair,
+use anyhow::{Result, bail};
+use bc_rand::{
+    RandomNumberGenerator, SecureRandomNumberGenerator, rng_random_data,
 };
-use ssh_key::Algorithm as SSHAlgorithm;
+use bc_ur::prelude::*;
+use ssh_key::{
+    Algorithm as SSHAlgorithm,
+    private::{
+        DsaKeypair, EcdsaKeypair, Ed25519Keypair, KeypairData,
+        PrivateKey as SSHPrivateKey, RsaKeypair,
+    },
+};
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags, Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
+    Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey,
+    EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PrivateKeys,
+    PrivateKeysProvider, PublicKeys, PublicKeysProvider, Signature, Signer,
+    SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey, tags,
 };
 
 /// A secure foundation for deriving multiple cryptographic keys.
 ///
-/// `PrivateKeyBase` serves as a root of cryptographic material from which various
-/// types of keys can be deterministically derived. It securely manages the underlying
-/// key material and provides methods to derive specific cryptographic keys for different
-/// purposes.
+/// `PrivateKeyBase` serves as a root of cryptographic material from which
+/// various types of keys can be deterministically derived. It securely manages
+/// the underlying key material and provides methods to derive specific
+/// cryptographic keys for different purposes.
 ///
 /// It supports:
 /// - Deterministic derivation of signing keys (Schnorr, ECDSA, Ed25519)
@@ -35,18 +38,18 @@ use crate::{
 ///
 /// # Security
 ///
-/// `PrivateKeyBase` implements `ZeroizeOnDrop` to securely erase the sensitive key
-/// material from memory when the object is dropped, reducing the risk of key
-/// extraction via memory attacks.
+/// `PrivateKeyBase` implements `ZeroizeOnDrop` to securely erase the sensitive
+/// key material from memory when the object is dropped, reducing the risk of
+/// key extraction via memory attacks.
 ///
 /// # Examples
 ///
 /// Creating and using a PrivateKeyBase:
 ///
 /// ```
-/// use bc_components::PrivateKeyBase;
-/// use bc_components::Signer;
-/// use bc_components::{PrivateKeysProvider, PublicKeysProvider};
+/// use bc_components::{
+///     PrivateKeyBase, PrivateKeysProvider, PublicKeysProvider, Signer,
+/// };
 ///
 /// // Create a new random PrivateKeyBase
 /// let key_base = PrivateKeyBase::new();
@@ -56,7 +59,8 @@ use crate::{
 /// let signature = key_base.sign(message).unwrap();
 ///
 /// // Generate a key pair for public/private key operations
-/// let (private_keys, public_keys) = (key_base.private_keys(), key_base.public_keys());
+/// let (private_keys, public_keys) =
+///     (key_base.private_keys(), key_base.public_keys());
 /// ```
 #[derive(Clone, Eq, PartialEq, ZeroizeOnDrop)]
 pub struct PrivateKeyBase(Vec<u8>);
@@ -65,7 +69,7 @@ impl Signer for PrivateKeyBase {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
-        options: Option<SigningOptions>
+        options: Option<SigningOptions>,
     ) -> Result<Signature> {
         let schnorr_key = self.schnorr_signing_private_key();
         schnorr_key.sign_with_options(message, options)
@@ -74,9 +78,15 @@ impl Signer for PrivateKeyBase {
 
 impl Verifier for PrivateKeyBase {
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
-        let schnorr_key = self.schnorr_signing_private_key().to_schnorr().unwrap().public_key();
+        let schnorr_key = self
+            .schnorr_signing_private_key()
+            .to_schnorr()
+            .unwrap()
+            .public_key();
         match signature.to_schnorr() {
-            Some(schnorr_signature) => schnorr_key.verify(schnorr_signature, message),
+            Some(schnorr_signature) => {
+                schnorr_key.verify(schnorr_signature, message)
+            }
             None => false,
         }
     }
@@ -100,7 +110,8 @@ impl PrivateKeyBase {
         Self(data.as_ref().to_vec())
     }
 
-    /// Restores a `PrivateKeyBase` from an optional reference to an array of bytes.
+    /// Restores a `PrivateKeyBase` from an optional reference to an array of
+    /// bytes.
     ///
     /// If the data is `None`, a new random `PrivateKeyBase` is generated.
     pub fn from_optional_data(data: Option<impl AsRef<[u8]>>) -> Self {
@@ -110,7 +121,8 @@ impl PrivateKeyBase {
         }
     }
 
-    /// Generate a new random `PrivateKeyBase` using the given random number generator.
+    /// Generate a new random `PrivateKeyBase` using the given random number
+    /// generator.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
         Self::from_data(rng_random_data(rng, 32))
     }
@@ -122,32 +134,42 @@ impl PrivateKeyBase {
 
     /// Derive a new ECDSA `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn ecdsa_signing_private_key(&self) -> SigningPrivateKey {
-        SigningPrivateKey::new_ecdsa(ECPrivateKey::derive_from_key_material(&self.0))
+        SigningPrivateKey::new_ecdsa(ECPrivateKey::derive_from_key_material(
+            &self.0,
+        ))
     }
 
     /// Derive a new Schnorr `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn schnorr_signing_private_key(&self) -> SigningPrivateKey {
-        SigningPrivateKey::new_schnorr(ECPrivateKey::derive_from_key_material(&self.0))
+        SigningPrivateKey::new_schnorr(ECPrivateKey::derive_from_key_material(
+            &self.0,
+        ))
     }
 
     /// Derive a new Ed25519 `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn ed25519_signing_private_key(&self) -> SigningPrivateKey {
-        SigningPrivateKey::new_ed25519(Ed25519PrivateKey::derive_from_key_material(&self.0))
+        SigningPrivateKey::new_ed25519(
+            Ed25519PrivateKey::derive_from_key_material(&self.0),
+        )
     }
 
     /// Derive a new SSH `SigningPrivateKey` from this `PrivateKeyBase`.
     pub fn ssh_signing_private_key(
         &self,
         algorithm: SSHAlgorithm,
-        comment: impl Into<String>
+        comment: impl Into<String>,
     ) -> Result<SigningPrivateKey> {
         let mut rng = HKDFRng::new(&self.0, algorithm.as_str());
         let keypair = match algorithm {
-            SSHAlgorithm::Dsa => { KeypairData::Dsa(DsaKeypair::random(&mut rng)?) }
+            SSHAlgorithm::Dsa => {
+                KeypairData::Dsa(DsaKeypair::random(&mut rng)?)
+            }
             SSHAlgorithm::Ecdsa { curve } => {
                 KeypairData::Ecdsa(EcdsaKeypair::random(&mut rng, curve)?)
             }
-            SSHAlgorithm::Ed25519 => { KeypairData::Ed25519(Ed25519Keypair::random(&mut rng)) }
+            SSHAlgorithm::Ed25519 => {
+                KeypairData::Ed25519(Ed25519Keypair::random(&mut rng))
+            }
             SSHAlgorithm::Rsa { hash: _ } => {
                 KeypairData::Rsa(RsaKeypair::random(&mut rng, 2048)?)
             }
@@ -171,7 +193,7 @@ impl PrivateKeyBase {
     pub fn schnorr_private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
             self.schnorr_signing_private_key(),
-            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+            EncapsulationPrivateKey::X25519(self.x25519_private_key()),
         )
     }
 
@@ -182,7 +204,9 @@ impl PrivateKeyBase {
     pub fn schnorr_public_keys(&self) -> PublicKeys {
         PublicKeys::new(
             self.schnorr_signing_private_key().public_key().unwrap(),
-            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
+            EncapsulationPublicKey::X25519(
+                self.x25519_private_key().public_key(),
+            ),
         )
     }
 
@@ -193,7 +217,7 @@ impl PrivateKeyBase {
     pub fn ecdsa_private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
             self.ecdsa_signing_private_key(),
-            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+            EncapsulationPrivateKey::X25519(self.x25519_private_key()),
         )
     }
 
@@ -204,7 +228,9 @@ impl PrivateKeyBase {
     pub fn ecdsa_public_keys(&self) -> PublicKeys {
         PublicKeys::new(
             self.ecdsa_signing_private_key().public_key().unwrap(),
-            EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
+            EncapsulationPublicKey::X25519(
+                self.x25519_private_key().public_key(),
+            ),
         )
     }
 
@@ -215,15 +241,13 @@ impl PrivateKeyBase {
     pub fn ssh_private_keys(
         &self,
         algorithm: SSHAlgorithm,
-        comment: impl Into<String>
+        comment: impl Into<String>,
     ) -> Result<PrivateKeys> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
-        Ok(
-            PrivateKeys::with_keys(
-                private_key,
-                EncapsulationPrivateKey::X25519(self.x25519_private_key())
-            )
-        )
+        Ok(PrivateKeys::with_keys(
+            private_key,
+            EncapsulationPrivateKey::X25519(self.x25519_private_key()),
+        ))
     }
 
     /// Derive a new `PublicKeys` from this `PrivateKeyBase`.
@@ -233,42 +257,36 @@ impl PrivateKeyBase {
     pub fn ssh_public_keys(
         &self,
         algorithm: SSHAlgorithm,
-        comment: impl Into<String>
+        comment: impl Into<String>,
     ) -> Result<PublicKeys> {
         let private_key = self.ssh_signing_private_key(algorithm, comment)?;
-        Ok(
-            PublicKeys::new(
-                private_key.public_key().unwrap(),
-                EncapsulationPublicKey::X25519(self.x25519_private_key().public_key())
-            )
-        )
+        Ok(PublicKeys::new(
+            private_key.public_key().unwrap(),
+            EncapsulationPublicKey::X25519(
+                self.x25519_private_key().public_key(),
+            ),
+        ))
     }
 
     /// Get the raw data of this `PrivateKeyBase`.
-    pub fn data(&self) -> &[u8] {
-        self.into()
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 }
 
 impl PrivateKeysProvider for PrivateKeyBase {
     fn private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
             self.schnorr_signing_private_key(),
-            EncapsulationPrivateKey::X25519(self.x25519_private_key())
+            EncapsulationPrivateKey::X25519(self.x25519_private_key()),
         )
     }
 }
 
 impl PublicKeysProvider for PrivateKeyBase {
-    fn public_keys(&self) -> PublicKeys {
-        self.schnorr_public_keys()
-    }
+    fn public_keys(&self) -> PublicKeys { self.schnorr_public_keys() }
 }
 
 impl Default for PrivateKeyBase {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl std::fmt::Debug for PrivateKeyBase {
@@ -278,21 +296,15 @@ impl std::fmt::Debug for PrivateKeyBase {
 }
 
 impl<'a> From<&'a PrivateKeyBase> for &'a [u8] {
-    fn from(value: &'a PrivateKeyBase) -> Self {
-        &value.0
-    }
+    fn from(value: &'a PrivateKeyBase) -> Self { &value.0 }
 }
 
 impl AsRef<PrivateKeyBase> for PrivateKeyBase {
-    fn as_ref(&self) -> &PrivateKeyBase {
-        self
-    }
+    fn as_ref(&self) -> &PrivateKeyBase { self }
 }
 
 impl AsRef<[u8]> for PrivateKeyBase {
-    fn as_ref(&self) -> &[u8] {
-        self.into()
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 impl CBORTagged for PrivateKeyBase {
@@ -302,15 +314,11 @@ impl CBORTagged for PrivateKeyBase {
 }
 
 impl From<PrivateKeyBase> for CBOR {
-    fn from(value: PrivateKeyBase) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PrivateKeyBase) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PrivateKeyBase {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(&self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(&self.0) }
 }
 
 impl TryFrom<CBOR> for PrivateKeyBase {
@@ -331,7 +339,7 @@ impl CBORTaggedDecodable for PrivateKeyBase {
 
 #[cfg(test)]
 mod tests {
-    use bc_ur::{ UREncodable, URDecodable };
+    use bc_ur::{URDecodable, UREncodable};
     use hex_literal::hex;
 
     use crate::PrivateKeyBase;
@@ -343,8 +351,14 @@ mod tests {
         crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
         assert_eq!(
-            private_key_base.ecdsa_signing_private_key().to_ecdsa().unwrap().data(),
-            &hex!("9505a44aaf385ce633cf0e2bc49e65cc88794213bdfbf8caf04150b9c4905f5a")
+            private_key_base
+                .ecdsa_signing_private_key()
+                .to_ecdsa()
+                .unwrap()
+                .data(),
+            &hex!(
+                "9505a44aaf385ce633cf0e2bc49e65cc88794213bdfbf8caf04150b9c4905f5a"
+            )
         );
         assert_eq!(
             private_key_base
@@ -354,19 +368,31 @@ mod tests {
                 .to_schnorr()
                 .unwrap()
                 .data(),
-            &hex!("fd4d22f9e8493da52d730aa402ac9e661deca099ef4db5503f519a73c3493e18")
+            &hex!(
+                "fd4d22f9e8493da52d730aa402ac9e661deca099ef4db5503f519a73c3493e18"
+            )
         );
         assert_eq!(
             private_key_base.x25519_private_key().data(),
-            &hex!("77ff838285a0403d3618aa8c30491f99f55221be0b944f50bfb371f43b897485")
+            &hex!(
+                "77ff838285a0403d3618aa8c30491f99f55221be0b944f50bfb371f43b897485"
+            )
         );
         assert_eq!(
             private_key_base.x25519_private_key().public_key().data(),
-            &hex!("863cf3facee3ba45dc54e5eedecb21d791d64adfb0a1c63bfb6fea366c1ee62b")
+            &hex!(
+                "863cf3facee3ba45dc54e5eedecb21d791d64adfb0a1c63bfb6fea366c1ee62b"
+            )
         );
 
         let ur = private_key_base.ur_string();
-        assert_eq!(ur, "ur:crypto-prvkey-base/gdhkwzdtfthptokigtvwnnjsqzcxknsktdsfecsbbk");
-        assert_eq!(PrivateKeyBase::from_ur_string(&ur).unwrap(), private_key_base);
+        assert_eq!(
+            ur,
+            "ur:crypto-prvkey-base/gdhkwzdtfthptokigtvwnnjsqzcxknsktdsfecsbbk"
+        );
+        assert_eq!(
+            PrivateKeyBase::from_ur_string(&ur).unwrap(),
+            private_key_base
+        );
     }
 }

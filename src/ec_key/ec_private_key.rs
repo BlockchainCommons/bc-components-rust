@@ -1,8 +1,8 @@
-use anyhow::{ bail, Result };
-use bc_rand::{ RandomNumberGenerator, SecureRandomNumberGenerator };
+use anyhow::{Result, bail};
+use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
-use crate::{ ECKeyBase, ECKey, tags, SchnorrPublicKey, ECPublicKey };
+use crate::{ECKey, ECKeyBase, ECPublicKey, SchnorrPublicKey, tags};
 
 /// The size of an ECDSA private key in bytes (32 bytes).
 pub const ECDSA_PRIVATE_KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
@@ -59,7 +59,8 @@ impl ECPrivateKey {
         Self::new_using(&mut rng)
     }
 
-    /// Creates a new random ECDSA private key using the given random number generator.
+    /// Creates a new random ECDSA private key using the given random number
+    /// generator.
     ///
     /// This allows for deterministic key generation when using a seeded RNG.
     pub fn new_using(rng: &mut impl RandomNumberGenerator) -> Self {
@@ -69,9 +70,10 @@ impl ECPrivateKey {
     }
 
     /// Returns the ECDSA private key as an array of bytes.
-    pub fn data(&self) -> &[u8; ECDSA_PRIVATE_KEY_SIZE] {
-        &self.0
-    }
+    pub fn data(&self) -> &[u8; ECDSA_PRIVATE_KEY_SIZE] { &self.0 }
+
+    /// Get the ECDSA private key as a byte slice.
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Restores an ECDSA private key from an array of bytes.
     ///
@@ -106,8 +108,8 @@ impl ECPrivateKey {
     /// Derives the Schnorr public key from this ECDSA private key.
     ///
     /// Schnorr public keys are used with the BIP-340 Schnorr signature scheme.
-    /// Unlike ECDSA public keys, Schnorr public keys are 32 bytes ("x-only") rather
-    /// than 33 bytes.
+    /// Unlike ECDSA public keys, Schnorr public keys are 32 bytes ("x-only")
+    /// rather than 33 bytes.
     pub fn schnorr_public_key(&self) -> SchnorrPublicKey {
         bc_crypto::schnorr_public_key_from_private_key(self.into()).into()
     }
@@ -115,21 +117,25 @@ impl ECPrivateKey {
     /// Signs a message using the ECDSA signature scheme.
     ///
     /// Returns a 70-72 byte signature in DER format.
-    pub fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] {
+    pub fn ecdsa_sign(
+        &self,
+        message: impl AsRef<[u8]>,
+    ) -> [u8; bc_crypto::ECDSA_SIGNATURE_SIZE] {
         bc_crypto::ecdsa_sign(&self.0, message.as_ref())
     }
 
-    /// Signs a message using the Schnorr signature scheme with a custom random number generator.
+    /// Signs a message using the Schnorr signature scheme with a custom random
+    /// number generator.
     ///
-    /// This method implements the BIP-340 Schnorr signature scheme, which provides
-    /// several advantages over ECDSA including linearity (allowing for signature aggregation)
-    /// and non-malleability.
+    /// This method implements the BIP-340 Schnorr signature scheme, which
+    /// provides several advantages over ECDSA including linearity (allowing
+    /// for signature aggregation) and non-malleability.
     ///
     /// Returns a 64-byte signature.
     pub fn schnorr_sign_using(
         &self,
         message: impl AsRef<[u8]>,
-        rng: &mut dyn RandomNumberGenerator
+        rng: &mut dyn RandomNumberGenerator,
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         bc_crypto::schnorr_sign_using(&self.0, message, rng)
     }
@@ -141,7 +147,7 @@ impl ECPrivateKey {
     /// Returns a 64-byte signature.
     pub fn schnorr_sign(
         &self,
-        message: impl AsRef<[u8]>
+        message: impl AsRef<[u8]>,
     ) -> [u8; bc_crypto::SCHNORR_SIGNATURE_SIZE] {
         let mut rng = SecureRandomNumberGenerator;
         self.schnorr_sign_using(message, &mut rng)
@@ -159,9 +165,7 @@ impl From<[u8; ECDSA_PRIVATE_KEY_SIZE]> for ECPrivateKey {
 /// Provides a reference to the key data as a byte slice.
 impl AsRef<[u8]> for ECPrivateKey {
     /// Returns a reference to the key as a byte slice.
-    fn as_ref(&self) -> &[u8] {
-        self.data()
-    }
+    fn as_ref(&self) -> &[u8] { self.0.as_ref() }
 }
 
 /// Formats the key as a hexadecimal string.
@@ -183,25 +187,20 @@ impl std::fmt::Debug for ECPrivateKey {
 /// Implements the `Default` trait, creating a random key.
 impl Default for ECPrivateKey {
     /// Creates a new random key as the default value.
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
-/// Converts a reference to an `ECPrivateKey` to a reference to a fixed-size byte array.
+/// Converts a reference to an `ECPrivateKey` to a reference to a fixed-size
+/// byte array.
 impl<'a> From<&'a ECPrivateKey> for &'a [u8; ECDSA_PRIVATE_KEY_SIZE] {
     /// Returns a reference to the underlying byte array.
-    fn from(value: &'a ECPrivateKey) -> Self {
-        &value.0
-    }
+    fn from(value: &'a ECPrivateKey) -> Self { &value.0 }
 }
 
 /// Converts a reference to an `ECPrivateKey` to a reference to a byte slice.
 impl<'a> From<&'a ECPrivateKey> for &'a [u8] {
     /// Returns a reference to the key as a byte slice.
-    fn from(value: &'a ECPrivateKey) -> Self {
-        value.as_ref()
-    }
+    fn from(value: &'a ECPrivateKey) -> Self { value.as_ref() }
 }
 
 /// Implements the `ECKeyBase` trait methods.
@@ -210,7 +209,10 @@ impl ECKeyBase for ECPrivateKey {
     const KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
 
     /// Creates a key from a byte slice, with validation.
-    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> where Self: Sized {
+    fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self>
+    where
+        Self: Sized,
+    {
         let data = data.as_ref();
         if data.len() != ECDSA_PRIVATE_KEY_SIZE {
             bail!("Invalid EC private key size");
@@ -221,9 +223,7 @@ impl ECKeyBase for ECPrivateKey {
     }
 
     /// Returns the key as a byte slice.
-    fn data(&self) -> &[u8] {
-        self.0.as_ref()
-    }
+    fn data(&self) -> &[u8] { self.0.as_ref() }
 }
 
 /// Implements the `ECKey` trait for deriving public keys.
@@ -245,9 +245,7 @@ impl CBORTagged for ECPrivateKey {
 /// Converts an `ECPrivateKey` to CBOR.
 impl From<ECPrivateKey> for CBOR {
     /// Converts to tagged CBOR.
-    fn from(value: ECPrivateKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: ECPrivateKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implements CBOR encoding for EC private keys.

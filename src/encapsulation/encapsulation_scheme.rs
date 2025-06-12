@@ -1,19 +1,22 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use bc_rand::RandomNumberGenerator;
 
-use crate::MLKEM;
-use crate::{EncapsulationPrivateKey, EncapsulationPublicKey, X25519PrivateKey};
+use crate::{
+    EncapsulationPrivateKey, EncapsulationPublicKey, MLKEM, X25519PrivateKey,
+};
 
 /// Supported key encapsulation mechanisms.
 ///
-/// Key Encapsulation Mechanisms (KEMs) are cryptographic algorithms designed to securely
-/// establish a shared secret between parties in public-key cryptography. They are often
-/// used to encapsulate (wrap) symmetric keys for secure key exchange.
+/// Key Encapsulation Mechanisms (KEMs) are cryptographic algorithms designed to
+/// securely establish a shared secret between parties in public-key
+/// cryptography. They are often used to encapsulate (wrap) symmetric keys for
+/// secure key exchange.
 ///
 /// This enum represents the various KEM schemes supported in this crate:
-/// - X25519: A Diffie-Hellman key exchange mechanism using the Curve25519 elliptic curve
-/// - ML-KEM (Module Lattice-based Key Encapsulation Mechanism): Post-quantum secure KEM 
-///   at different security levels (512, 768, 1024)
+/// - X25519: A Diffie-Hellman key exchange mechanism using the Curve25519
+///   elliptic curve
+/// - ML-KEM (Module Lattice-based Key Encapsulation Mechanism): Post-quantum
+///   secure KEM at different security levels (512, 768, 1024)
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
 pub enum EncapsulationScheme {
     /// X25519 key agreement (default)
@@ -32,7 +35,8 @@ impl EncapsulationScheme {
     ///
     /// # Returns
     ///
-    /// A tuple containing the private key and public key for the selected encapsulation scheme.
+    /// A tuple containing the private key and public key for the selected
+    /// encapsulation scheme.
     ///
     /// # Example
     ///
@@ -78,7 +82,8 @@ impl EncapsulationScheme {
         }
     }
 
-    /// Generates a deterministic key pair using the provided random number generator.
+    /// Generates a deterministic key pair using the provided random number
+    /// generator.
     ///
     /// # Parameters
     ///
@@ -86,19 +91,21 @@ impl EncapsulationScheme {
     ///
     /// # Returns
     ///
-    /// A Result containing a tuple with the private key and public key if successful,
-    /// or an error if deterministic key generation is not supported for the selected scheme.
+    /// A Result containing a tuple with the private key and public key if
+    /// successful, or an error if deterministic key generation is not
+    /// supported for the selected scheme.
     ///
     /// # Errors
     ///
-    /// Returns an error if deterministic key generation is not supported for the
-    /// selected encapsulation scheme (currently only X25519 supports this).
+    /// Returns an error if deterministic key generation is not supported for
+    /// the selected encapsulation scheme (currently only X25519 supports
+    /// this).
     ///
     /// # Example
     ///
     /// ```
-    /// use bc_rand::SecureRandomNumberGenerator;
     /// use bc_components::EncapsulationScheme;
+    /// use bc_rand::SecureRandomNumberGenerator;
     ///
     /// let mut rng = SecureRandomNumberGenerator;
     /// let result = EncapsulationScheme::X25519.keypair_using(&mut rng);
@@ -114,7 +121,8 @@ impl EncapsulationScheme {
     ) -> Result<(EncapsulationPrivateKey, EncapsulationPublicKey)> {
         match self {
             EncapsulationScheme::X25519 => {
-                let (private_key, public_key) = X25519PrivateKey::keypair_using(rng);
+                let (private_key, public_key) =
+                    X25519PrivateKey::keypair_using(rng);
                 Ok((
                     EncapsulationPrivateKey::X25519(private_key),
                     EncapsulationPublicKey::X25519(public_key),
