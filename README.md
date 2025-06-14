@@ -21,7 +21,7 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.22.0"
+bc-components = "0.23.0"
 ```
 
 ## Types

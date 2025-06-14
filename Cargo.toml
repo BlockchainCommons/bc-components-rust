@@ -1,6 +1,6 @@
 [package]
 name = "bc-components"
-version = "0.22.0"
+version = "0.23.0"
 edition = "2024"
 description = "Secure Components for Rust."
 authors = ["Blockchain Commons"]
@@ -14,9 +14,9 @@ categories = ["cryptography"]                                          # https:/
 [dependencies]
 bc-crypto = "^0.9.0"
 bc-rand = "^0.4.0"
-dcbor = { version = "^0.20.0", features = ["anyhow", "multithreaded"] }
-bc-tags = "^0.3.0"
-bc-ur = "^0.10.0"
+dcbor = { version = "^0.21.0", features = ["anyhow", "multithreaded"] }
+bc-tags = "^0.4.0"
+bc-ur = "^0.11.0"
 sskr = "^0.8.0"
 
 hex = "^0.4.3"
