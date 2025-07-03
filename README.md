@@ -21,7 +21,7 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.23.0"
+bc-components = "0.24.0"
 ```
 
 ## Types
@@ -129,6 +129,7 @@ The library is organized into several categories of cryptographic primitives and
 
 ## Version History
 
+- **0.24.0, July 3, 2025** - Align to dependencies.
 - **0.5.0, September 14, 2024** - BREAKING CHANGE: Removed pre-hashing (tagged hash) support for Schnorr signatures, making them BIP-340 compliant. Schnorr signatures produced by previous versions of this crate will now only verify if you pre-hash the image yourself using the BIP-340 method and the tag you previously used, if any.
 
 ## Status - Community Review
