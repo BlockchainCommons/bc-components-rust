@@ -68,7 +68,7 @@ use crate::{PrivateKeyDataProvider, tags};
 ///
 /// ```
 /// use bc_components::Seed;
-/// use dcbor::Date;
+/// use dcbor::prelude::*;
 ///
 /// // Create seed data
 /// let data = vec![0u8; 16];
@@ -90,7 +90,7 @@ pub struct Seed {
     data: Vec<u8>,
     name: String,
     note: String,
-    creation_date: Option<dcbor::Date>,
+    creation_date: Option<Date>,
 }
 
 impl Seed {
@@ -127,7 +127,7 @@ impl Seed {
         data: impl AsRef<[u8]>,
         name: Option<String>,
         note: Option<String>,
-        creation_date: Option<dcbor::Date>,
+        creation_date: Option<Date>,
     ) -> Result<Self> {
         let data = data.as_ref().to_vec();
         if data.len() < Self::MIN_SEED_LENGTH {
@@ -157,10 +157,10 @@ impl Seed {
     pub fn set_note(&mut self, note: &str) { self.note = note.to_string(); }
 
     /// Return the creation date of the seed.
-    pub fn creation_date(&self) -> &Option<dcbor::Date> { &self.creation_date }
+    pub fn creation_date(&self) -> &Option<Date> { &self.creation_date }
 
     /// Set the creation date of the seed.
-    pub fn set_creation_date(&mut self, creation_date: Option<dcbor::Date>) {
+    pub fn set_creation_date(&mut self, creation_date: Option<Date>) {
         self.creation_date = creation_date;
     }
 }
@@ -237,7 +237,7 @@ impl CBORTaggedDecodable for Seed {
         if data.is_empty() {
             return Err("Seed data is empty".into());
         }
-        let creation_date = map.get::<i32, dcbor::Date>(2);
+        let creation_date = map.get::<i32, Date>(2);
         let name = map.get::<i32, String>(3);
         let note = map.get::<i32, String>(4);
         Ok(Self::new_opt(data, name, note, creation_date)?)
