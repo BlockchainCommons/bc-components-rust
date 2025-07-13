@@ -3,7 +3,7 @@ use std::{cell::RefCell, env, path::Path, rc::Rc};
 use anyhow::{Context, Result, bail};
 use bc_crypto::hkdf_hmac_sha256;
 use dcbor::prelude::*;
-use ssh_agent_client_rs::Client;
+use ssh_agent_client_rs::{Client, Identity};
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
 use crate::{EncryptedMessage, Nonce, Salt, SymmetricKey};
@@ -23,7 +23,16 @@ pub trait SSHAgent {
 
 impl SSHAgent for Client {
     fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
-        self.list_identities()
+        self.list_all_identities()
+            .map(|identities| {
+                identities
+                    .into_iter()
+                    .filter_map(|i| match i {
+                        Identity::PublicKey(pk) => Some(pk.into_owned()),
+                        _ => None,
+                    })
+                    .collect()
+            })
             .map_err(|e| anyhow::anyhow!(e.to_string()))
     }
 
@@ -100,9 +109,13 @@ impl SSHAgentParams {
         Self { salt, id: id.as_ref().to_string(), agent }
     }
 
-    pub fn salt(&self) -> &Salt { &self.salt }
+    pub fn salt(&self) -> &Salt {
+        &self.salt
+    }
 
-    pub fn id(&self) -> &String { &self.id }
+    pub fn id(&self) -> &String {
+        &self.id
+    }
 
     pub fn agent(&self) -> Option<Rc<RefCell<dyn SSHAgent + 'static>>> {
         self.agent.clone()
@@ -117,7 +130,9 @@ impl SSHAgentParams {
 }
 
 impl Default for SSHAgentParams {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
@@ -334,7 +349,9 @@ mod tests_common {
         SSHAgentParams, Salt,
     };
 
-    pub fn test_id() -> String { "your_email@example.com".to_string() }
+    pub fn test_id() -> String {
+        "your_email@example.com".to_string()
+    }
 
     pub fn test_ssh_agent_params(agent: Rc<RefCell<dyn SSHAgent>>) {
         // Create SSHAgentParams with the agent.
@@ -406,7 +423,9 @@ mod mock_agent_tests {
     }
 
     impl MockSSHAgent {
-        fn new() -> Self { Self { identities: HashMap::new() } }
+        fn new() -> Self {
+            Self { identities: HashMap::new() }
+        }
 
         fn add_identity(&mut self, key: ssh_key::PrivateKey) {
             self.identities.insert(key.comment().to_string(), key);
@@ -532,7 +551,9 @@ mod real_agent_tests {
         EncryptedKey, KeyDerivationMethod, SymmetricKey, connect_to_ssh_agent,
     };
 
-    pub fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
+    pub fn test_content_key() -> SymmetricKey {
+        SymmetricKey::new()
+    }
 
     #[test]
     fn test_ssh_agent_params_with_real_agent() {
