@@ -1,7 +1,8 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 
-use crate::{EncapsulationScheme, MLKEMCiphertext, X25519PublicKey, tags};
+use crate::{
+    EncapsulationScheme, Error, MLKEMCiphertext, Result, X25519PublicKey, tags,
+};
 
 /// A ciphertext produced by a key encapsulation mechanism (KEM).
 ///

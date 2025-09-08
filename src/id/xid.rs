@@ -1,8 +1,8 @@
 use dcbor::prelude::*;
 
 use crate::{
-    Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider,
-    SigningPrivateKey, SigningPublicKey, tags, Error, Result,
+    Digest, Error, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider,
+    Result, SigningPrivateKey, SigningPublicKey, tags,
 };
 
 /// A XID (eXtensible IDentifier).
@@ -177,7 +177,9 @@ impl From<&SigningPublicKey> for XID {
 impl TryFrom<&SigningPrivateKey> for XID {
     type Error = Error;
 
-    fn try_from(key: &SigningPrivateKey) -> std::result::Result<Self, Self::Error> {
+    fn try_from(
+        key: &SigningPrivateKey,
+    ) -> std::result::Result<Self, Self::Error> {
         Ok(Self::new(&key.public_key()?))
     }
 }

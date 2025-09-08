@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use dcbor::prelude::*;
 
-use crate::{tags, Error};
+use crate::{Error, tags};
 
 /// A Universally Unique Identifier (UUID).
 ///

@@ -54,7 +54,11 @@ impl Ed25519PrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_PRIVATE_KEY_SIZE {
-            return Err(Error::invalid_size("Ed25519 private key", ED25519_PRIVATE_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "Ed25519 private key",
+                ED25519_PRIVATE_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; ED25519_PRIVATE_KEY_SIZE];
         arr.copy_from_slice(data);

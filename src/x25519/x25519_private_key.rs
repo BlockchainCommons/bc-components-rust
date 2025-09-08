@@ -5,8 +5,8 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
-    Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey, tags,
-    Error, Result,
+    Decrypter, EncapsulationPrivateKey, Error, Result, SymmetricKey,
+    X25519PublicKey, tags,
 };
 
 /// A private key for X25519 key agreement operations.
@@ -71,7 +71,11 @@ impl X25519PrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
-            return Err(Error::invalid_size("X25519 private key", Self::KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "X25519 private key",
+                Self::KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::KEY_SIZE];
         arr.copy_from_slice(data);

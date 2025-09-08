@@ -3,14 +3,13 @@
 //! Multiple derivation methods are supported, ensuring extensibility and
 //! security.
 
-use crate::{Error, Result};
 use dcbor::prelude::*;
 
 use super::SSHAgentParams;
 use crate::{
-    Argon2idParams, EncryptedMessage, HKDFParams, KeyDerivation,
-    KeyDerivationMethod, KeyDerivationParams, PBKDF2Params, ScryptParams,
-    SymmetricKey, tags,
+    Argon2idParams, EncryptedMessage, Error, HKDFParams, KeyDerivation,
+    KeyDerivationMethod, KeyDerivationParams, PBKDF2Params, Result,
+    ScryptParams, SymmetricKey, tags,
 };
 
 /// # Overview
@@ -115,9 +114,9 @@ impl EncryptedKey {
     }
 
     pub fn aad_cbor(&self) -> Result<CBOR> {
-        self.encrypted_message()
-            .aad_cbor()
-            .ok_or_else(|| Error::general("Missing AAD CBOR in EncryptedMessage"))
+        self.encrypted_message().aad_cbor().ok_or_else(|| {
+            Error::general("Missing AAD CBOR in EncryptedMessage")
+        })
     }
 
     pub fn unlock(&self, secret: impl AsRef<[u8]>) -> Result<SymmetricKey> {

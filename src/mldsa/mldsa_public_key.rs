@@ -3,7 +3,7 @@ use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::{tags, Error, Result};
+use crate::{Error, Result, tags};
 
 /// A public key for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -155,16 +155,28 @@ impl MLDSAPublicKey {
     pub fn from_bytes(level: MLDSA, bytes: &[u8]) -> Result<Self> {
         match level {
             MLDSA::MLDSA44 => Ok(MLDSAPublicKey::MLDSA44(Box::new(
-                mldsa44::PublicKey::from_bytes(bytes)
-                    .map_err(|e| Error::post_quantum(format!("MLDSA44 public key error: {}", e)))?,
+                mldsa44::PublicKey::from_bytes(bytes).map_err(|e| {
+                    Error::post_quantum(format!(
+                        "MLDSA44 public key error: {}",
+                        e
+                    ))
+                })?,
             ))),
             MLDSA::MLDSA65 => Ok(MLDSAPublicKey::MLDSA65(Box::new(
-                mldsa65::PublicKey::from_bytes(bytes)
-                    .map_err(|e| Error::post_quantum(format!("MLDSA65 public key error: {}", e)))?,
+                mldsa65::PublicKey::from_bytes(bytes).map_err(|e| {
+                    Error::post_quantum(format!(
+                        "MLDSA65 public key error: {}",
+                        e
+                    ))
+                })?,
             ))),
             MLDSA::MLDSA87 => Ok(MLDSAPublicKey::MLDSA87(Box::new(
-                mldsa87::PublicKey::from_bytes(bytes)
-                    .map_err(|e| Error::post_quantum(format!("MLDSA87 public key error: {}", e)))?,
+                mldsa87::PublicKey::from_bytes(bytes).map_err(|e| {
+                    Error::post_quantum(format!(
+                        "MLDSA87 public key error: {}",
+                        e
+                    ))
+                })?,
             ))),
         }
     }

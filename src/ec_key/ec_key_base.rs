@@ -1,7 +1,6 @@
-use crate::{Result};
 use bc_ur::UREncodable;
 
-use crate::ECPublicKey;
+use crate::{ECPublicKey, Result};
 
 /// A base trait for all elliptic curve keys.
 ///

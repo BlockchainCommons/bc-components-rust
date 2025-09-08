@@ -1,9 +1,10 @@
-use crate::{Result};
 use bc_crypto::{hash::hkdf_hmac_sha512, hkdf_hmac_sha256};
 use dcbor::prelude::*;
 
 use super::{HashType, KeyDerivation, SALT_LEN};
-use crate::{EncryptedMessage, KeyDerivationMethod, Nonce, Salt, SymmetricKey};
+use crate::{
+    EncryptedMessage, KeyDerivationMethod, Nonce, Result, Salt, SymmetricKey,
+};
 
 /// Struct representing HKDF parameters.
 ///

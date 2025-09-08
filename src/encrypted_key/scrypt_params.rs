@@ -1,9 +1,8 @@
-use crate::{Result};
 use bc_crypto::scrypt_opt;
 use dcbor::prelude::*;
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
-use crate::{EncryptedMessage, Nonce, Salt, SymmetricKey};
+use crate::{EncryptedMessage, Nonce, Result, Salt, SymmetricKey};
 
 /// Struct representing Scrypt parameters.
 ///

@@ -1,9 +1,8 @@
-use crate::{Error, Result};
 use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
 use super::{SigningPrivateKey, SigningPublicKey};
-use crate::{ECPrivateKey, Ed25519PrivateKey, PrivateKeyBase};
+use crate::{ECPrivateKey, Ed25519PrivateKey, Error, PrivateKeyBase, Result};
 
 /// Supported digital signature schemes.
 ///
@@ -322,7 +321,7 @@ impl SignatureScheme {
                 Ok((private_key, public_key))
             }
             _ => Err(Error::general(
-                "Deterministic keypair generation not supported for this signature scheme"
+                "Deterministic keypair generation not supported for this signature scheme",
             )),
         }
     }

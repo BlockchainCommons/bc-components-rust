@@ -1,8 +1,8 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 
 use super::{MLDSAPrivateKey, MLDSAPublicKey};
+use crate::{Error, Result};
 
 /// Security levels for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -118,7 +118,10 @@ impl TryFrom<CBOR> for MLDSA {
             2 => Ok(MLDSA::MLDSA44),
             3 => Ok(MLDSA::MLDSA65),
             5 => Ok(MLDSA::MLDSA87),
-            _ => Err(Error::post_quantum(format!("Invalid MLDSA level: {}", level))),
+            _ => Err(Error::post_quantum(format!(
+                "Invalid MLDSA level: {}",
+                level
+            ))),
         }
     }
 }

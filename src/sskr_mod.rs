@@ -479,7 +479,9 @@ pub fn sskr_generate_using(
 /// let recovered_secret = sskr_combine(&recovery_shares).unwrap();
 /// assert_eq!(recovered_secret, master_secret);
 /// ```
-pub fn sskr_combine(shares: &[SSKRShare]) -> std::result::Result<SSKRSecret, SSKRError> {
+pub fn sskr_combine(
+    shares: &[SSKRShare],
+) -> std::result::Result<SSKRSecret, SSKRError> {
     let shares: Vec<Vec<u8>> = shares
         .iter()
         .map(|share| share.as_bytes().to_vec())

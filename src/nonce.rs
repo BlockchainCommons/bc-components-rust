@@ -86,9 +86,7 @@ impl Nonce {
     }
 
     /// Restores a nonce from data.
-    pub const fn from_data(data: [u8; Self::NONCE_SIZE]) -> Self {
-        Self(data)
-    }
+    pub const fn from_data(data: [u8; Self::NONCE_SIZE]) -> Self { Self(data) }
 
     /// Restores a nonce from data.
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
@@ -106,14 +104,10 @@ impl Nonce {
     }
 
     /// Get the data of the nonce.
-    pub fn data(&self) -> &[u8; Self::NONCE_SIZE] {
-        self.into()
-    }
+    pub fn data(&self) -> &[u8; Self::NONCE_SIZE] { self.into() }
 
     /// Get the nonce as a byte slice.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_ref()
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Create a new nonce from the given hexadecimal string.
     ///
@@ -124,64 +118,46 @@ impl Nonce {
     }
 
     /// The data as a hexadecimal string.
-    pub fn hex(&self) -> String {
-        hex::encode(self.data())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.data()) }
 }
 
 impl AsRef<[u8]> for Nonce {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Provides a default implementation that creates a new random nonce.
 impl Default for Nonce {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 /// Converts an Rc-wrapped Nonce into a Nonce by cloning the inner value.
 impl From<Rc<Nonce>> for Nonce {
-    fn from(value: Rc<Nonce>) -> Self {
-        value.as_ref().clone()
-    }
+    fn from(value: Rc<Nonce>) -> Self { value.as_ref().clone() }
 }
 
 /// Allows accessing the underlying data as a fixed-size byte array reference.
 impl<'a> From<&'a Nonce> for &'a [u8; Nonce::NONCE_SIZE] {
-    fn from(value: &'a Nonce) -> Self {
-        &value.0
-    }
+    fn from(value: &'a Nonce) -> Self { &value.0 }
 }
 
 /// Provides a self-reference, enabling API consistency with other types.
 impl AsRef<Nonce> for Nonce {
-    fn as_ref(&self) -> &Self {
-        self
-    }
+    fn as_ref(&self) -> &Self { self }
 }
 
 /// Identifies the CBOR tags used for Nonce serialization.
 impl CBORTagged for Nonce {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_NONCE])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_NONCE]) }
 }
 
 /// Enables conversion of a Nonce into a tagged CBOR value.
 impl From<Nonce> for CBOR {
-    fn from(value: Nonce) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Nonce) -> Self { value.tagged_cbor() }
 }
 
 /// Defines how a Nonce is encoded as CBOR (as a byte string).
 impl CBORTaggedEncodable for Nonce {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(self.data())
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(self.data()) }
 }
 
 /// Enables conversion from CBOR to Nonce, with proper error handling.
@@ -210,23 +186,17 @@ impl std::fmt::Debug for Nonce {
 
 /// Enables cloning a Nonce from a reference using From trait.
 impl From<&Nonce> for Nonce {
-    fn from(nonce: &Nonce) -> Self {
-        nonce.clone()
-    }
+    fn from(nonce: &Nonce) -> Self { nonce.clone() }
 }
 
 /// Converts a Nonce into a `Vec<u8>` containing the nonce bytes.
 impl From<Nonce> for Vec<u8> {
-    fn from(nonce: Nonce) -> Self {
-        nonce.0.to_vec()
-    }
+    fn from(nonce: Nonce) -> Self { nonce.0.to_vec() }
 }
 
 /// Converts a Nonce reference into a `Vec<u8>` containing the nonce bytes.
 impl From<&Nonce> for Vec<u8> {
-    fn from(nonce: &Nonce) -> Self {
-        nonce.0.to_vec()
-    }
+    fn from(nonce: &Nonce) -> Self { nonce.0.to_vec() }
 }
 
 #[cfg(test)]

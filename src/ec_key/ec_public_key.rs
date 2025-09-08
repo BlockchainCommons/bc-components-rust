@@ -1,8 +1,9 @@
-use crate::{Error, Result};
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
-use crate::{ECKey, ECKeyBase, ECPublicKeyBase, Signature, Verifier, tags};
+use crate::{
+    ECKey, ECKeyBase, ECPublicKeyBase, Error, Result, Signature, Verifier, tags,
+};
 
 /// The size of an ECDSA compressed public key in bytes (33 bytes).
 pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
@@ -109,7 +110,11 @@ impl ECKeyBase for ECPublicKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_PUBLIC_KEY_SIZE {
-            return Err(Error::invalid_size("ECDSA public key", ECDSA_PUBLIC_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "ECDSA public key",
+                ECDSA_PUBLIC_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut key = [0u8; ECDSA_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

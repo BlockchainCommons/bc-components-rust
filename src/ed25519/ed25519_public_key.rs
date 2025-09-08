@@ -27,7 +27,11 @@ impl Ed25519PublicKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_PUBLIC_KEY_SIZE {
-            return Err(Error::invalid_size("Ed25519 public key", ED25519_PUBLIC_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "Ed25519 public key",
+                ED25519_PUBLIC_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut key = [0u8; ED25519_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

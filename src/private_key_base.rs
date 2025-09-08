@@ -1,4 +1,3 @@
-use crate::{Error, Result};
 use bc_rand::{
     RandomNumberGenerator, SecureRandomNumberGenerator, rng_random_data,
 };
@@ -14,9 +13,10 @@ use zeroize::ZeroizeOnDrop;
 
 use crate::{
     Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey,
-    EncapsulationPublicKey, HKDFRng, PrivateKeyDataProvider, PrivateKeys,
-    PrivateKeysProvider, PublicKeys, PublicKeysProvider, Signature, Signer,
-    SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey, tags,
+    EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider,
+    PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Result,
+    Signature, Signer, SigningOptions, SigningPrivateKey, Verifier,
+    X25519PrivateKey, tags,
 };
 
 /// A secure foundation for deriving multiple cryptographic keys.
@@ -274,9 +274,7 @@ impl PrivateKeyBase {
     }
 
     /// Get the raw data of this `PrivateKeyBase`.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_ref()
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 }
 
 impl PrivateKeysProvider for PrivateKeyBase {
@@ -289,15 +287,11 @@ impl PrivateKeysProvider for PrivateKeyBase {
 }
 
 impl PublicKeysProvider for PrivateKeyBase {
-    fn public_keys(&self) -> PublicKeys {
-        self.schnorr_public_keys()
-    }
+    fn public_keys(&self) -> PublicKeys { self.schnorr_public_keys() }
 }
 
 impl Default for PrivateKeyBase {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl std::fmt::Debug for PrivateKeyBase {
@@ -307,21 +301,15 @@ impl std::fmt::Debug for PrivateKeyBase {
 }
 
 impl<'a> From<&'a PrivateKeyBase> for &'a [u8] {
-    fn from(value: &'a PrivateKeyBase) -> Self {
-        &value.0
-    }
+    fn from(value: &'a PrivateKeyBase) -> Self { &value.0 }
 }
 
 impl AsRef<PrivateKeyBase> for PrivateKeyBase {
-    fn as_ref(&self) -> &PrivateKeyBase {
-        self
-    }
+    fn as_ref(&self) -> &PrivateKeyBase { self }
 }
 
 impl AsRef<[u8]> for PrivateKeyBase {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 impl CBORTagged for PrivateKeyBase {
@@ -331,15 +319,11 @@ impl CBORTagged for PrivateKeyBase {
 }
 
 impl From<PrivateKeyBase> for CBOR {
-    fn from(value: PrivateKeyBase) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PrivateKeyBase) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PrivateKeyBase {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(&self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(&self.0) }
 }
 
 impl TryFrom<CBOR> for PrivateKeyBase {

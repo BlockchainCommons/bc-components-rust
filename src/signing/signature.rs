@@ -1,4 +1,3 @@
-use crate::{Error, Result};
 use bc_crypto::{
     ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE,
 };
@@ -6,7 +5,7 @@ use bc_ur::prelude::*;
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
-use crate::{MLDSASignature, tags};
+use crate::{Error, MLDSASignature, Result, tags};
 
 /// A digital signature created with various signature algorithms.
 ///
@@ -140,7 +139,11 @@ impl Signature {
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
-            return Err(Error::invalid_size("Schnorr signature", SCHNORR_SIGNATURE_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "Schnorr signature",
+                SCHNORR_SIGNATURE_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; SCHNORR_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
@@ -191,7 +194,11 @@ impl Signature {
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
-            return Err(Error::invalid_size("ECDSA signature", ECDSA_SIGNATURE_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "ECDSA signature",
+                ECDSA_SIGNATURE_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; ECDSA_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
@@ -242,7 +249,11 @@ impl Signature {
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_SIGNATURE_SIZE {
-            return Err(Error::invalid_size("Ed25519 signature", ED25519_SIGNATURE_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "Ed25519 signature",
+                ED25519_SIGNATURE_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; ED25519_SIGNATURE_SIZE];
         arr.copy_from_slice(data);

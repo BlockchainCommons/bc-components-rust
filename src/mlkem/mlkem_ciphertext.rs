@@ -1,10 +1,9 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
 
 use super::MLKEM;
-use crate::tags;
+use crate::{Error, Result, tags};
 
 /// A ciphertext containing an encapsulated shared secret for ML-KEM.
 ///

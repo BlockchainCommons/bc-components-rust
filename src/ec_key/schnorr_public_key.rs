@@ -1,7 +1,6 @@
-use crate::{Error, Result};
 use bc_crypto::SCHNORR_SIGNATURE_SIZE;
 
-use crate::ECKeyBase;
+use crate::{ECKeyBase, Error, Result};
 
 /// The size of a Schnorr public key in bytes (32 bytes).
 pub const SCHNORR_PUBLIC_KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
@@ -135,7 +134,11 @@ impl ECKeyBase for SchnorrPublicKey {
     {
         let data = data.as_ref();
         if data.len() != SCHNORR_PUBLIC_KEY_SIZE {
-            return Err(Error::invalid_size("Schnorr public key", SCHNORR_PUBLIC_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "Schnorr public key",
+                SCHNORR_PUBLIC_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut key = [0u8; SCHNORR_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

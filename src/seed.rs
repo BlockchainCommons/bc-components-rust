@@ -1,7 +1,7 @@
 use bc_rand::{RandomNumberGenerator, rng_random_data};
 use bc_ur::prelude::*;
 
-use crate::{PrivateKeyDataProvider, tags, Error, Result};
+use crate::{Error, PrivateKeyDataProvider, Result, tags};
 
 /// A cryptographic seed for deterministic key generation.
 ///
@@ -130,7 +130,13 @@ impl Seed {
     ) -> Result<Self> {
         let data = data.as_ref().to_vec();
         if data.len() < Self::MIN_SEED_LENGTH {
-            return Err(Error::invalid_data("seed", format!("data is too short (minimum {} bytes)", Self::MIN_SEED_LENGTH)));
+            return Err(Error::invalid_data(
+                "seed",
+                format!(
+                    "data is too short (minimum {} bytes)",
+                    Self::MIN_SEED_LENGTH
+                ),
+            ));
         }
         Ok(Self {
             data,

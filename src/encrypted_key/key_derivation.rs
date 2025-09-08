@@ -1,7 +1,6 @@
-use crate::{Result};
 use dcbor::prelude::*;
 
-use crate::{EncryptedMessage, SymmetricKey};
+use crate::{EncryptedMessage, Result, SymmetricKey};
 
 /// Trait for key derivation implementations.
 pub trait KeyDerivation: CBORCodable {

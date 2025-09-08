@@ -33,7 +33,11 @@ impl AuthenticationTag {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
-            return Err(Error::invalid_size("authentication tag", Self::AUTHENTICATION_TAG_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "authentication tag",
+                Self::AUTHENTICATION_TAG_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::AUTHENTICATION_TAG_SIZE];
         arr.copy_from_slice(data.as_ref());

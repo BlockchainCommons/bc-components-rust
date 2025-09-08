@@ -1,9 +1,8 @@
-use crate::{Result};
 use bc_crypto::{hash::pbkdf2_hmac_sha512, pbkdf2_hmac_sha256};
 use dcbor::prelude::*;
 
 use super::{HashType, KeyDerivation, KeyDerivationMethod, SALT_LEN};
-use crate::{EncryptedMessage, Nonce, Salt, SymmetricKey};
+use crate::{EncryptedMessage, Nonce, Result, Salt, SymmetricKey};
 
 /// Struct representing PBKDF2 parameters.
 ///

@@ -1,6 +1,8 @@
 use bc_rand::RandomNumberGenerator;
 
-use crate::{EncapsulationScheme, PrivateKeys, PublicKeys, SignatureScheme, Result};
+use crate::{
+    EncapsulationScheme, PrivateKeys, PublicKeys, Result, SignatureScheme,
+};
 
 /// Generates a key pair using the default signature and encapsulation schemes.
 ///

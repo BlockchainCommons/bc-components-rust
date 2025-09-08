@@ -1,8 +1,6 @@
-use crate::{Result};
-
 use crate::{
     EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey,
-    SymmetricKey,
+    Result, SymmetricKey,
 };
 
 /// A trait for types that can encapsulate shared secrets for public key

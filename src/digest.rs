@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use bc_crypto::hash::sha256;
 use dcbor::prelude::*;
 
-use crate::{digest_provider::DigestProvider, tags, Error, Result};
+use crate::{Error, Result, digest_provider::DigestProvider, tags};
 
 /// A cryptographically secure digest, implemented with SHA-256.
 ///
@@ -66,7 +66,11 @@ impl Digest {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::DIGEST_SIZE {
-            return Err(Error::invalid_size("digest", Self::DIGEST_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "digest",
+                Self::DIGEST_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::DIGEST_SIZE];
         arr.copy_from_slice(data.as_ref());

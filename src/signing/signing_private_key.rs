@@ -1,14 +1,13 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Error, Result};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
 use crate::{
-    ECKey, ECPrivateKey, Ed25519PrivateKey, MLDSAPrivateKey, Signature, Signer,
-    SigningPublicKey, tags,
+    ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey, Result,
+    Signature, Signer, SigningPublicKey, tags,
 };
 
 /// Options for configuring signature creation.
@@ -340,7 +339,9 @@ impl SigningPrivateKey {
             Self::SSH(key) => {
                 Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
             }
-            Self::MLDSA(_) => Err(Error::general("Deriving MLDSA public key not supported")),
+            Self::MLDSA(_) => {
+                Err(Error::general("Deriving MLDSA public key not supported"))
+            }
         }
     }
 }
@@ -574,7 +575,9 @@ impl Signer for SigningPrivateKey {
                 {
                     self.ssh_sign(message, namespace, hash_alg)
                 } else {
-                    Err(Error::ssh("Missing namespace and hash algorithm for SSH signing"))
+                    Err(Error::ssh(
+                        "Missing namespace and hash algorithm for SSH signing",
+                    ))
                 }
             }
             Self::MLDSA(_) => self.mldsa_sign(message),

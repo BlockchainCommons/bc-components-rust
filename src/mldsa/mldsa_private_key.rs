@@ -1,10 +1,9 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::tags;
+use crate::{Error, Result, tags};
 
 /// A private key for the ML-DSA post-quantum digital signature algorithm.
 ///

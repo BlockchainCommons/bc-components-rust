@@ -1,7 +1,7 @@
 use bc_rand::random_data;
 use bc_ur::prelude::*;
 
-use crate::{tags, Error, Result};
+use crate::{Error, Result, tags};
 
 /// An "Apparently Random Identifier" (ARID)
 ///
@@ -42,7 +42,11 @@ impl ARID {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::ARID_SIZE {
-            return Err(Error::invalid_size("ARID", Self::ARID_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "ARID",
+                Self::ARID_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::ARID_SIZE];
         arr.copy_from_slice(data);

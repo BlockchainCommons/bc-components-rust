@@ -1,10 +1,9 @@
-use crate::{Result};
 use bc_ur::prelude::*;
 
 use super::EncapsulationScheme;
 use crate::{
     Decrypter, EncapsulationCiphertext, EncryptedMessage, Encrypter, Nonce,
-    tags,
+    Result, tags,
 };
 
 /// A sealed message that can only be decrypted by the intended recipient.

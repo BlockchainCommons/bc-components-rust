@@ -1,9 +1,8 @@
-use crate::{Error, Result};
 use bc_ur::prelude::*;
 
 use crate::{
-    Decrypter, EncapsulationCiphertext, EncapsulationScheme, MLKEMPrivateKey,
-    SymmetricKey, X25519PrivateKey, tags,
+    Decrypter, EncapsulationCiphertext, EncapsulationScheme, Error,
+    MLKEMPrivateKey, Result, SymmetricKey, X25519PrivateKey, tags,
 };
 
 /// A private key used for key encapsulation mechanisms (KEM).
@@ -165,7 +164,9 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
                         MLKEMPrivateKey::try_from(cbor)?,
                     ))
                 }
-                _ => Err(dcbor::Error::msg("Invalid encapsulation private key")),
+                _ => {
+                    Err(dcbor::Error::msg("Invalid encapsulation private key"))
+                }
             },
             _ => Err(dcbor::Error::msg("Invalid encapsulation private key")),
         }

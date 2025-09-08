@@ -1,8 +1,8 @@
-use crate::{Error, Result};
 use bc_rand::RandomNumberGenerator;
 
 use crate::{
-    EncapsulationPrivateKey, EncapsulationPublicKey, MLKEM, X25519PrivateKey,
+    EncapsulationPrivateKey, EncapsulationPublicKey, Error, MLKEM, Result,
+    X25519PrivateKey,
 };
 
 /// Supported key encapsulation mechanisms.
@@ -129,7 +129,7 @@ impl EncapsulationScheme {
                 ))
             }
             _ => Err(Error::general(
-                "Deterministic keypair generation not supported for this encapsulation scheme"
+                "Deterministic keypair generation not supported for this encapsulation scheme",
             )),
         }
     }

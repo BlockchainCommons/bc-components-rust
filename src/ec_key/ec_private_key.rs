@@ -1,8 +1,9 @@
-use crate::{Error, Result};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
-use crate::{ECKey, ECKeyBase, ECPublicKey, SchnorrPublicKey, tags};
+use crate::{
+    ECKey, ECKeyBase, ECPublicKey, Error, Result, SchnorrPublicKey, tags,
+};
 
 /// The size of an ECDSA private key in bytes (32 bytes).
 pub const ECDSA_PRIVATE_KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
@@ -88,7 +89,11 @@ impl ECPrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_PRIVATE_KEY_SIZE {
-            return Err(Error::invalid_size("EC private key", ECDSA_PRIVATE_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "EC private key",
+                ECDSA_PRIVATE_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         arr.copy_from_slice(data);
@@ -215,7 +220,11 @@ impl ECKeyBase for ECPrivateKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_PRIVATE_KEY_SIZE {
-            return Err(Error::invalid_size("EC private key", ECDSA_PRIVATE_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "EC private key",
+                ECDSA_PRIVATE_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut key = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         key.copy_from_slice(data);

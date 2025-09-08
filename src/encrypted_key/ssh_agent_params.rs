@@ -108,13 +108,9 @@ impl SSHAgentParams {
         Self { salt, id: id.as_ref().to_string(), agent }
     }
 
-    pub fn salt(&self) -> &Salt {
-        &self.salt
-    }
+    pub fn salt(&self) -> &Salt { &self.salt }
 
-    pub fn id(&self) -> &String {
-        &self.id
-    }
+    pub fn id(&self) -> &String { &self.id }
 
     pub fn agent(&self) -> Option<Rc<RefCell<dyn SSHAgent + 'static>>> {
         self.agent.clone()
@@ -129,9 +125,7 @@ impl SSHAgentParams {
 }
 
 impl Default for SSHAgentParams {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
@@ -361,9 +355,7 @@ mod tests_common {
         SSHAgentParams, Salt,
     };
 
-    pub fn test_id() -> String {
-        "your_email@example.com".to_string()
-    }
+    pub fn test_id() -> String { "your_email@example.com".to_string() }
 
     pub fn test_ssh_agent_params(agent: Rc<RefCell<dyn SSHAgent>>) {
         // Create SSHAgentParams with the agent.
@@ -425,19 +417,15 @@ mod tests_common {
 mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-    use crate::{Error, Result};
-
     use super::tests_common::{test_id, test_ssh_agent_params};
-    use crate::SSHAgent;
+    use crate::{Error, Result, SSHAgent};
 
     struct MockSSHAgent {
         identities: HashMap<String, ssh_key::PrivateKey>,
     }
 
     impl MockSSHAgent {
-        fn new() -> Self {
-            Self { identities: HashMap::new() }
-        }
+        fn new() -> Self { Self { identities: HashMap::new() } }
 
         fn add_identity(&mut self, key: ssh_key::PrivateKey) {
             self.identities.insert(key.comment().to_string(), key);
@@ -565,9 +553,7 @@ mod real_agent_tests {
         EncryptedKey, KeyDerivationMethod, SymmetricKey, connect_to_ssh_agent,
     };
 
-    pub fn test_content_key() -> SymmetricKey {
-        SymmetricKey::new()
-    }
+    pub fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
 
     #[test]
     fn test_ssh_agent_params_with_real_agent() {

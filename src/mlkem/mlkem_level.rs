@@ -1,8 +1,8 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 
 use super::{MLKEMPrivateKey, MLKEMPublicKey};
+use crate::{Error, Result};
 
 /// Security levels for the ML-KEM post-quantum key encapsulation mechanism.
 ///
@@ -147,7 +147,10 @@ impl TryFrom<CBOR> for MLKEM {
             512 => Ok(MLKEM::MLKEM512),
             768 => Ok(MLKEM::MLKEM768),
             1024 => Ok(MLKEM::MLKEM1024),
-            _ => Err(Error::post_quantum(format!("Invalid MLKEM level: {}", level))),
+            _ => Err(Error::post_quantum(format!(
+                "Invalid MLKEM level: {}",
+                level
+            ))),
         }
     }
 }

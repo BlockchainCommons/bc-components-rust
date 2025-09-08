@@ -1,10 +1,11 @@
-use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{SecretKey, SharedSecret};
 
 use super::{MLKEM, MLKEMCiphertext};
-use crate::{Decrypter, EncapsulationPrivateKey, SymmetricKey, tags};
+use crate::{
+    Decrypter, EncapsulationPrivateKey, Error, Result, SymmetricKey, tags,
+};
 
 /// A private key for the ML-KEM post-quantum key encapsulation mechanism.
 ///

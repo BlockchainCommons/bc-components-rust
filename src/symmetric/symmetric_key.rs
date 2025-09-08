@@ -1,11 +1,10 @@
-use crate::{Error, Result};
 use bc_crypto::{
     aead_chacha20_poly1305_decrypt_with_aad,
     aead_chacha20_poly1305_encrypt_with_aad,
 };
 use bc_ur::prelude::*;
 
-use crate::{Digest, EncryptedMessage, Nonce, tags};
+use crate::{Digest, EncryptedMessage, Error, Nonce, Result, tags};
 
 /// A symmetric encryption key used for both encryption and decryption.
 ///
@@ -52,7 +51,11 @@ impl SymmetricKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::SYMMETRIC_KEY_SIZE {
-            return Err(Error::invalid_size("symmetric key", Self::SYMMETRIC_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "symmetric key",
+                Self::SYMMETRIC_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::SYMMETRIC_KEY_SIZE];
         arr.copy_from_slice(data);

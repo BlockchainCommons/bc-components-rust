@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use bc_ur::prelude::*;
 
-use crate::{Digest, digest_provider::DigestProvider, tags, Error, Result};
+use crate::{Digest, Error, Result, digest_provider::DigestProvider, tags};
 
 /// Implementers of this trait provide a globally unique reference to
 /// themselves.
@@ -98,7 +98,11 @@ impl Reference {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::REFERENCE_SIZE {
-            return Err(Error::invalid_size("reference", Self::REFERENCE_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "reference",
+                Self::REFERENCE_SIZE,
+                data.len(),
+            ));
         }
         let mut arr = [0u8; Self::REFERENCE_SIZE];
         arr.copy_from_slice(data.as_ref());

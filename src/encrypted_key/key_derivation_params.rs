@@ -1,11 +1,10 @@
-use crate::{Result};
 use dcbor::prelude::*;
 
 use super::{
     Argon2idParams, HKDFParams, KeyDerivation, KeyDerivationMethod,
     PBKDF2Params, SSHAgentParams, ScryptParams,
 };
-use crate::{EncryptedMessage, SymmetricKey};
+use crate::{EncryptedMessage, Result, SymmetricKey};
 
 /// Enum representing the derivation parameters.
 #[derive(Debug, Clone, PartialEq, Eq)]

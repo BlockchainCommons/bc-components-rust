@@ -1,6 +1,4 @@
-use crate::{Result};
-
-use crate::{Signature, SigningOptions};
+use crate::{Result, Signature, SigningOptions};
 
 /// A trait for types capable of creating digital signatures.
 ///

@@ -1,9 +1,8 @@
-use crate::{Result};
 use bc_ur::prelude::*;
 
 use crate::{
     Decrypter, Digest, EncapsulationPrivateKey, Reference, ReferenceProvider,
-    Signature, Signer, SigningPrivateKey, tags,
+    Result, Signature, Signer, SigningPrivateKey, tags,
 };
 
 /// A container for an entity's private cryptographic keys.

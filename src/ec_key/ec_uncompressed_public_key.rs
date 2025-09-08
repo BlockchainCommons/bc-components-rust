@@ -1,7 +1,8 @@
-use crate::{Error, Result};
 use bc_ur::prelude::*;
 
-use crate::{ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, tags};
+use crate::{
+    ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, Error, Result, tags,
+};
 
 /// The size of an ECDSA uncompressed public key in bytes (65 bytes).
 pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize =
@@ -91,7 +92,11 @@ impl ECKeyBase for ECUncompressedPublicKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE {
-            return Err(Error::invalid_size("ECDSA uncompressed public key", ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE, data.len()));
+            return Err(Error::invalid_size(
+                "ECDSA uncompressed public key",
+                ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE,
+                data.len(),
+            ));
         }
         let mut key = [0u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

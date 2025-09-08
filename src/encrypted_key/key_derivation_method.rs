@@ -1,5 +1,6 @@
-use crate::{Error, Result};
 use bc_ur::prelude::*;
+
+use crate::{Error, Result};
 
 /// Enum representing the supported key derivation methods.
 ///
