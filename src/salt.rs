@@ -113,10 +113,7 @@ impl Salt {
         rng: &mut impl RandomNumberGenerator,
     ) -> Result<Self> {
         if count < 8 {
-            return Err(Error::invalid_data(
-                "salt",
-                "length is too short (minimum 8 bytes)",
-            ));
+            return Err(Error::data_too_short("salt", 8, count));
         }
         Ok(Self::from_data(rng_random_data(rng, count)))
     }
@@ -126,10 +123,7 @@ impl Salt {
     /// If the minimum number of bytes is less than 8, this will return `None`.
     pub fn new_in_range(range: RangeInclusive<usize>) -> Result<Self> {
         if range.start() < &8 {
-            return Err(Error::invalid_data(
-                "salt",
-                "minimum length is too short (minimum 8 bytes)",
-            ));
+            return Err(Error::data_too_short("salt", 8, *range.start()));
         }
         let mut rng = SecureRandomNumberGenerator;
         Self::new_in_range_using(&range, &mut rng)
@@ -143,10 +137,7 @@ impl Salt {
         rng: &mut impl RandomNumberGenerator,
     ) -> Result<Self> {
         if range.start() < &8 {
-            return Err(Error::invalid_data(
-                "salt",
-                "minimum length is too short (minimum 8 bytes)",
-            ));
+            return Err(Error::data_too_short("salt", 8, *range.start()));
         }
         let count = rng_next_in_closed_range(rng, range);
         Self::new_with_len_using(count, rng)

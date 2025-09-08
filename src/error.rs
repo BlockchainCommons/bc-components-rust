@@ -14,6 +14,16 @@ pub enum Error {
     #[error("invalid {data_type}: {reason}")]
     InvalidData { data_type: String, reason: String },
 
+    // Data too short.
+    #[error(
+        "data too short: {data_type} expected at least {minimum}, got {actual}"
+    )]
+    DataTooShort {
+        data_type: String,
+        minimum: usize,
+        actual: usize,
+    },
+
     /// Cryptographic operation failed.
     #[error("cryptographic operation failed: {0}")]
     Crypto(String),
@@ -95,6 +105,15 @@ impl Error {
             data_type: data_type.into(),
             reason: reason.into(),
         }
+    }
+
+    /// Create a data too short error.
+    pub fn data_too_short(
+        data_type: impl Into<String>,
+        minimum: usize,
+        actual: usize,
+    ) -> Self {
+        Error::DataTooShort { data_type: data_type.into(), minimum, actual }
     }
 
     /// Create a crypto error.

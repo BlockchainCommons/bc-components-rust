@@ -130,12 +130,10 @@ impl Seed {
     ) -> Result<Self> {
         let data = data.as_ref().to_vec();
         if data.len() < Self::MIN_SEED_LENGTH {
-            return Err(Error::invalid_data(
+            return Err(Error::data_too_short(
                 "seed",
-                format!(
-                    "data is too short (minimum {} bytes)",
-                    Self::MIN_SEED_LENGTH
-                ),
+                Self::MIN_SEED_LENGTH,
+                data.len(),
             ));
         }
         Ok(Self {
