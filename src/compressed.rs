@@ -1,11 +1,10 @@
 use std::{borrow::Cow, fmt::Formatter};
 
-use anyhow::{Result, anyhow, bail};
 use bc_crypto::hash::crc32;
 use bc_ur::prelude::*;
 use miniz_oxide::{deflate::compress_to_vec, inflate::decompress_to_vec};
 
-use crate::{DigestProvider, digest::Digest, tags};
+use crate::{DigestProvider, digest::Digest, tags, Error, Result};
 
 /// A compressed binary object with integrity verification.
 ///
@@ -87,7 +86,7 @@ impl Compressed {
         digest: Option<Digest>,
     ) -> Result<Self> {
         if compressed_data.len() > uncompressed_size {
-            bail!("Compressed data is larger than uncompressed size");
+            return Err(Error::compression("compressed data is larger than uncompressed size"));
         }
         Ok(Self {
             checksum,
@@ -199,9 +198,9 @@ impl Compressed {
         }
 
         let uncompressed_data = decompress_to_vec(&self.compressed_data)
-            .map_err(|_| anyhow!("corrupt compressed data"))?;
+            .map_err(|_| Error::compression("corrupt compressed data"))?;
         if crc32(&uncompressed_data) != self.checksum {
-            bail!("compressed data checksum mismatch");
+            return Err(Error::compression("compressed data checksum mismatch"));
         }
 
         Ok(uncompressed_data)

@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
-use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
+
+use crate::{Error, Result};
 
 /// The authentication tag produced by the encryption process to verify message
 /// integrity.
@@ -32,7 +33,7 @@ impl AuthenticationTag {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::AUTHENTICATION_TAG_SIZE {
-            bail!("Invalid authentication tag size");
+            return Err(Error::invalid_size("authentication tag", Self::AUTHENTICATION_TAG_SIZE, data.len()));
         }
         let mut arr = [0u8; Self::AUTHENTICATION_TAG_SIZE];
         arr.copy_from_slice(data.as_ref());
@@ -106,7 +107,7 @@ impl From<AuthenticationTag> for CBOR {
 impl TryFrom<CBOR> for AuthenticationTag {
     type Error = Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self, Self::Error> {
+    fn try_from(cbor: CBOR) -> std::result::Result<Self, Self::Error> {
         let data = CBOR::try_into_byte_string(cbor)?;
         Self::from_data_ref(data)
     }

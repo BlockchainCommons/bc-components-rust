@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_crypto::SCHNORR_SIGNATURE_SIZE;
 
 use crate::ECKeyBase;
@@ -135,7 +135,7 @@ impl ECKeyBase for SchnorrPublicKey {
     {
         let data = data.as_ref();
         if data.len() != SCHNORR_PUBLIC_KEY_SIZE {
-            bail!("invalid Schnorr public key size");
+            return Err(Error::invalid_size("Schnorr public key", SCHNORR_PUBLIC_KEY_SIZE, data.len()));
         }
         let mut key = [0u8; SCHNORR_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

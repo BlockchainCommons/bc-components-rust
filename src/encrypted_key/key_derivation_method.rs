@@ -1,5 +1,5 @@
-use anyhow::{Error, Result};
-use dcbor::prelude::*;
+use crate::{Error, Result};
+use bc_ur::prelude::*;
 
 /// Enum representing the supported key derivation methods.
 ///
@@ -55,6 +55,6 @@ impl TryFrom<&CBOR> for KeyDerivationMethod {
     fn try_from(cbor: &CBOR) -> Result<Self> {
         let i: usize = cbor.clone().try_into()?;
         KeyDerivationMethod::from_index(i)
-            .ok_or_else(|| Error::msg("Invalid KeyDerivationMethod"))
+            .ok_or_else(|| Error::general("Invalid KeyDerivationMethod"))
     }
 }

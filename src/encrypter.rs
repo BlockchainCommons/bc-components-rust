@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::{Result};
 
 use crate::{
     EncapsulationCiphertext, EncapsulationPrivateKey, EncapsulationPublicKey,

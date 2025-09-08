@@ -1,9 +1,8 @@
 use std::str::FromStr;
 
-use anyhow::{Error, Result};
 use dcbor::prelude::*;
 
-use crate::tags;
+use crate::{tags, Error};
 
 /// A Universally Unique Identifier (UUID).
 ///
@@ -143,7 +142,7 @@ impl From<&UUID> for String {
 impl FromStr for UUID {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         let s = s.trim();
         let s = s.replace('-', "");
         let bytes = hex::decode(s).unwrap();

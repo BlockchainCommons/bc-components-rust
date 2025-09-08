@@ -1,7 +1,6 @@
-use anyhow::{Result, bail};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 
-use crate::Ed25519PublicKey;
+use crate::{Ed25519PublicKey, Error, Result};
 
 pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 
@@ -55,7 +54,7 @@ impl Ed25519PrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_PRIVATE_KEY_SIZE {
-            bail!("Invalid Ed25519 private key size");
+            return Err(Error::invalid_size("Ed25519 private key", ED25519_PRIVATE_KEY_SIZE, data.len()));
         }
         let mut arr = [0u8; ED25519_PRIVATE_KEY_SIZE];
         arr.copy_from_slice(data);

@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
@@ -88,7 +88,7 @@ impl ECPrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_PRIVATE_KEY_SIZE {
-            bail!("Invalid EC private key size");
+            return Err(Error::invalid_size("EC private key", ECDSA_PRIVATE_KEY_SIZE, data.len()));
         }
         let mut arr = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         arr.copy_from_slice(data);
@@ -215,7 +215,7 @@ impl ECKeyBase for ECPrivateKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_PRIVATE_KEY_SIZE {
-            bail!("Invalid EC private key size");
+            return Err(Error::invalid_size("EC private key", ECDSA_PRIVATE_KEY_SIZE, data.len()));
         }
         let mut key = [0u8; ECDSA_PRIVATE_KEY_SIZE];
         key.copy_from_slice(data);

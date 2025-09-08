@@ -1,5 +1,5 @@
-use anyhow::{Error, Result};
-use dcbor::prelude::*;
+use crate::{Error, Result};
+use bc_ur::prelude::*;
 
 /// Enum representing the supported hash types.
 ///
@@ -36,7 +36,7 @@ impl TryFrom<CBOR> for HashType {
         match i {
             0 => Ok(HashType::SHA256),
             1 => Ok(HashType::SHA512),
-            _ => Err(Error::msg("Invalid HashType")),
+            _ => Err(Error::general("Invalid HashType")),
         }
     }
 }

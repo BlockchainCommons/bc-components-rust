@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{PublicKey, SharedSecret};
@@ -100,15 +100,15 @@ impl MLKEMPublicKey {
         match level {
             MLKEM::MLKEM512 => Ok(MLKEMPublicKey::MLKEM512(Box::new(
                 mlkem512::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM768 => Ok(MLKEMPublicKey::MLKEM768(Box::new(
                 mlkem768::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM1024 => Ok(MLKEMPublicKey::MLKEM1024(Box::new(
                 mlkem1024::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
         }
     }

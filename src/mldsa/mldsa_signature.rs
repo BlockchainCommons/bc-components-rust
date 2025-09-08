@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
@@ -89,15 +89,15 @@ impl MLDSASignature {
         match level {
             MLDSA::MLDSA44 => Ok(MLDSASignature::MLDSA44(Box::new(
                 mldsa44::DetachedSignature::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLDSA::MLDSA65 => Ok(MLDSASignature::MLDSA65(Box::new(
                 mldsa65::DetachedSignature::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLDSA::MLDSA87 => Ok(MLDSASignature::MLDSA87(Box::new(
                 mldsa87::DetachedSignature::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
         }
     }

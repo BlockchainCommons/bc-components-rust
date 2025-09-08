@@ -1,5 +1,5 @@
-use anyhow::{Result, bail};
-use dcbor::prelude::*;
+use crate::{Error, Result};
+use bc_ur::prelude::*;
 
 use crate::{
     Decrypter, EncapsulationCiphertext, EncapsulationScheme, MLKEMPrivateKey,
@@ -112,11 +112,11 @@ impl EncapsulationPrivateKey {
                 EncapsulationPrivateKey::MLKEM(private_key),
                 EncapsulationCiphertext::MLKEM(ciphertext),
             ) => private_key.decapsulate_shared_secret(ciphertext),
-            _ => bail!(
+            _ => Err(Error::crypto(format!(
                 "Mismatched key encapsulation types. private key: {:?}, ciphertext: {:?}",
                 self.encapsulation_scheme(),
                 ciphertext.encapsulation_scheme()
-            ),
+            ))),
         }
     }
 }
@@ -150,9 +150,9 @@ impl From<EncapsulationPrivateKey> for CBOR {
 
 /// Conversion from CBOR to `EncapsulationPrivateKey` for deserialization.
 impl TryFrom<CBOR> for EncapsulationPrivateKey {
-    type Error = anyhow::Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self> {
+    fn try_from(cbor: CBOR) -> std::result::Result<Self, dcbor::Error> {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => match tag.value() {
                 tags::TAG_X25519_PRIVATE_KEY => {
@@ -165,9 +165,9 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
                         MLKEMPrivateKey::try_from(cbor)?,
                     ))
                 }
-                _ => bail!("Invalid encapsulation private key"),
+                _ => Err(dcbor::Error::msg("Invalid encapsulation private key")),
             },
-            _ => bail!("Invalid encapsulation private key"),
+            _ => Err(dcbor::Error::msg("Invalid encapsulation private key")),
         }
     }
 }

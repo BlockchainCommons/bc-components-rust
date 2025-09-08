@@ -1,4 +1,4 @@
-use anyhow::{Error, Result, bail};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 
@@ -118,7 +118,7 @@ impl TryFrom<CBOR> for MLDSA {
             2 => Ok(MLDSA::MLDSA44),
             3 => Ok(MLDSA::MLDSA65),
             5 => Ok(MLDSA::MLDSA87),
-            _ => bail!("Invalid MLDSA level: {}", level),
+            _ => Err(Error::post_quantum(format!("Invalid MLDSA level: {}", level))),
         }
     }
 }

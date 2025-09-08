@@ -1,10 +1,9 @@
-use anyhow::{Result, anyhow, bail};
 use dcbor::prelude::*;
 use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::tags;
+use crate::{tags, Error, Result};
 
 /// A public key for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -100,7 +99,7 @@ impl MLDSAPublicKey {
         message: impl AsRef<[u8]>,
     ) -> Result<bool> {
         if signature.level() != self.level() {
-            bail!("Signature level does not match public key level");
+            return Err(Error::LevelMismatch);
         }
 
         let verifies = match (self, signature) {
@@ -157,15 +156,15 @@ impl MLDSAPublicKey {
         match level {
             MLDSA::MLDSA44 => Ok(MLDSAPublicKey::MLDSA44(Box::new(
                 mldsa44::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(format!("MLDSA44 public key error: {}", e)))?,
             ))),
             MLDSA::MLDSA65 => Ok(MLDSAPublicKey::MLDSA65(Box::new(
                 mldsa65::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(format!("MLDSA65 public key error: {}", e)))?,
             ))),
             MLDSA::MLDSA87 => Ok(MLDSAPublicKey::MLDSA87(Box::new(
                 mldsa87::PublicKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(format!("MLDSA87 public key error: {}", e)))?,
             ))),
         }
     }

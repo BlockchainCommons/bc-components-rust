@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
@@ -321,9 +321,9 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
-            _ => bail!(
+            _ => Err(Error::general(
                 "Deterministic keypair generation not supported for this signature scheme"
-            ),
+            )),
         }
     }
 }

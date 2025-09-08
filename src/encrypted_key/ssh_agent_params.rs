@@ -1,12 +1,11 @@
 use std::{cell::RefCell, env, path::Path, rc::Rc};
 
-use anyhow::{Context, Result, bail};
 use bc_crypto::hkdf_hmac_sha256;
 use dcbor::prelude::*;
 use ssh_agent_client_rs::{Client, Identity};
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
-use crate::{EncryptedMessage, Nonce, Salt, SymmetricKey};
+use crate::{EncryptedMessage, Error, Nonce, Result, Salt, SymmetricKey};
 
 #[allow(dead_code)]
 pub trait SSHAgent {
@@ -33,22 +32,22 @@ impl SSHAgent for Client {
                     })
                     .collect()
             })
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
+            .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
     fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
         self.add_identity(key)
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
+            .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
     fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
         self.remove_identity(key)
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
+            .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
     fn remove_all_identities(&mut self) -> Result<()> {
         self.remove_all_identities()
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
+            .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
     fn sign(
@@ -57,7 +56,7 @@ impl SSHAgent for Client {
         data: &[u8],
     ) -> Result<ssh_key::Signature> {
         self.sign(key, data)
-            .map_err(|e| anyhow::anyhow!(e.to_string()))
+            .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 }
 
@@ -137,10 +136,10 @@ impl Default for SSHAgentParams {
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
 pub fn connect_to_ssh_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
-    let sock =
-        env::var("SSH_AUTH_SOCK").context("SSH_AUTH_SOCK env var not set")?;
-    let client =
-        Client::connect(Path::new(&sock)).context("no ssh-agent reachable")?;
+    let sock = env::var("SSH_AUTH_SOCK")
+        .map_err(|_| Error::ssh_agent("SSH_AUTH_SOCK env var not set"))?;
+    let client = Client::connect(Path::new(&sock))
+        .map_err(|_| Error::ssh_agent("no ssh-agent reachable"))?;
     Ok(Rc::new(RefCell::new(client)))
 }
 
@@ -153,8 +152,9 @@ impl KeyDerivation for SSHAgentParams {
         secret: impl AsRef<[u8]>,
     ) -> Result<EncryptedMessage> {
         // Convert `secret` to a string for the SSH ID.
-        let id = String::from_utf8(secret.as_ref().to_vec())
-            .context("SSH Agent secret must be a valid UTF-8 string")?;
+        let id = String::from_utf8(secret.as_ref().to_vec()).map_err(|_| {
+            Error::ssh_agent("SSH Agent secret must be a valid UTF-8 string")
+        })?;
 
         // If None call connect_to_agent to get the agent.
         let agent = self
@@ -172,7 +172,9 @@ impl KeyDerivation for SSHAgentParams {
             .collect();
 
         if ids.is_empty() {
-            bail!("No Ed25519 identities available in SSH agent");
+            return Err(Error::ssh_agent(
+                "No Ed25519 identities available in SSH agent",
+            ));
         }
 
         // If `id` is empty, use the first available identity, otherwise find
@@ -180,16 +182,16 @@ impl KeyDerivation for SSHAgentParams {
         let identity = if id.is_empty() {
             // If there is more than one identity, throw an error.
             if ids.len() > 1 {
-                bail!(
-                    "Multiple identities available in SSH agent, but no ID provided"
-                );
+                return Err(Error::ssh_agent(
+                    "Multiple identities available in SSH agent, but no ID provided",
+                ));
             }
             // Safe to unwrap because we checked that `ids` is not empty
             ids.first().unwrap()
         } else {
             ids.iter()
                 .find(|k| k.comment() == id)
-                .context("No matching identity found")?
+                .ok_or_else(|| Error::ssh_agent("No matching identity found"))?
         };
 
         // Sign the salt with the identity.
@@ -197,7 +199,7 @@ impl KeyDerivation for SSHAgentParams {
         let sig = agent
             .borrow_mut()
             .sign(identity, salt.as_bytes())
-            .context("SSH agent refused to sign")?;
+            .map_err(|_| Error::ssh_agent("SSH agent refused to sign"))?;
 
         // Derive the symmetric key using HKDF with HMAC-SHA256.
         let derived_key = SymmetricKey::from_data_ref(hkdf_hmac_sha256(
@@ -228,8 +230,9 @@ impl KeyDerivation for SSHAgentParams {
         secret: impl AsRef<[u8]>,
     ) -> Result<SymmetricKey> {
         // Convert `secret` to a string for the SSH ID.
-        let id = String::from_utf8(secret.as_ref().to_vec())
-            .context("SSH Agent secret must be a valid UTF-8 string")?;
+        let id = String::from_utf8(secret.as_ref().to_vec()).map_err(|_| {
+            Error::ssh_agent("SSH Agent secret must be a valid UTF-8 string")
+        })?;
 
         // If None call connect_to_agent to get the agent.
         let agent = self
@@ -247,7 +250,9 @@ impl KeyDerivation for SSHAgentParams {
             .collect();
 
         if ids.is_empty() {
-            bail!("No Ed25519 identities available in SSH agent");
+            return Err(Error::ssh_agent(
+                "No Ed25519 identities available in SSH agent",
+            ));
         }
 
         // id priority:
@@ -257,11 +262,11 @@ impl KeyDerivation for SSHAgentParams {
         let identity = if !id.is_empty() {
             ids.iter()
                 .find(|k| k.comment() == id)
-                .context("No matching identity found")?
+                .ok_or_else(|| Error::ssh_agent("No matching identity found"))?
         } else if !self.id.is_empty() {
             ids.iter()
                 .find(|k| k.comment() == self.id)
-                .context("No matching identity found")?
+                .ok_or_else(|| Error::ssh_agent("No matching identity found"))?
         } else {
             // Safe to unwrap because we checked that `ids` is not empty
             ids.first().unwrap()
@@ -271,7 +276,7 @@ impl KeyDerivation for SSHAgentParams {
         let sig = agent
             .borrow_mut()
             .sign(identity, self.salt.as_bytes())
-            .context("SSH agent refused to sign")?;
+            .map_err(|_| Error::ssh_agent("SSH agent refused to sign"))?;
 
         // Derive the symmetric key using HKDF with HMAC-SHA256.
         let derived_key = SymmetricKey::from_data_ref(hkdf_hmac_sha256(
@@ -282,13 +287,20 @@ impl KeyDerivation for SSHAgentParams {
         .unwrap(); // Safe to unwrap because SYMMETRIC_KEY_SIZE is valid.
 
         // Decrypt the encrypted key with the derived key.
-        let decrypted_key = derived_key
-            .decrypt(encrypted_message)
-            .context("Failed to decrypt the encrypted key")?;
+        let decrypted_key =
+            derived_key.decrypt(encrypted_message).map_err(|e| {
+                Error::crypto(format!(
+                    "Failed to decrypt the encrypted key: {}",
+                    e
+                ))
+            })?;
 
-        let content_key = decrypted_key
-            .try_into()
-            .context("Failed to convert decrypted key to SymmetricKey")?;
+        let content_key = decrypted_key.try_into().map_err(|e| {
+            Error::crypto(format!(
+                "Failed to convert decrypted key to SymmetricKey: {}",
+                e
+            ))
+        })?;
 
         // If the decryption was successful, return the symmetric key.
         Ok(content_key)
@@ -413,7 +425,7 @@ mod tests_common {
 mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-    use anyhow::Result;
+    use crate::{Error, Result};
 
     use super::tests_common::{test_id, test_ssh_agent_params};
     use crate::SSHAgent;
@@ -466,11 +478,13 @@ mod mock_agent_tests {
             let private_key = self
                 .identities
                 .get(key.comment())
-                .ok_or_else(|| anyhow::anyhow!("Identity not found"))?;
+                .ok_or_else(|| Error::ssh_agent("Identity not found"))?;
             // println!("Signing Private key: {:?}", private_key);
             let sig: ssh_key::SshSig = private_key
                 .sign("test_namespace", ssh_key::HashAlg::Sha256, data)
-                .map_err(|e| anyhow::anyhow!("Failed to sign data: {}", e))?;
+                .map_err(|e| {
+                    Error::ssh_agent(format!("Failed to sign data: {}", e))
+                })?;
             // println!("Signature: {:?}", sig.signature());
             Ok(sig.signature().clone())
         }

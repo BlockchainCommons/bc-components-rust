@@ -1,9 +1,8 @@
-use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
 
 use crate::{
     Digest, PrivateKeyBase, PublicKeys, Reference, ReferenceProvider,
-    SigningPrivateKey, SigningPublicKey, tags,
+    SigningPrivateKey, SigningPublicKey, tags, Error, Result,
 };
 
 /// A XID (eXtensible IDentifier).
@@ -41,7 +40,7 @@ impl XID {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::XID_SIZE {
-            bail!("Invalid XID size");
+            return Err(Error::invalid_size("XID", Self::XID_SIZE, data.len()));
         }
         let mut arr = [0u8; Self::XID_SIZE];
         arr.copy_from_slice(data.as_ref());
@@ -178,7 +177,7 @@ impl From<&SigningPublicKey> for XID {
 impl TryFrom<&SigningPrivateKey> for XID {
     type Error = Error;
 
-    fn try_from(key: &SigningPrivateKey) -> Result<Self, Self::Error> {
+    fn try_from(key: &SigningPrivateKey) -> std::result::Result<Self, Self::Error> {
         Ok(Self::new(&key.public_key()?))
     }
 }

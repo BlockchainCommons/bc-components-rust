@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{SecretKey, SharedSecret};
@@ -102,15 +102,15 @@ impl MLKEMPrivateKey {
         match level {
             MLKEM::MLKEM512 => Ok(MLKEMPrivateKey::MLKEM512(Box::new(
                 mlkem512::SecretKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM768 => Ok(MLKEMPrivateKey::MLKEM768(Box::new(
                 mlkem768::SecretKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM1024 => Ok(MLKEMPrivateKey::MLKEM1024(Box::new(
                 mlkem1024::SecretKey::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
         }
     }

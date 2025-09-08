@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::Ciphertext;
@@ -87,15 +87,15 @@ impl MLKEMCiphertext {
         match level {
             MLKEM::MLKEM512 => Ok(MLKEMCiphertext::MLKEM512(Box::new(
                 mlkem512::Ciphertext::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM768 => Ok(MLKEMCiphertext::MLKEM768(Box::new(
                 mlkem768::Ciphertext::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
             MLKEM::MLKEM1024 => Ok(MLKEMCiphertext::MLKEM1024(Box::new(
                 mlkem1024::Ciphertext::from_bytes(bytes)
-                    .map_err(|e| anyhow!(e))?,
+                    .map_err(|e| Error::post_quantum(e.to_string()))?,
             ))),
         }
     }

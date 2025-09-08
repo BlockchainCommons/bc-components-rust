@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
@@ -109,7 +109,7 @@ impl ECKeyBase for ECPublicKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_PUBLIC_KEY_SIZE {
-            bail!("Invalid ECDSA public key size");
+            return Err(Error::invalid_size("ECDSA public key", ECDSA_PUBLIC_KEY_SIZE, data.len()));
         }
         let mut key = [0u8; ECDSA_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

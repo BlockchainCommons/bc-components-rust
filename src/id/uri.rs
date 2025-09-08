@@ -1,10 +1,9 @@
 use std::str::FromStr;
 
-use anyhow::{Error, Result, bail};
 use dcbor::prelude::*;
 use url::Url;
 
-use crate::tags;
+use crate::{tags, Error, Result};
 
 /// A Uniform Resource Identifier (URI).
 ///
@@ -29,7 +28,7 @@ impl URI {
         if Url::parse(&uri).is_ok() {
             Ok(Self(uri))
         } else {
-            bail!("Invalid URI")
+            Err(Error::invalid_data("URI", "invalid URI format"))
         }
     }
 }
@@ -38,7 +37,7 @@ impl URI {
 impl FromStr for URI {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> { Self::new(s) }
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> { Self::new(s) }
 }
 
 /// Implements `AsRef<str>` to allow URI to be treated as a string slice.
@@ -99,14 +98,14 @@ impl std::fmt::Display for URI {
 impl TryFrom<&str> for URI {
     type Error = Error;
 
-    fn try_from(uri: &str) -> Result<Self, Self::Error> { Self::new(uri) }
+    fn try_from(uri: &str) -> std::result::Result<Self, Self::Error> { Self::new(uri) }
 }
 
 /// Implements conversion from String to URI with validation.
 impl TryFrom<String> for URI {
     type Error = Error;
 
-    fn try_from(uri: String) -> Result<Self, Self::Error> {
+    fn try_from(uri: String) -> std::result::Result<Self, Self::Error> {
         Self::try_from(uri.as_str())
     }
 }

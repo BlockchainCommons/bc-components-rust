@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_rand::RandomNumberGenerator;
 
 use crate::{
@@ -128,9 +128,9 @@ impl EncapsulationScheme {
                     EncapsulationPublicKey::X25519(public_key),
                 ))
             }
-            _ => bail!(
+            _ => Err(Error::general(
                 "Deterministic keypair generation not supported for this encapsulation scheme"
-            ),
+            )),
         }
     }
 }

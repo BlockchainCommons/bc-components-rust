@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_ur::prelude::*;
 
 use crate::{ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, tags};
@@ -91,7 +91,7 @@ impl ECKeyBase for ECUncompressedPublicKey {
     {
         let data = data.as_ref();
         if data.len() != ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE {
-            bail!("Invalid ECDSA uncompressed public key size");
+            return Err(Error::invalid_size("ECDSA uncompressed public key", ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE, data.len()));
         }
         let mut key = [0u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE];
         key.copy_from_slice(data);

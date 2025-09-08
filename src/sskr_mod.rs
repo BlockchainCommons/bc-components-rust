@@ -1,4 +1,3 @@
-use anyhow::Result;
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use sskr::SSKRError;
@@ -356,7 +355,7 @@ impl CBORTaggedDecodable for SSKRShare {
 pub fn sskr_generate(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
-) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
+) -> std::result::Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let mut rng = SecureRandomNumberGenerator;
     sskr_generate_using(spec, master_secret, &mut rng)
 }
@@ -415,7 +414,7 @@ pub fn sskr_generate_using(
     spec: &SSKRSpec,
     master_secret: &SSKRSecret,
     rng: &mut impl RandomNumberGenerator,
-) -> Result<Vec<Vec<SSKRShare>>, SSKRError> {
+) -> std::result::Result<Vec<Vec<SSKRShare>>, SSKRError> {
     let shares = sskr::sskr_generate_using(spec, master_secret, rng)?;
     let shares = shares
         .into_iter()
@@ -480,7 +479,7 @@ pub fn sskr_generate_using(
 /// let recovered_secret = sskr_combine(&recovery_shares).unwrap();
 /// assert_eq!(recovered_secret, master_secret);
 /// ```
-pub fn sskr_combine(shares: &[SSKRShare]) -> Result<SSKRSecret, SSKRError> {
+pub fn sskr_combine(shares: &[SSKRShare]) -> std::result::Result<SSKRSecret, SSKRError> {
     let shares: Vec<Vec<u8>> = shares
         .iter()
         .map(|share| share.as_bytes().to_vec())

@@ -3,7 +3,7 @@
 //! Multiple derivation methods are supported, ensuring extensibility and
 //! security.
 
-use anyhow::{Error, Result};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 
 use super::SSHAgentParams;
@@ -117,7 +117,7 @@ impl EncryptedKey {
     pub fn aad_cbor(&self) -> Result<CBOR> {
         self.encrypted_message()
             .aad_cbor()
-            .ok_or_else(|| Error::msg("Missing AAD CBOR in EncryptedMessage"))
+            .ok_or_else(|| Error::general("Missing AAD CBOR in EncryptedMessage"))
     }
 
     pub fn unlock(&self, secret: impl AsRef<[u8]>) -> Result<SymmetricKey> {
@@ -126,7 +126,7 @@ impl EncryptedKey {
         let array = cbor.clone().try_into_array()?;
         let method = array
             .first()
-            .ok_or_else(|| Error::msg("Missing method"))?
+            .ok_or_else(|| Error::general("Missing method"))?
             .try_into()?;
         match method {
             KeyDerivationMethod::HKDF => {

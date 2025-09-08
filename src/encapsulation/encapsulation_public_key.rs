@@ -1,5 +1,4 @@
-use anyhow::{Result, bail};
-use dcbor::prelude::*;
+use bc_ur::prelude::*;
 
 use crate::{
     EncapsulationCiphertext, EncapsulationScheme, Encrypter, MLKEMPublicKey,
@@ -153,9 +152,9 @@ impl From<EncapsulationPublicKey> for CBOR {
 
 /// Conversion from CBOR to `EncapsulationPublicKey` for deserialization.
 impl TryFrom<CBOR> for EncapsulationPublicKey {
-    type Error = anyhow::Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self> {
+    fn try_from(cbor: CBOR) -> std::result::Result<Self, dcbor::Error> {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => match tag.value() {
                 tags::TAG_X25519_PUBLIC_KEY => {
@@ -168,9 +167,9 @@ impl TryFrom<CBOR> for EncapsulationPublicKey {
                         cbor,
                     )?))
                 }
-                _ => bail!("Invalid encapsulation public key"),
+                _ => Err(dcbor::Error::msg("Invalid encapsulation public key")),
             },
-            _ => bail!("Invalid encapsulation public key"),
+            _ => Err(dcbor::Error::msg("Invalid encapsulation public key")),
         }
     }
 }

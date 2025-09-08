@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
@@ -340,7 +340,7 @@ impl SigningPrivateKey {
             Self::SSH(key) => {
                 Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
             }
-            Self::MLDSA(_) => bail!("Deriving MLDSA public key not supported"),
+            Self::MLDSA(_) => Err(Error::general("Deriving MLDSA public key not supported")),
         }
     }
 }
@@ -376,7 +376,7 @@ impl SigningPrivateKey {
             let sig = private_key.ecdsa_sign(message);
             Ok(Signature::ecdsa_from_data(sig))
         } else {
-            bail!("Invalid key type for ECDSA signing");
+            Err(Error::crypto("Invalid key type for ECDSA signing"))
         }
     }
 
@@ -422,7 +422,7 @@ impl SigningPrivateKey {
                 private_key.schnorr_sign_using(message, &mut *rng.borrow_mut());
             Ok(Signature::schnorr_from_data(sig))
         } else {
-            bail!("Invalid key type for Schnorr signing");
+            Err(Error::crypto("Invalid key type for Schnorr signing"))
         }
     }
 
@@ -456,7 +456,7 @@ impl SigningPrivateKey {
             let sig = key.sign(message.as_ref());
             Ok(Signature::ed25519_from_data(sig))
         } else {
-            bail!("Invalid key type for Ed25519 signing");
+            Err(Error::crypto("Invalid key type for Ed25519 signing"))
         }
     }
 
@@ -485,7 +485,7 @@ impl SigningPrivateKey {
                 private.sign(namespace.as_ref(), hash_alg, message.as_ref())?;
             Ok(Signature::from_ssh(sig))
         } else {
-            bail!("Invalid key type for SSH signing");
+            Err(Error::ssh("Invalid key type for SSH signing"))
         }
     }
 
@@ -506,7 +506,7 @@ impl SigningPrivateKey {
             let sig = key.sign(message.as_ref());
             Ok(Signature::MLDSA(sig))
         } else {
-            bail!("Invalid key type for MLDSA signing");
+            Err(Error::post_quantum("Invalid key type for MLDSA signing"))
         }
     }
 }
@@ -574,9 +574,7 @@ impl Signer for SigningPrivateKey {
                 {
                     self.ssh_sign(message, namespace, hash_alg)
                 } else {
-                    bail!(
-                        "Missing namespace and hash algorithm for SSH signing"
-                    );
+                    Err(Error::ssh("Missing namespace and hash algorithm for SSH signing"))
                 }
             }
             Self::MLDSA(_) => self.mldsa_sign(message),

@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use bc_crypto::{
     ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE,
 };
@@ -140,7 +140,7 @@ impl Signature {
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
-            bail!("Invalid Schnorr signature size");
+            return Err(Error::invalid_size("Schnorr signature", SCHNORR_SIGNATURE_SIZE, data.len()));
         }
         let mut arr = [0u8; SCHNORR_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
@@ -191,7 +191,7 @@ impl Signature {
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
-            bail!("Invalid ECDSA signature size");
+            return Err(Error::invalid_size("ECDSA signature", ECDSA_SIGNATURE_SIZE, data.len()));
         }
         let mut arr = [0u8; ECDSA_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
@@ -242,7 +242,7 @@ impl Signature {
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_SIGNATURE_SIZE {
-            bail!("Invalid Ed25519 signature size");
+            return Err(Error::invalid_size("Ed25519 signature", ED25519_SIGNATURE_SIZE, data.len()));
         }
         let mut arr = [0u8; ED25519_SIGNATURE_SIZE];
         arr.copy_from_slice(data);
@@ -356,10 +356,10 @@ impl Signature {
                     ssh_key::EcdsaCurve::NistP384 => {
                         Ok(SignatureScheme::SshEcdsaP384)
                     }
-                    _ => bail!("Unsupported SSH ECDSA curve"),
+                    _ => Err(Error::ssh("Unsupported SSH ECDSA curve")),
                 },
                 ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
-                _ => bail!("Unsupported SSH signature algorithm"),
+                _ => Err(Error::ssh("Unsupported SSH signature algorithm")),
             },
             Self::MLDSA(sig) => match sig.level() {
                 crate::MLDSA::MLDSA44 => Ok(SignatureScheme::MLDSA44),

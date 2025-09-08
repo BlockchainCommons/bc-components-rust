@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::{Result};
 use bc_ur::UREncodable;
 
 use crate::ECPublicKey;

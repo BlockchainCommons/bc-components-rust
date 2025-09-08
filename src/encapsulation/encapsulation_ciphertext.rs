@@ -1,4 +1,4 @@
-use anyhow::{Result, bail};
+use crate::{Error, Result};
 use dcbor::prelude::*;
 
 use crate::{EncapsulationScheme, MLKEMCiphertext, X25519PublicKey, tags};
@@ -57,7 +57,7 @@ impl EncapsulationCiphertext {
     pub fn x25519_public_key(&self) -> Result<&X25519PublicKey> {
         match self {
             Self::X25519(public_key) => Ok(public_key),
-            _ => bail!("Invalid key encapsulation type"),
+            _ => Err(Error::crypto("Invalid key encapsulation type")),
         }
     }
 
@@ -95,7 +95,7 @@ impl EncapsulationCiphertext {
     pub fn mlkem_ciphertext(&self) -> Result<&MLKEMCiphertext> {
         match self {
             Self::MLKEM(ciphertext) => Ok(ciphertext),
-            _ => bail!("Invalid key encapsulation type"),
+            _ => Err(Error::crypto("Invalid key encapsulation type")),
         }
     }
 
@@ -193,9 +193,9 @@ impl From<EncapsulationCiphertext> for CBOR {
 
 /// Conversion from CBOR to `EncapsulationCiphertext` for deserialization.
 impl TryFrom<CBOR> for EncapsulationCiphertext {
-    type Error = anyhow::Error;
+    type Error = dcbor::Error;
 
-    fn try_from(cbor: CBOR) -> Result<Self> {
+    fn try_from(cbor: CBOR) -> std::result::Result<Self, dcbor::Error> {
         match cbor.as_case() {
             CBORCase::Tagged(tag, _) => match tag.value() {
                 tags::TAG_X25519_PUBLIC_KEY => {
@@ -208,9 +208,9 @@ impl TryFrom<CBOR> for EncapsulationCiphertext {
                         MLKEMCiphertext::try_from(cbor)?,
                     ))
                 }
-                _ => bail!("Invalid encapsulation ciphertext"),
+                _ => Err(dcbor::Error::msg("Invalid encapsulation ciphertext")),
             },
-            _ => bail!("Invalid encapsulation ciphertext"),
+            _ => Err(dcbor::Error::msg("Invalid encapsulation ciphertext")),
         }
     }
 }

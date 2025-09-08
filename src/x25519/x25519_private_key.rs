@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
-use anyhow::{Result, bail};
 use bc_crypto::x25519_new_private_key_using;
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
     Decrypter, EncapsulationPrivateKey, SymmetricKey, X25519PublicKey, tags,
+    Error, Result,
 };
 
 /// A private key for X25519 key agreement operations.
@@ -71,7 +71,7 @@ impl X25519PrivateKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::KEY_SIZE {
-            bail!("Invalid X25519 private key size");
+            return Err(Error::invalid_size("X25519 private key", Self::KEY_SIZE, data.len()));
         }
         let mut arr = [0u8; Self::KEY_SIZE];
         arr.copy_from_slice(data);

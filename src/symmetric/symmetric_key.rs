@@ -1,4 +1,4 @@
-use anyhow::{Error, Result, bail};
+use crate::{Error, Result};
 use bc_crypto::{
     aead_chacha20_poly1305_decrypt_with_aad,
     aead_chacha20_poly1305_encrypt_with_aad,
@@ -52,7 +52,7 @@ impl SymmetricKey {
     pub fn from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != Self::SYMMETRIC_KEY_SIZE {
-            bail!("Invalid symmetric key size");
+            return Err(Error::invalid_size("symmetric key", Self::SYMMETRIC_KEY_SIZE, data.len()));
         }
         let mut arr = [0u8; Self::SYMMETRIC_KEY_SIZE];
         arr.copy_from_slice(data);
@@ -112,13 +112,13 @@ impl SymmetricKey {
 
     /// Decrypt the given encrypted message with this key.
     pub fn decrypt(&self, message: &EncryptedMessage) -> Result<Vec<u8>> {
-        aead_chacha20_poly1305_decrypt_with_aad(
+        Ok(aead_chacha20_poly1305_decrypt_with_aad(
             message.ciphertext(),
             self.into(),
             message.nonce().into(),
             message.aad(),
             message.authentication_tag().into(),
-        )
+        )?)
     }
 }
 
@@ -161,7 +161,7 @@ impl From<&SymmetricKey> for Vec<u8> {
 impl TryFrom<Vec<u8>> for SymmetricKey {
     type Error = Error;
 
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<u8>) -> std::result::Result<Self, Self::Error> {
         Self::from_data_ref(value)
     }
 }

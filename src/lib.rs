@@ -19,6 +19,9 @@
 //! bc-components = "0.24.0"
 //! ```
 
+mod error;
+pub use error::{Error, Result};
+
 mod digest;
 pub use digest::Digest;
 
