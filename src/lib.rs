@@ -99,7 +99,7 @@ pub use encapsulation::{
 };
 
 mod sskr_mod;
-pub use sskr::SSKRError;
+pub use sskr::Error as SSKRError;
 pub use sskr_mod::{
     SSKRGroupSpec, SSKRSecret, SSKRShare, SSKRSpec, sskr_combine,
     sskr_generate, sskr_generate_using,

@@ -34,7 +34,7 @@ pub enum Error {
 
     /// SSKR error.
     #[error("SSKR error: {0}")]
-    Sskr(#[from] sskr::SSKRError),
+    Sskr(#[from] sskr::Error),
 
     /// SSH key operation failed.
     #[error("SSH operation failed: {0}")]
@@ -117,10 +117,14 @@ impl Error {
     }
 
     /// Create a crypto error.
-    pub fn crypto(msg: impl Into<String>) -> Self { Error::Crypto(msg.into()) }
+    pub fn crypto(msg: impl Into<String>) -> Self {
+        Error::Crypto(msg.into())
+    }
 
     /// Create an SSH error.
-    pub fn ssh(msg: impl Into<String>) -> Self { Error::Ssh(msg.into()) }
+    pub fn ssh(msg: impl Into<String>) -> Self {
+        Error::Ssh(msg.into())
+    }
 
     /// Create a compression error.
     pub fn compression(msg: impl Into<String>) -> Self {
@@ -162,12 +166,16 @@ impl From<ssh_agent_client_rs::Error> for Error {
 
 // Convert SSH key errors
 impl From<ssh_key::Error> for Error {
-    fn from(err: ssh_key::Error) -> Self { Error::ssh(err.to_string()) }
+    fn from(err: ssh_key::Error) -> Self {
+        Error::ssh(err.to_string())
+    }
 }
 
 // Convert bc_crypto errors
 impl From<bc_crypto::Error> for Error {
-    fn from(err: bc_crypto::Error) -> Self { Error::crypto(err.to_string()) }
+    fn from(err: bc_crypto::Error) -> Self {
+        Error::crypto(err.to_string())
+    }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
