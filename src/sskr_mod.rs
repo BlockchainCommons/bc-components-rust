@@ -70,9 +70,7 @@ impl SSKRShare {
     /// let share = SSKRShare::from_data(data.clone());
     /// assert_eq!(share.as_bytes(), &data);
     /// ```
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_ref()
-    }
+    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
 
     /// Creates a new `SSKRShare` from a hexadecimal string.
     ///
@@ -116,9 +114,7 @@ impl SSKRShare {
     /// ]);
     /// assert_eq!(share.hex(), "1234213101aabbcc");
     /// ```
-    pub fn hex(&self) -> String {
-        hex::encode(self.as_bytes())
-    }
+    pub fn hex(&self) -> String { hex::encode(self.as_bytes()) }
 
     /// Returns the unique identifier of the split to which this share belongs.
     ///
@@ -160,9 +156,7 @@ impl SSKRShare {
     /// ]);
     /// assert_eq!(share.identifier_hex(), "1234");
     /// ```
-    pub fn identifier_hex(&self) -> String {
-        hex::encode(&self.0[0..=1])
-    }
+    pub fn identifier_hex(&self) -> String { hex::encode(&self.0[0..=1]) }
 
     /// Returns the minimum number of groups whose quorum must be met to
     /// reconstruct the secret.
@@ -183,9 +177,7 @@ impl SSKRShare {
     /// // The encoded value 0x2 in the third byte's high nibble represents a threshold of 3
     /// assert_eq!(share.group_threshold(), 3);
     /// ```
-    pub fn group_threshold(&self) -> usize {
-        usize::from(self.0[2] >> 4) + 1
-    }
+    pub fn group_threshold(&self) -> usize { usize::from(self.0[2] >> 4) + 1 }
 
     /// Returns the total number of groups in the split.
     ///
@@ -205,9 +197,7 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the third byte's low nibble represents a count of 2
     /// assert_eq!(share.group_count(), 2);
     /// ```
-    pub fn group_count(&self) -> usize {
-        usize::from(self.0[2] & 0xf) + 1
-    }
+    pub fn group_count(&self) -> usize { usize::from(self.0[2] & 0xf) + 1 }
 
     /// Returns the index of the group to which this share belongs.
     ///
@@ -227,9 +217,7 @@ impl SSKRShare {
     /// // The encoded value 0x3 in the fourth byte's high nibble represents group index 3
     /// assert_eq!(share.group_index(), 3);
     /// ```
-    pub fn group_index(&self) -> usize {
-        usize::from(self.0[3] >> 4)
-    }
+    pub fn group_index(&self) -> usize { usize::from(self.0[3] >> 4) }
 
     /// Returns the minimum number of shares within the group to which this
     /// share belongs that must be combined to meet the group threshold.
@@ -251,9 +239,7 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the fourth byte's low nibble represents a threshold of 2
     /// assert_eq!(share.member_threshold(), 2);
     /// ```
-    pub fn member_threshold(&self) -> usize {
-        usize::from(self.0[3] & 0xf) + 1
-    }
+    pub fn member_threshold(&self) -> usize { usize::from(self.0[3] & 0xf) + 1 }
 
     /// Returns the index of this share within the group to which it belongs.
     ///
@@ -273,15 +259,11 @@ impl SSKRShare {
     /// // The encoded value 0x1 in the fifth byte's low nibble represents member index 1
     /// assert_eq!(share.member_index(), 1);
     /// ```
-    pub fn member_index(&self) -> usize {
-        usize::from(self.0[4] & 0xf)
-    }
+    pub fn member_index(&self) -> usize { usize::from(self.0[4] & 0xf) }
 }
 
 impl AsRef<[u8]> for SSKRShare {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 /// Implementation of the CBOR Tagged trait for SSKRShare.
@@ -296,16 +278,12 @@ impl CBORTagged for SSKRShare {
 
 /// Conversion from SSKRShare to CBOR for serialization.
 impl From<SSKRShare> for CBOR {
-    fn from(value: SSKRShare) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SSKRShare) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of CBOR encoding for SSKRShare.
 impl CBORTaggedEncodable for SSKRShare {
-    fn untagged_cbor(&self) -> CBOR {
-        CBOR::to_byte_string(&self.0)
-    }
+    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(&self.0) }
 }
 
 /// Conversion from CBOR to SSKRShare for deserialization.
