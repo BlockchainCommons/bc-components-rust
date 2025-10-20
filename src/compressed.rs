@@ -22,15 +22,15 @@ use crate::{DigestProvider, Error, Result, digest::Digest, tags};
 /// - Automatic compression with configurable compression level
 /// - Integrity verification via CRC32 checksum
 /// - Optional cryptographic digest for content identification
-/// - Smart behavior for small data (stores uncompressed if compression would
+/// - Smart behavior for small data (stores decompressed if compression would
 ///   increase size)
 /// - CBOR serialization/deserialization support
 #[derive(Clone, Eq, PartialEq)]
 pub struct Compressed {
-    /// CRC32 checksum of the uncompressed data for integrity verification
+    /// CRC32 checksum of the decompressed data for integrity verification
     checksum: u32,
-    /// Size of the original uncompressed data in bytes
-    uncompressed_size: usize,
+    /// Size of the original decompressed data in bytes
+    decompressed_size: usize,
     /// The compressed data (or original data if compression is ineffective)
     compressed_data: Vec<u8>,
     /// Optional cryptographic digest of the content
@@ -47,8 +47,8 @@ impl Compressed {
     ///
     /// # Parameters
     ///
-    /// * `checksum` - CRC32 checksum of the uncompressed data
-    /// * `uncompressed_size` - Size of the original uncompressed data in bytes
+    /// * `checksum` - CRC32 checksum of the decompressed data
+    /// * `decompressed_size` - Size of the original decompressed data in bytes
     /// * `compressed_data` - The compressed data bytes
     /// * `digest` - Optional cryptographic digest of the content
     ///
@@ -59,7 +59,7 @@ impl Compressed {
     ///
     /// # Errors
     ///
-    /// Returns an error if the compressed data is larger than the uncompressed
+    /// Returns an error if the compressed data is larger than the decompressed
     /// size, which would indicate a logical inconsistency.
     ///
     /// # Example
@@ -70,29 +70,29 @@ impl Compressed {
     ///
     /// let data = b"hello world";
     /// let checksum = crc32(data);
-    /// let uncompressed_size = data.len();
+    /// let decompressed_size = data.len();
     ///
     /// // In a real scenario, this would be actually compressed data
     /// let compressed_data = data.to_vec();
     ///
     /// let compressed =
-    ///     Compressed::new(checksum, uncompressed_size, compressed_data, None)
+    ///     Compressed::new(checksum, decompressed_size, compressed_data, None)
     ///         .unwrap();
     /// ```
     pub fn new(
         checksum: u32,
-        uncompressed_size: usize,
+        decompressed_size: usize,
         compressed_data: Vec<u8>,
         digest: Option<Digest>,
     ) -> Result<Self> {
-        if compressed_data.len() > uncompressed_size {
+        if compressed_data.len() > decompressed_size {
             return Err(Error::compression(
-                "compressed data is larger than uncompressed size",
+                "compressed data is larger than decompressed size",
             ));
         }
         Ok(Self {
             checksum,
-            uncompressed_size,
+            decompressed_size,
             compressed_data,
             digest,
         })
@@ -110,7 +110,7 @@ impl Compressed {
     ///
     /// # Parameters
     ///
-    /// * `uncompressed_data` - The original data to compress
+    /// * `decompressed_data` - The original data to compress
     /// * `digest` - Optional cryptographic digest of the content
     ///
     /// # Returns
@@ -125,42 +125,42 @@ impl Compressed {
     /// // Compress a string
     /// let data = "This is a longer string that should compress well with repeated patterns. \
     ///            This is a longer string that should compress well with repeated patterns.";
-    /// let compressed = Compressed::from_uncompressed_data(data.as_bytes(), None);
+    /// let compressed = Compressed::from_decompressed_data(data.as_bytes(), None);
     ///
     /// // The compressed size should be smaller than the original
     /// assert!(compressed.compressed_size() < data.len());
     ///
     /// // We can recover the original data
-    /// let uncompressed = compressed.uncompress().unwrap();
-    /// assert_eq!(uncompressed, data.as_bytes());
+    /// let decompressed = compressed.decompress().unwrap();
+    /// assert_eq!(decompressed, data.as_bytes());
     /// ```
-    pub fn from_uncompressed_data(
-        uncompressed_data: impl AsRef<[u8]>,
+    pub fn from_decompressed_data(
+        decompressed_data: impl AsRef<[u8]>,
         digest: Option<Digest>,
     ) -> Self {
-        let uncompressed_data = uncompressed_data.as_ref();
-        let compressed_data = compress_to_vec(uncompressed_data, 6);
-        let checksum = crc32(uncompressed_data);
-        let uncompressed_size = uncompressed_data.len();
+        let decompressed_data = decompressed_data.as_ref();
+        let compressed_data = compress_to_vec(decompressed_data, 6);
+        let checksum = crc32(decompressed_data);
+        let decompressed_size = decompressed_data.len();
         let compressed_size = compressed_data.len();
-        if compressed_size != 0 && compressed_size < uncompressed_size {
+        if compressed_size != 0 && compressed_size < decompressed_size {
             Self {
                 checksum,
-                uncompressed_size,
+                decompressed_size,
                 compressed_data,
                 digest,
             }
         } else {
             Self {
                 checksum,
-                uncompressed_size,
-                compressed_data: uncompressed_data.to_vec(),
+                decompressed_size,
+                compressed_data: decompressed_data.to_vec(),
                 digest,
             }
         }
     }
 
-    /// Decompresses and returns the original uncompressed data.
+    /// Decompresses and returns the original decompressed data.
     ///
     /// This method performs the reverse of the compression process, restoring
     /// the original data. It also verifies the integrity of the data using the
@@ -168,7 +168,7 @@ impl Compressed {
     ///
     /// # Returns
     ///
-    /// A `Result` containing the uncompressed data if successful,
+    /// A `Result` containing the decompressed data if successful,
     /// or an error if decompression fails or the checksum doesn't match.
     ///
     /// # Errors
@@ -187,27 +187,27 @@ impl Compressed {
     /// let original = b"This is some example data to compress";
     ///
     /// // Compress it
-    /// let compressed = Compressed::from_uncompressed_data(original, None);
+    /// let compressed = Compressed::from_decompressed_data(original, None);
     ///
-    /// // Uncompress to get the original data back
-    /// let uncompressed = compressed.uncompress().unwrap();
-    /// assert_eq!(uncompressed, original);
+    /// // Deompress to get the original data back
+    /// let decompressed = compressed.decompress().unwrap();
+    /// assert_eq!(decompressed, original);
     /// ```
-    pub fn uncompress(&self) -> Result<Vec<u8>> {
+    pub fn decompress(&self) -> Result<Vec<u8>> {
         let compressed_size = self.compressed_data.len();
-        if compressed_size >= self.uncompressed_size {
+        if compressed_size >= self.decompressed_size {
             return Ok(self.compressed_data.clone());
         }
 
-        let uncompressed_data = decompress_to_vec(&self.compressed_data)
+        let decompressed_data = decompress_to_vec(&self.compressed_data)
             .map_err(|_| Error::compression("corrupt compressed data"))?;
-        if crc32(&uncompressed_data) != self.checksum {
+        if crc32(&decompressed_data) != self.checksum {
             return Err(Error::compression(
                 "compressed data checksum mismatch",
             ));
         }
 
-        Ok(uncompressed_data)
+        Ok(decompressed_data)
     }
 
     /// Returns the size of the compressed data in bytes.
@@ -222,17 +222,19 @@ impl Compressed {
     /// use bc_components::Compressed;
     ///
     /// let data = b"Hello world!";
-    /// let compressed = Compressed::from_uncompressed_data(data, None);
+    /// let compressed = Compressed::from_decompressed_data(data, None);
     ///
     /// // For small inputs like this, compression might not be effective
     /// // so the compressed_size might equal the original size
     /// println!("Compressed size: {}", compressed.compressed_size());
     /// ```
-    pub fn compressed_size(&self) -> usize { self.compressed_data.len() }
+    pub fn compressed_size(&self) -> usize {
+        self.compressed_data.len()
+    }
 
     /// Returns the compression ratio of the data.
     ///
-    /// The compression ratio is calculated as (compressed size) / (uncompressed
+    /// The compression ratio is calculated as (compressed size) / (decompressed
     /// size), so lower values indicate better compression.
     ///
     /// # Returns
@@ -240,7 +242,7 @@ impl Compressed {
     /// A floating-point value representing the compression ratio.
     /// - Values less than 1.0 indicate effective compression
     /// - Values equal to 1.0 indicate no compression was applied
-    /// - Values of NaN can occur if the uncompressed size is zero
+    /// - Values of NaN can occur if the decompressed size is zero
     ///
     /// # Example
     ///
@@ -249,14 +251,14 @@ impl Compressed {
     ///
     /// // A string with a lot of repetition should compress well
     /// let data = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
-    /// let compressed = Compressed::from_uncompressed_data(data.as_bytes(), None);
+    /// let compressed = Compressed::from_decompressed_data(data.as_bytes(), None);
     ///
     /// // Should have a good compression ratio (much less than 1.0)
     /// let ratio = compressed.compression_ratio();
     /// assert!(ratio < 0.5);
     /// ```
     pub fn compression_ratio(&self) -> f64 {
-        (self.compressed_size() as f64) / (self.uncompressed_size as f64)
+        (self.compressed_size() as f64) / (self.decompressed_size as f64)
     }
 
     /// Returns a reference to the digest of the compressed data, if available.
@@ -274,12 +276,14 @@ impl Compressed {
     /// let data = b"Hello world!";
     /// let digest = Digest::from_image(data);
     /// let compressed =
-    ///     Compressed::from_uncompressed_data(data, Some(digest.clone()));
+    ///     Compressed::from_decompressed_data(data, Some(digest.clone()));
     ///
     /// // We can retrieve the digest we associated with the compressed data
     /// assert_eq!(compressed.digest_ref_opt(), Some(&digest));
     /// ```
-    pub fn digest_ref_opt(&self) -> Option<&Digest> { self.digest.as_ref() }
+    pub fn digest_ref_opt(&self) -> Option<&Digest> {
+        self.digest.as_ref()
+    }
 
     /// Returns whether this compressed data has an associated digest.
     ///
@@ -293,16 +297,18 @@ impl Compressed {
     /// use bc_components::{Compressed, Digest};
     ///
     /// // Create compressed data without a digest
-    /// let compressed1 = Compressed::from_uncompressed_data(b"Hello", None);
+    /// let compressed1 = Compressed::from_decompressed_data(b"Hello", None);
     /// assert!(!compressed1.has_digest());
     ///
     /// // Create compressed data with a digest
     /// let digest = Digest::from_image(b"Hello");
     /// let compressed2 =
-    ///     Compressed::from_uncompressed_data(b"Hello", Some(digest));
+    ///     Compressed::from_decompressed_data(b"Hello", Some(digest));
     /// assert!(compressed2.has_digest());
     /// ```
-    pub fn has_digest(&self) -> bool { self.digest.is_some() }
+    pub fn has_digest(&self) -> bool {
+        self.digest.is_some()
+    }
 }
 
 /// Implementation of the `DigestProvider` trait for `Compressed`.
@@ -337,7 +343,7 @@ impl std::fmt::Debug for Compressed {
             "Compressed(checksum: {}, size: {}/{}, ratio: {:.2}, digest: {})",
             hex::encode(self.checksum.to_be_bytes()),
             self.compressed_size(),
-            self.uncompressed_size,
+            self.decompressed_size,
             self.compression_ratio(),
             self.digest_ref_opt()
                 .map(|d| d.short_description())
@@ -351,19 +357,25 @@ impl std::fmt::Debug for Compressed {
 /// This allows passing a `Compressed` instance to functions that take
 /// `AsRef<Compressed>` parameters.
 impl AsRef<Compressed> for Compressed {
-    fn as_ref(&self) -> &Compressed { self }
+    fn as_ref(&self) -> &Compressed {
+        self
+    }
 }
 
 /// Implementation of the `CBORTagged` trait for `Compressed`.
 ///
 /// Defines the CBOR tag(s) used when serializing a `Compressed` object.
 impl CBORTagged for Compressed {
-    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_COMPRESSED]) }
+    fn cbor_tags() -> Vec<Tag> {
+        tags_for_values(&[tags::TAG_COMPRESSED])
+    }
 }
 
 /// Conversion from `Compressed` to CBOR for serialization.
 impl From<Compressed> for CBOR {
-    fn from(value: Compressed) -> Self { value.tagged_cbor() }
+    fn from(value: Compressed) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 /// Implementation of CBOR encoding for `Compressed`.
@@ -373,7 +385,7 @@ impl From<Compressed> for CBOR {
 /// ```text
 /// [
 ///   checksum: uint,
-///   uncompressed_size: uint,
+///   decompressed_size: uint,
 ///   compressed_data: bytes,
 ///   digest?: Digest  // Optional
 /// ]
@@ -382,7 +394,7 @@ impl CBORTaggedEncodable for Compressed {
     fn untagged_cbor(&self) -> CBOR {
         let mut elements = vec![
             self.checksum.into(),
-            self.uncompressed_size.into(),
+            self.decompressed_size.into(),
             CBOR::to_byte_string(&self.compressed_data),
         ];
         if let Some(digest) = self.digest.clone() {
@@ -411,7 +423,7 @@ impl CBORTaggedDecodable for Compressed {
             return Err("invalid number of elements in compressed".into());
         }
         let checksum = elements[0].clone().try_into()?;
-        let uncompressed_size = elements[1].clone().try_into()?;
+        let decompressed_size = elements[1].clone().try_into()?;
         let compressed_data = elements[2].clone().try_into_byte_string()?;
         let digest = if elements.len() == 4 {
             Some(elements[3].clone().try_into()?)
@@ -420,7 +432,7 @@ impl CBORTaggedDecodable for Compressed {
         };
         Ok(Self::new(
             checksum,
-            uncompressed_size,
+            decompressed_size,
             compressed_data,
             digest,
         )?)
@@ -435,44 +447,44 @@ mod tests {
     fn test_1() {
         let source =
             b"Lorem ipsum dolor sit amet consectetur adipiscing elit mi nibh ornare proin blandit diam ridiculus, faucibus mus dui eu vehicula nam donec dictumst sed vivamus bibendum aliquet efficitur. Felis imperdiet sodales dictum morbi vivamus augue dis duis aliquet velit ullamcorper porttitor, lobortis dapibus hac purus aliquam natoque iaculis blandit montes nunc pretium.";
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let compressed = Compressed::from_decompressed_data(source, None);
         assert_eq!(
             format!("{:?}", compressed),
             "Compressed(checksum: 3eeb10a0, size: 217/364, ratio: 0.60, digest: None)"
         );
-        assert_eq!(compressed.uncompress().unwrap(), source);
+        assert_eq!(compressed.decompress().unwrap(), source);
     }
 
     #[test]
     fn test_2() {
         let source = b"Lorem ipsum dolor sit amet consectetur adipiscing";
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let compressed = Compressed::from_decompressed_data(source, None);
         assert_eq!(
             format!("{:?}", compressed),
             "Compressed(checksum: 29db1793, size: 45/49, ratio: 0.92, digest: None)"
         );
-        assert_eq!(compressed.uncompress().unwrap(), source);
+        assert_eq!(compressed.decompress().unwrap(), source);
     }
 
     #[test]
     fn test_3() {
         let source = b"Lorem";
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let compressed = Compressed::from_decompressed_data(source, None);
         assert_eq!(
             format!("{:?}", compressed),
             "Compressed(checksum: 44989b39, size: 5/5, ratio: 1.00, digest: None)"
         );
-        assert_eq!(compressed.uncompress().unwrap(), source);
+        assert_eq!(compressed.decompress().unwrap(), source);
     }
 
     #[test]
     fn test_4() {
         let source = b"";
-        let compressed = Compressed::from_uncompressed_data(source, None);
+        let compressed = Compressed::from_decompressed_data(source, None);
         assert_eq!(
             format!("{:?}", compressed),
             "Compressed(checksum: 00000000, size: 0/0, ratio: NaN, digest: None)"
         );
-        assert_eq!(compressed.uncompress().unwrap(), source);
+        assert_eq!(compressed.decompress().unwrap(), source);
     }
 }
