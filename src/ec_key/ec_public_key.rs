@@ -2,7 +2,7 @@ use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
 use crate::{
-    ECKey, ECKeyBase, ECPublicKeyBase, Error, Result, Signature, Verifier, tags,
+    tags, Digest, ECKey, ECKeyBase, ECPublicKeyBase, Error, Reference, ReferenceProvider, Result, Signature, Verifier
 };
 
 /// The size of an ECDSA compressed public key in bytes (33 bytes).
@@ -80,14 +80,6 @@ impl ECPublicKey {
 
 impl AsRef<[u8]> for ECPublicKey {
     fn as_ref(&self) -> &[u8] { &self.0 }
-}
-
-/// Formats the key as a hexadecimal string.
-impl std::fmt::Display for ECPublicKey {
-    /// Displays the key as a hexadecimal string.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
-    }
 }
 
 /// Formats the key for debugging, showing type name and hexadecimal value.
@@ -200,5 +192,19 @@ impl CBORTaggedEncodable for ECPublicKey {
         let mut m = Map::new();
         m.insert(3, CBOR::to_byte_string(self.0));
         m.into()
+    }
+}
+
+impl ReferenceProvider for ECPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for ECPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ECPublicKey({})", self.ref_hex_short())
     }
 }

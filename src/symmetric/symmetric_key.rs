@@ -4,7 +4,7 @@ use bc_crypto::{
 };
 use bc_ur::prelude::*;
 
-use crate::{Digest, EncryptedMessage, Error, Nonce, Result, tags};
+use crate::{tags, Digest, EncryptedMessage, Error, Nonce, Reference, ReferenceProvider, Result};
 
 /// A symmetric encryption key used for both encryption and decryption.
 ///
@@ -207,5 +207,19 @@ impl CBORTaggedDecodable for SymmetricKey {
         let bytes = CBOR::try_into_byte_string(cbor)?;
         let instance = Self::from_data_ref(bytes)?;
         Ok(instance)
+    }
+}
+
+impl ReferenceProvider for SymmetricKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for SymmetricKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "SymmetricKey({})", self.ref_hex_short())
     }
 }

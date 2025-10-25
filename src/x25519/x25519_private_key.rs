@@ -5,8 +5,7 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
-    Decrypter, EncapsulationPrivateKey, Error, Result, SymmetricKey,
-    X25519PublicKey, tags,
+    tags, Decrypter, Digest, EncapsulationPrivateKey, Error, Reference, ReferenceProvider, Result, SymmetricKey, X25519PublicKey
 };
 
 /// A private key for X25519 key agreement operations.
@@ -215,4 +214,19 @@ impl From<X25519PrivateKey> for Vec<u8> {
 /// Implements conversion from an X25519PrivateKey reference to a byte vector.
 impl From<&X25519PrivateKey> for Vec<u8> {
     fn from(key: &X25519PrivateKey) -> Self { key.0.to_vec() }
+}
+
+/// Implements ReferenceProvider to provide a unique reference for the key.
+impl ReferenceProvider for X25519PrivateKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for X25519PrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "X25519PrivateKey({})", self.ref_hex_short())
+    }
 }

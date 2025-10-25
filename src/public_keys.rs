@@ -194,7 +194,11 @@ impl Encrypter for PublicKeys {
 
 impl std::fmt::Display for PublicKeys {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PublicKeys({})", self.reference().ref_hex_short())
+        write!(f, "PublicKeys({}, {}, {})",
+            self.reference().ref_hex_short(),
+            self.signing_public_key,
+            self.encapsulation_public_key
+        )
     }
 }
 
@@ -231,7 +235,7 @@ mod tests {
         );
         assert_eq!(PublicKeys::from_ur_string(&ur).unwrap(), public_keys);
 
-        assert_eq!(format!("{}", public_keys), "PublicKeys(c9ede672)");
+        assert_eq!(format!("{}", public_keys), "PublicKeys(c9ede672, SigningPublicKey(7efa2ea1, SchnorrPublicKey(b4df96ce)), EncapsulationPublicKey(bacae62f, X25519PublicKey(bacae62f)))");
         assert_eq!(
             format!("{}", public_keys.reference()),
             "Reference(c9ede672)"

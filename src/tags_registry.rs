@@ -7,9 +7,7 @@ use ssh_key::{
 };
 
 use crate::{
-    ARID, Digest, EncapsulationScheme, EncryptedKey, Nonce, PrivateKeyBase,
-    PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed,
-    Signature, SignatureScheme, URI, UUID, XID,
+    Digest, EncapsulationScheme, EncryptedKey, Nonce, PrivateKeyBase, PrivateKeys, PublicKeys, Reference, ReferenceProvider, SSKRShare, Salt, SealedMessage, Seed, Signature, SignatureScheme, ARID, URI, UUID, XID
 };
 
 pub fn register_tags_in(tags_store: &mut TagsStore) {
@@ -115,8 +113,9 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     tags_store.set_summarizer(
         TAG_PRIVATE_KEY_BASE,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
+            let private_key_base =
             PrivateKeyBase::from_untagged_cbor(untagged_cbor)?;
-            Ok("PrivateKeyBase".to_string())
+            Ok(format!("PrivateKeyBase({})", private_key_base))
         }),
     );
 
@@ -165,18 +164,20 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PRIVATE_KEY,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
+            let ssh_private_key =
             SSHPrivateKey::from_openssh(untagged_cbor.try_into_text()?)
                 .map_err(|e| dcbor::Error::msg(e.to_string()))?;
-            Ok("SSHPrivateKey".to_string())
+            Ok(format!("SSHPrivateKey({})", ssh_private_key.ref_hex_short()))
         }),
     );
 
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PUBLIC_KEY,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
+            let ssh_public_key =
             SSHPublicKey::from_openssh(&untagged_cbor.try_into_text()?)
                 .map_err(|e| dcbor::Error::msg(e.to_string()))?;
-            Ok("SSHPublicKey".to_string())
+            Ok(format!("SSHPublicKey({})", ssh_public_key.ref_hex_short()))
         }),
     );
 

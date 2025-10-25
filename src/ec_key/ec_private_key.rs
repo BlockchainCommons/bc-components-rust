@@ -2,7 +2,7 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
-    ECKey, ECKeyBase, ECPublicKey, Error, Result, SchnorrPublicKey, tags,
+    tags, Digest, ECKey, ECKeyBase, ECPublicKey, Error, Reference, ReferenceProvider, Result, SchnorrPublicKey
 };
 
 /// The size of an ECDSA private key in bytes (32 bytes).
@@ -173,14 +173,6 @@ impl AsRef<[u8]> for ECPrivateKey {
     fn as_ref(&self) -> &[u8] { self.0.as_ref() }
 }
 
-/// Formats the key as a hexadecimal string.
-impl std::fmt::Display for ECPrivateKey {
-    /// Displays the key as a hexadecimal string.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
-    }
-}
-
 /// Formats the key for debugging, showing type name and hexadecimal value.
 impl std::fmt::Debug for ECPrivateKey {
     /// Displays the key with type information and hexadecimal value.
@@ -269,5 +261,19 @@ impl CBORTaggedEncodable for ECPrivateKey {
         m.insert(2, true);
         m.insert(3, CBOR::to_byte_string(self.0));
         m.into()
+    }
+}
+
+impl ReferenceProvider for ECPrivateKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for ECPrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ECPrivateKey({})", self.ref_hex_short())
     }
 }

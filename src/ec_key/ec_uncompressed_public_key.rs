@@ -1,7 +1,7 @@
 use bc_ur::prelude::*;
 
 use crate::{
-    ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, Error, Result, tags,
+    tags, Digest, ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, Error, Reference, ReferenceProvider, Result
 };
 
 /// The size of an ECDSA uncompressed public key in bytes (65 bytes).
@@ -61,14 +61,6 @@ impl ECUncompressedPublicKey {
         data: [u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE],
     ) -> Self {
         Self(data)
-    }
-}
-
-/// Formats the key as a hexadecimal string.
-impl std::fmt::Display for ECUncompressedPublicKey {
-    /// Displays the key as a hexadecimal string.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
     }
 }
 
@@ -163,5 +155,19 @@ impl CBORTaggedEncodable for ECUncompressedPublicKey {
         let mut m = Map::new();
         m.insert(3, CBOR::to_byte_string(self.0));
         m.into()
+    }
+}
+
+impl ReferenceProvider for ECUncompressedPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for ECUncompressedPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ECUncompressedPublicKey({})", self.ref_hex_short())
     }
 }

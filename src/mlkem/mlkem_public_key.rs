@@ -3,7 +3,7 @@ use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{PublicKey, SharedSecret};
 
 use super::{MLKEM, MLKEMCiphertext};
-use crate::{Error, Result, SymmetricKey, tags};
+use crate::{tags, Digest, Error, Reference, ReferenceProvider, Result, SymmetricKey};
 
 /// A public key for the ML-KEM post-quantum key encapsulation mechanism.
 ///
@@ -245,6 +245,30 @@ impl CBORTaggedDecodable for MLKEMPublicKey {
                 Ok(MLKEMPublicKey::from_bytes(level, &data)?)
             }
             _ => Err("MLKEMPublicKey must be an array".into()),
+        }
+    }
+}
+
+impl ReferenceProvider for MLKEMPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for MLKEMPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MLKEMPublicKey::MLKEM512(_) => {
+                write!(f, "MLKEM512PublicKey({})", self.ref_hex_short())
+            }
+            MLKEMPublicKey::MLKEM768(_) => {
+                write!(f, "MLKEM768PublicKey({})", self.ref_hex_short())
+            }
+            MLKEMPublicKey::MLKEM1024(_) => {
+                write!(f, "MLKEM1024PublicKey({})", self.ref_hex_short())
+            }
         }
     }
 }

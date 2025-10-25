@@ -1,6 +1,6 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 
-use crate::{Ed25519PublicKey, Error, Result};
+use crate::{Digest, Ed25519PublicKey, Error, Reference, ReferenceProvider, Result};
 
 pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 
@@ -105,13 +105,6 @@ impl AsRef<[u8]> for Ed25519PrivateKey {
     fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
-/// Implements Display to output the key as a hex string.
-impl std::fmt::Display for Ed25519PrivateKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
-    }
-}
-
 /// Implements Debug to output the key with a type label.
 impl std::fmt::Debug for Ed25519PrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -133,4 +126,18 @@ impl<'a> From<&'a Ed25519PrivateKey> for &'a [u8; ED25519_PRIVATE_KEY_SIZE] {
 /// Implements conversion from an Ed25519PrivateKey reference to a byte slice.
 impl<'a> From<&'a Ed25519PrivateKey> for &'a [u8] {
     fn from(value: &'a Ed25519PrivateKey) -> Self { &value.0 }
+}
+
+impl ReferenceProvider for Ed25519PrivateKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.data()
+        ))
+    }
+}
+
+impl std::fmt::Display for Ed25519PrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ed25519PrivateKey({})", self.ref_hex_short())
+    }
 }

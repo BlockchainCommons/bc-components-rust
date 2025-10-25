@@ -12,11 +12,7 @@ use ssh_key::{
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    Decrypter, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey,
-    EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider,
-    PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Result,
-    Signature, Signer, SigningOptions, SigningPrivateKey, Verifier,
-    X25519PrivateKey, tags,
+    tags, Decrypter, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Reference, ReferenceProvider, Result, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
 };
 
 /// A secure foundation for deriving multiple cryptographic keys.
@@ -339,6 +335,20 @@ impl CBORTaggedDecodable for PrivateKeyBase {
         let data = CBOR::try_into_byte_string(untagged_cbor)?;
         let instance = Self::from_data(data);
         Ok(instance)
+    }
+}
+
+impl ReferenceProvider for PrivateKeyBase {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for PrivateKeyBase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PrivateKeyBase({})", self.reference().ref_hex_short())
     }
 }
 

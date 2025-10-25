@@ -6,8 +6,7 @@ use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
 use crate::{
-    ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey, Result,
-    Signature, Signer, SigningPublicKey, tags,
+    tags, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey, Reference, ReferenceProvider, Result, Signature, Signer, SigningPublicKey
 };
 
 /// Options for configuring signature creation.
@@ -762,4 +761,34 @@ impl std::fmt::Debug for SigningPrivateKey {
 impl From<&SigningPrivateKey> for SigningPrivateKey {
     /// Clones a SigningPrivateKey from a reference.
     fn from(key: &SigningPrivateKey) -> Self { key.clone() }
+}
+
+impl ReferenceProvider for SSHPrivateKey {
+    fn reference(&self) -> Reference {
+        let string = self.to_openssh(LineEnding::default()).unwrap();
+        let bytes = string.as_bytes();
+        let digest = Digest::from_image(bytes);
+        Reference::from_digest(digest)
+    }
+}
+
+impl ReferenceProvider for SigningPrivateKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for SigningPrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let display_key = match self {
+            SigningPrivateKey::Schnorr(key) => key.to_string(),
+            SigningPrivateKey::ECDSA(key) => key.to_string(),
+            SigningPrivateKey::Ed25519(key) => key.to_string(),
+            SigningPrivateKey::SSH(key) => format!("SSHPrivateKey({})", key.ref_hex_short()),
+            SigningPrivateKey::MLDSA(key) => key.to_string(),
+        };
+        write!(f, "SigningPrivateKey({}, {})", self.ref_hex_short(), display_key)
+    }
 }

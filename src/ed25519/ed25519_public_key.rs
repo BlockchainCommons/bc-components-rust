@@ -1,4 +1,4 @@
-use crate::{Error, Result};
+use crate::{Digest, Error, Reference, ReferenceProvider, Result};
 
 pub const ED25519_PUBLIC_KEY_SIZE: usize = bc_crypto::ED25519_PUBLIC_KEY_SIZE;
 
@@ -68,13 +68,6 @@ impl AsRef<[u8]> for Ed25519PublicKey {
     fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
-/// Implements Display to output the key as a hex string.
-impl std::fmt::Display for Ed25519PublicKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
-    }
-}
-
 /// Implements Debug to output the key with a type label.
 impl std::fmt::Debug for Ed25519PublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -98,4 +91,18 @@ impl From<[u8; ED25519_PUBLIC_KEY_SIZE]> for Ed25519PublicKey {
 /// Implements conversion from an Ed25519PublicKey reference to a byte slice.
 impl<'a> From<&'a Ed25519PublicKey> for &'a [u8] {
     fn from(value: &'a Ed25519PublicKey) -> Self { &value.0 }
+}
+
+impl ReferenceProvider for Ed25519PublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.data()
+        ))
+    }
+}
+
+impl std::fmt::Display for Ed25519PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ed25519PublicKey({})", self.ref_hex_short())
+    }
 }

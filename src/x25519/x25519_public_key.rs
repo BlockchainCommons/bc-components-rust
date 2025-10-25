@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use bc_ur::prelude::*;
 
-use crate::{EncapsulationPublicKey, Encrypter, Error, Result, tags};
+use crate::{tags, Digest, EncapsulationPublicKey, Encrypter, Error, Reference, ReferenceProvider, Result};
 
 /// A public key for X25519 key agreement operations.
 ///
@@ -148,5 +148,20 @@ impl From<&X25519PublicKey> for Vec<u8> {
 impl Encrypter for X25519PublicKey {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
         EncapsulationPublicKey::X25519(self.clone())
+    }
+}
+
+/// Implements ReferenceProvider to provide a unique reference for the key.
+impl ReferenceProvider for X25519PublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for X25519PublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "X25519PublicKey({})", self.ref_hex_short())
     }
 }

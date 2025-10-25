@@ -2,8 +2,7 @@ use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
 use crate::{
-    ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, SchnorrPublicKey,
-    Signature, Verifier, tags,
+    tags, Digest, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, Reference, ReferenceProvider, SchnorrPublicKey, Signature, Verifier
 };
 
 /// A public key used for verifying digital signatures.
@@ -405,5 +404,35 @@ impl CBORTaggedDecodable for SigningPublicKey {
             },
             _ => Err("invalid signing public key".into()),
         }
+    }
+}
+
+impl ReferenceProvider for SSHPublicKey {
+    fn reference(&self) -> Reference {
+        let string = self.to_openssh().unwrap();
+        let bytes = string.as_bytes();
+        let digest = Digest::from_image(bytes);
+        Reference::from_digest(digest)
+    }
+}
+
+impl ReferenceProvider for SigningPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for SigningPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let display_key = match self {
+            SigningPublicKey::Schnorr(key) => key.to_string(),
+            SigningPublicKey::ECDSA(key) => key.to_string(),
+            SigningPublicKey::Ed25519(key) => key.to_string(),
+            SigningPublicKey::SSH(key) => format!("SSHPublicKey({})", key.ref_hex_short()),
+            SigningPublicKey::MLDSA(key) => key.to_string(),
+        };
+        write!(f, "SigningPublicKey({}, {})", self.ref_hex_short(), display_key)
     }
 }

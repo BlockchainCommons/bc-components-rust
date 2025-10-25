@@ -1,6 +1,6 @@
 use bc_crypto::SCHNORR_SIGNATURE_SIZE;
 
-use crate::{ECKeyBase, Error, Result};
+use crate::{Digest, ECKeyBase, Error, Reference, ReferenceProvider, Result};
 
 /// The size of a Schnorr public key in bytes (32 bytes).
 pub const SCHNORR_PUBLIC_KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
@@ -106,11 +106,19 @@ impl AsRef<[u8]> for SchnorrPublicKey {
     fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
+impl ReferenceProvider for SchnorrPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.data(),
+        ))
+    }
+}
+
 /// Formats the key as a hexadecimal string.
 impl std::fmt::Display for SchnorrPublicKey {
     /// Displays the key as a hexadecimal string.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.hex())
+        write!(f, "SchnorrPublicKey({})", self.ref_hex_short())
     }
 }
 

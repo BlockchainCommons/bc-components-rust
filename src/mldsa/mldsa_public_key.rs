@@ -3,7 +3,7 @@ use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::{Error, Result, tags};
+use crate::{tags, Digest, Error, Reference, ReferenceProvider, Result};
 
 /// A public key for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -257,6 +257,24 @@ impl CBORTaggedDecodable for MLDSAPublicKey {
                 Ok(MLDSAPublicKey::from_bytes(level, &data)?)
             }
             _ => Err("MLDSAPublicKey must be an array".into()),
+        }
+    }
+}
+
+impl ReferenceProvider for MLDSAPublicKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for MLDSAPublicKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MLDSAPublicKey::MLDSA44(_) => write!(f, "MLDSA44PublicKey({})", self.ref_hex_short()),
+            MLDSAPublicKey::MLDSA65(_) => write!(f, "MLDSA65PublicKey({})", self.ref_hex_short()),
+            MLDSAPublicKey::MLDSA87(_) => write!(f, "MLDSA87PublicKey({})", self.ref_hex_short()),
         }
     }
 }

@@ -4,7 +4,7 @@ use pqcrypto_traits::kem::{SecretKey, SharedSecret};
 
 use super::{MLKEM, MLKEMCiphertext};
 use crate::{
-    Decrypter, EncapsulationPrivateKey, Error, Result, SymmetricKey, tags,
+    tags, Decrypter, Digest, EncapsulationPrivateKey, Error, Reference, ReferenceProvider, Result, SymmetricKey
 };
 
 /// A private key for the ML-KEM post-quantum key encapsulation mechanism.
@@ -246,6 +246,30 @@ impl CBORTaggedDecodable for MLKEMPrivateKey {
                 Ok(MLKEMPrivateKey::from_bytes(level, &data)?)
             }
             _ => Err("MLKEMPrivateKey must be an array".into()),
+        }
+    }
+}
+
+impl ReferenceProvider for MLKEMPrivateKey {
+    fn reference(&self) -> Reference {
+        Reference::from_digest(Digest::from_image(
+            self.tagged_cbor().to_cbor_data(),
+        ))
+    }
+}
+
+impl std::fmt::Display for MLKEMPrivateKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MLKEMPrivateKey::MLKEM512(_) => {
+                write!(f, "MLKEM512PrivateKey({})", self.ref_hex_short())
+            }
+            MLKEMPrivateKey::MLKEM768(_) => {
+                write!(f, "MLKEM768PrivateKey({})", self.ref_hex_short())
+            }
+            MLKEMPrivateKey::MLKEM1024(_) => {
+                write!(f, "MLKEM1024PrivateKey({})", self.ref_hex_short())
+            }
         }
     }
 }
