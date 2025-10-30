@@ -45,6 +45,9 @@ test_additional_features "ssh_agent_tests"
 section "pqcrypto Feature"
 test_only_features "pqcrypto"
 
+section "secp256k1 Feature"
+test_only_features "secp256k1"
+
 section "Doc Tests"
 cargo test --doc > /dev/null
 

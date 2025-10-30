@@ -1,6 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
-use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
+use bc_rand::RandomNumberGenerator;
+#[cfg(feature = "secp256k1")]
+use bc_rand::SecureRandomNumberGenerator;
 use bc_ur::prelude::*;
 use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
@@ -8,9 +10,11 @@ use super::Verifier;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSAPrivateKey;
 use crate::{
-    Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, Reference,
-    ReferenceProvider, Result, Signature, Signer, SigningPublicKey, tags,
+    Digest, Ed25519PrivateKey, Error, Reference, ReferenceProvider, Result,
+    Signature, Signer, SigningPublicKey, tags,
 };
+#[cfg(feature = "secp256k1")]
+use crate::{ECKey, ECPrivateKey};
 
 /// Options for configuring signature creation.
 ///
@@ -77,7 +81,8 @@ pub enum SigningOptions {
 ///
 /// Creating a new Schnorr signing key and using it to sign a message:
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{ECPrivateKey, Signer, SigningPrivateKey, Verifier};
 ///
 /// // Create a new Schnorr signing key
@@ -99,7 +104,8 @@ pub enum SigningOptions {
 /// `SigningPrivateKey` can be serialized to and from CBOR with appropriate
 /// tags:
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{ECPrivateKey, SigningPrivateKey};
 /// use dcbor::prelude::*;
 ///
@@ -119,9 +125,11 @@ pub enum SigningOptions {
 #[derive(Clone, PartialEq)]
 pub enum SigningPrivateKey {
     /// A Schnorr private key based on the secp256k1 curve
+    #[cfg(feature = "secp256k1")]
     Schnorr(ECPrivateKey),
 
     /// An ECDSA private key based on the secp256k1 curve
+    #[cfg(feature = "secp256k1")]
     ECDSA(ECPrivateKey),
 
     /// An Ed25519 private key
@@ -142,7 +150,9 @@ impl std::hash::Hash for SigningPrivateKey {
     /// This is used for collections that require hash support.
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr(key) => key.hash(state),
+            #[cfg(feature = "secp256k1")]
             Self::ECDSA(key) => key.hash(state),
             Self::Ed25519(key) => key.hash(state),
             Self::SSH(key) => key.to_bytes().unwrap().hash(state),
@@ -168,6 +178,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
     ///
     /// // Create a new EC private key
@@ -175,7 +187,9 @@ impl SigningPrivateKey {
     ///
     /// // Create a Schnorr signing key from it
     /// let signing_key = SigningPrivateKey::new_schnorr(ec_key);
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub const fn new_schnorr(key: ECPrivateKey) -> Self {
         Self::Schnorr(key)
     }
@@ -193,6 +207,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
     ///
     /// // Create a new EC private key
@@ -200,7 +216,9 @@ impl SigningPrivateKey {
     ///
     /// // Create an ECDSA signing key from it
     /// let signing_key = SigningPrivateKey::new_ecdsa(ec_key);
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
         Self::ECDSA(key)
     }
@@ -253,6 +271,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
     ///
     /// // Create a Schnorr key
@@ -262,7 +282,9 @@ impl SigningPrivateKey {
     /// // Create an ECDSA key
     /// let ecdsa_key = SigningPrivateKey::new_ecdsa(ECPrivateKey::new());
     /// assert!(ecdsa_key.to_schnorr().is_none());
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn to_schnorr(&self) -> Option<&ECPrivateKey> {
         match self {
             Self::Schnorr(key) => Some(key),
@@ -275,6 +297,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is a Schnorr key, `false` otherwise
+    #[cfg(feature = "secp256k1")]
     pub fn is_schnorr(&self) -> bool {
         self.to_schnorr().is_some()
     }
@@ -285,6 +308,7 @@ impl SigningPrivateKey {
     ///
     /// Some reference to the EC private key if this is an ECDSA key,
     /// or None if it's a different key type.
+    #[cfg(feature = "secp256k1")]
     pub fn to_ecdsa(&self) -> Option<&ECPrivateKey> {
         match self {
             Self::ECDSA(key) => Some(key),
@@ -297,6 +321,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an ECDSA key, `false` otherwise
+    #[cfg(feature = "secp256k1")]
     pub fn is_ecdsa(&self) -> bool {
         self.to_ecdsa().is_some()
     }
@@ -333,6 +358,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
     ///
     /// // Create a Schnorr signing key
@@ -340,12 +367,15 @@ impl SigningPrivateKey {
     ///
     /// // Derive the public key
     /// let public_key = private_key.public_key().unwrap();
+    /// # }
     /// ```
     pub fn public_key(&self) -> Result<SigningPublicKey> {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr(key) => {
                 Ok(SigningPublicKey::from_schnorr(key.schnorr_public_key()))
             }
+            #[cfg(feature = "secp256k1")]
             Self::ECDSA(key) => {
                 Ok(SigningPublicKey::from_ecdsa(key.public_key()))
             }
@@ -380,6 +410,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{ECPrivateKey, Signer, SigningPrivateKey};
     ///
     /// // Create an ECDSA key
@@ -388,7 +420,9 @@ impl SigningPrivateKey {
     /// // Sign a message
     /// let message = b"Hello, world!";
     /// let signature = private_key.sign(&message).unwrap();
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     fn ecdsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
         if let Some(private_key) = self.to_ecdsa() {
             let sig = private_key.ecdsa_sign(message);
@@ -415,6 +449,8 @@ impl SigningPrivateKey {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use std::{cell::RefCell, rc::Rc};
     ///
     /// use bc_components::{ECPrivateKey, SigningPrivateKey};
@@ -429,7 +465,9 @@ impl SigningPrivateKey {
     /// // Sign a message
     /// let message = b"Hello, world!";
     /// let signature = private_key.schnorr_sign(&message, rng).unwrap();
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_sign(
         &self,
         message: impl AsRef<[u8]>,
@@ -548,7 +586,8 @@ impl Signer for SigningPrivateKey {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use std::{cell::RefCell, rc::Rc};
     ///
     /// use bc_components::{
@@ -575,6 +614,7 @@ impl Signer for SigningPrivateKey {
         options: Option<SigningOptions>,
     ) -> Result<Signature> {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr(_) => {
                 if let Some(SigningOptions::Schnorr { rng }) = options {
                     self.schnorr_sign(message, rng)
@@ -585,6 +625,7 @@ impl Signer for SigningPrivateKey {
                     )
                 }
             }
+            #[cfg(feature = "secp256k1")]
             Self::ECDSA(_) => self.ecdsa_sign(message),
             Self::Ed25519(_) => self.ed25519_sign(message),
             Self::SSH(_) => {
@@ -620,11 +661,16 @@ impl Verifier for SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if the signature is valid for the message, `false` otherwise
-    fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
+    fn verify(
+        &self,
+        _signature: &Signature,
+        _message: &dyn AsRef<[u8]>,
+    ) -> bool {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr(key) => {
-                if let Signature::Schnorr(sig) = signature {
-                    key.schnorr_public_key().schnorr_verify(sig, message)
+                if let Signature::Schnorr(sig) = _signature {
+                    key.schnorr_public_key().schnorr_verify(sig, _message)
                 } else {
                     false
                 }
@@ -667,7 +713,9 @@ impl CBORTaggedEncodable for SigningPrivateKey {
     /// - ML-DSA: Delegates to the MLDSAPrivateKey implementation
     fn untagged_cbor(&self) -> CBOR {
         match self {
+            #[cfg(feature = "secp256k1")]
             SigningPrivateKey::Schnorr(key) => CBOR::to_byte_string(key.data()),
+            #[cfg(feature = "secp256k1")]
             SigningPrivateKey::ECDSA(key) => {
                 vec![(1).into(), CBOR::to_byte_string(key.data())].into()
             }
@@ -723,11 +771,20 @@ impl CBORTaggedDecodable for SigningPrivateKey {
     fn from_untagged_cbor(untagged_cbor: CBOR) -> dcbor::Result<Self> {
         match untagged_cbor.into_case() {
             CBORCase::ByteString(data) => {
-                Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?))
+                #[cfg(feature = "secp256k1")]
+                {
+                    Ok(Self::Schnorr(ECPrivateKey::from_data_ref(data)?))
+                }
+                #[cfg(not(feature = "secp256k1"))]
+                {
+                    let _ = data;
+                    Err("Schnorr private key not available without secp256k1 feature".into())
+                }
             }
             CBORCase::Array(mut elements) => {
                 let discriminator = usize::try_from(elements.remove(0))?;
                 match discriminator {
+                    #[cfg(feature = "secp256k1")]
                     1 => {
                         let data = elements.remove(0).try_into_byte_string()?;
                         let key = ECPrivateKey::from_data_ref(data)?;
@@ -809,7 +866,9 @@ impl ReferenceProvider for SigningPrivateKey {
 impl std::fmt::Display for SigningPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let display_key = match self {
+            #[cfg(feature = "secp256k1")]
             SigningPrivateKey::Schnorr(key) => key.to_string(),
+            #[cfg(feature = "secp256k1")]
             SigningPrivateKey::ECDSA(key) => key.to_string(),
             SigningPrivateKey::Ed25519(key) => key.to_string(),
             SigningPrivateKey::SSH(key) => {

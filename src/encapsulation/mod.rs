@@ -94,25 +94,17 @@ mod tests {
     }
 
     #[test]
-    fn test_x25519() {
-        test_encapsulation(EncapsulationScheme::default());
-    }
+    fn test_x25519() { test_encapsulation(EncapsulationScheme::default()); }
 
     #[test]
     #[cfg(feature = "pqcrypto")]
-    fn test_mlkem512() {
-        test_encapsulation(EncapsulationScheme::MLKEM512);
-    }
+    fn test_mlkem512() { test_encapsulation(EncapsulationScheme::MLKEM512); }
 
     #[test]
     #[cfg(feature = "pqcrypto")]
-    fn test_mlkem768() {
-        test_encapsulation(EncapsulationScheme::MLKEM768);
-    }
+    fn test_mlkem768() { test_encapsulation(EncapsulationScheme::MLKEM768); }
 
     #[test]
     #[cfg(feature = "pqcrypto")]
-    fn test_mlkem1024() {
-        test_encapsulation(EncapsulationScheme::MLKEM1024);
-    }
+    fn test_mlkem1024() { test_encapsulation(EncapsulationScheme::MLKEM1024); }
 }

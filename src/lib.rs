@@ -64,7 +64,9 @@ pub use signing::{
 mod encrypter;
 pub use encrypter::{Decrypter, Encrypter};
 
+#[cfg(feature = "secp256k1")]
 mod ec_key;
+#[cfg(feature = "secp256k1")]
 pub use ec_key::*;
 
 mod reference;
@@ -119,6 +121,7 @@ pub use keypair::{keypair, keypair_opt, keypair_opt_using, keypair_using};
 mod tests {
     use std::ops::Deref;
 
+    #[cfg(feature = "secp256k1")]
     use bc_crypto::{
         ecdsa_new_private_key_using, ecdsa_public_key_from_private_key,
         ecdsa_sign, ecdsa_verify, schnorr_public_key_from_private_key,
@@ -133,10 +136,11 @@ mod tests {
         PrivateKey as SSHPrivateKey, PublicKey as SSHPublicKey,
     };
 
+    #[cfg(feature = "secp256k1")]
+    use crate::ECPrivateKey;
     use crate::{
-        ECPrivateKey, PrivateKeyBase, Signature, Signer, SigningOptions,
-        SigningPrivateKey, SigningPublicKey, Verifier, X25519PrivateKey,
-        X25519PublicKey,
+        PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey,
+        SigningPublicKey, Verifier, X25519PrivateKey, X25519PublicKey,
     };
 
     #[test]
@@ -189,6 +193,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_ecdsa_signing_keys() {
         crate::register_tags();
         let mut rng = make_fake_random_number_generator();
@@ -446,6 +451,7 @@ xLZXkgY29tbWVudC4BAgMEBQY=
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_ecdsa_signing() {
         let mut rng = make_fake_random_number_generator();
         let private_key = ecdsa_new_private_key_using(&mut rng);

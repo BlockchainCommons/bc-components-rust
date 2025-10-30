@@ -23,7 +23,8 @@
 //!
 //! Creating and verifying a signature:
 //!
-//! ```
+//! ```ignore
+//! # // Requires secp256k1 feature (enabled by default)
 //! use bc_components::{SignatureScheme, Signer, Verifier};
 //!
 //! // Create a key pair using the Schnorr signature scheme
@@ -42,7 +43,8 @@
 //!
 //! Different signature schemes:
 //!
-//! ```
+//! ```ignore
+//! # // Requires secp256k1 feature (enabled by default)
 //! use bc_components::{SignatureScheme, Signer};
 //!
 //! // Create key pairs for different signature schemes
@@ -81,26 +83,33 @@ pub use signature_scheme::SignatureScheme;
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "secp256k1")]
     use std::{cell::RefCell, rc::Rc};
 
+    #[cfg(feature = "secp256k1")]
     use bc_rand::make_fake_random_number_generator;
+    #[cfg(any(feature = "secp256k1", feature = "pqcrypto"))]
     use dcbor::prelude::*;
     use hex_literal::hex;
+    #[cfg(feature = "secp256k1")]
     use indoc::indoc;
     use ssh_key::HashAlg;
 
     use super::SignatureScheme;
-    use crate::{
-        ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningOptions,
-        SigningPrivateKey, Verifier,
-    };
+    #[cfg(feature = "secp256k1")]
+    use crate::ECPrivateKey;
+    use crate::{Ed25519PrivateKey, Signer, SigningOptions, SigningPrivateKey, Verifier};
+    #[cfg(feature = "secp256k1")]
+    use crate::Signature;
     #[cfg(feature = "pqcrypto")]
     use crate::{MLDSA, MLDSASignature};
 
+    #[cfg(feature = "secp256k1")]
     const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
         SigningPrivateKey::new_ecdsa(ECPrivateKey::from_data(hex!(
             "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
         )));
+    #[cfg(feature = "secp256k1")]
     const SCHNORR_SIGNING_PRIVATE_KEY: SigningPrivateKey =
         SigningPrivateKey::new_schnorr(ECPrivateKey::from_data(hex!(
             "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
@@ -113,6 +122,7 @@ mod tests {
     const MESSAGE: &dyn AsRef<[u8]> = b"Wolf McNally";
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_schnorr_signing() {
         let public_key = SCHNORR_SIGNING_PRIVATE_KEY.public_key().unwrap();
         let signature = SCHNORR_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
@@ -127,6 +137,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_schnorr_cbor() {
         let rng = Rc::new(RefCell::new(make_fake_random_number_generator()));
         let options = SigningOptions::Schnorr { rng };
@@ -151,6 +162,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_ecdsa_signing() {
         let public_key = ECDSA_SIGNING_PRIVATE_KEY.public_key().unwrap();
         let signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
@@ -165,6 +177,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_ecdsa_cbor() {
         let signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
@@ -236,11 +249,13 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_schnorr_keypair() {
         test_keypair_signing(SignatureScheme::default(), None);
     }
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_ecdsa_keypair() {
         test_keypair_signing(SignatureScheme::Ecdsa, None);
     }

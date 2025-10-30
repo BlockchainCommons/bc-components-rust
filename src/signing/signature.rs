@@ -1,6 +1,6 @@
-use bc_crypto::{
-    ECDSA_SIGNATURE_SIZE, ED25519_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE,
-};
+use bc_crypto::ED25519_SIGNATURE_SIZE;
+#[cfg(feature = "secp256k1")]
+use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
 use ssh_key::{LineEnding, SshSig};
 
@@ -23,7 +23,8 @@ use crate::{Error, Result, tags};
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{SignatureScheme, Signer, Verifier};
 ///
 /// // Create a key pair using Schnorr
@@ -39,7 +40,8 @@ use crate::{Error, Result, tags};
 ///
 /// Converting to and from CBOR:
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{SignatureScheme, Signer};
 /// use dcbor::prelude::*;
 ///
@@ -62,9 +64,11 @@ use crate::{Error, Result, tags};
 #[derive(Clone)]
 pub enum Signature {
     /// A BIP-340 Schnorr signature (64 bytes)
+    #[cfg(feature = "secp256k1")]
     Schnorr([u8; SCHNORR_SIGNATURE_SIZE]),
 
     /// An ECDSA signature using the secp256k1 curve (64 bytes)
+    #[cfg(feature = "secp256k1")]
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
 
     /// An Ed25519 signature (64 bytes)
@@ -87,7 +91,9 @@ impl PartialEq for Signature {
     /// never equal.
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
+            #[cfg(feature = "secp256k1")]
             (Self::Schnorr(a), Self::Schnorr(b)) => a == b,
+            #[cfg(feature = "secp256k1")]
             (Self::ECDSA(a), Self::ECDSA(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
             (Self::SSH(a), Self::SSH(b)) => a == b,
@@ -112,11 +118,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::schnorr_from_data(data);
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_from_data(data: [u8; SCHNORR_SIGNATURE_SIZE]) -> Self {
         Self::Schnorr(data)
     }
@@ -135,11 +145,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::schnorr_from_data_ref(&data).unwrap();
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != SCHNORR_SIGNATURE_SIZE {
@@ -167,11 +181,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ecdsa_from_data(data);
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn ecdsa_from_data(data: [u8; ECDSA_SIGNATURE_SIZE]) -> Self {
         Self::ECDSA(data)
     }
@@ -190,11 +208,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ecdsa_from_data_ref(&data).unwrap();
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn ecdsa_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ECDSA_SIGNATURE_SIZE {
@@ -287,6 +309,8 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "secp256k1")]
+    /// # {
     /// use bc_components::{SignatureScheme, Signer};
     ///
     /// // Create a Schnorr signature
@@ -303,7 +327,9 @@ impl Signature {
     ///
     /// // This will return None since it's not a Schnorr signature
     /// assert!(ecdsa_sig.to_schnorr().is_none());
+    /// # }
     /// ```
+    #[cfg(feature = "secp256k1")]
     pub fn to_schnorr(&self) -> Option<&[u8; SCHNORR_SIGNATURE_SIZE]> {
         match self {
             Self::Schnorr(sig) => Some(sig),
@@ -317,6 +343,7 @@ impl Signature {
     ///
     /// Some reference to the 64-byte signature data if this is an ECDSA
     /// signature, or None if it's a different signature type.
+    #[cfg(feature = "secp256k1")]
     pub fn to_ecdsa(&self) -> Option<&[u8; ECDSA_SIGNATURE_SIZE]> {
         match self {
             Self::ECDSA(sig) => Some(sig),
@@ -347,7 +374,8 @@ impl Signature {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use bc_components::{SignatureScheme, Signer};
     ///
     /// // Create a signature with ECDSA
@@ -361,7 +389,9 @@ impl Signature {
     /// ```
     pub fn scheme(&self) -> Result<SignatureScheme> {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr(_) => Ok(SignatureScheme::Schnorr),
+            #[cfg(feature = "secp256k1")]
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
             Self::SSH(sig) => match sig.algorithm() {
@@ -397,10 +427,12 @@ impl std::fmt::Debug for Signature {
     /// the signature object.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            #[cfg(feature = "secp256k1")]
             Signature::Schnorr(data) => f
                 .debug_struct("Schnorr")
                 .field("data", &hex::encode(data))
                 .finish(),
+            #[cfg(feature = "secp256k1")]
             Signature::ECDSA(data) => f
                 .debug_struct("ECDSA")
                 .field("data", &hex::encode(data))
@@ -461,7 +493,9 @@ impl CBORTaggedEncodable for Signature {
     /// - ML-DSA: Delegates to the MLDSASignature implementation
     fn untagged_cbor(&self) -> CBOR {
         match self {
+            #[cfg(feature = "secp256k1")]
             Signature::Schnorr(data) => CBOR::to_byte_string(data),
+            #[cfg(feature = "secp256k1")]
             Signature::ECDSA(data) => {
                 vec![(1).into(), CBOR::to_byte_string(data)].into()
             }
@@ -513,7 +547,15 @@ impl CBORTaggedDecodable for Signature {
     fn from_untagged_cbor(cbor: CBOR) -> dcbor::Result<Self> {
         match cbor.clone().into_case() {
             CBORCase::ByteString(bytes) => {
-                Ok(Self::schnorr_from_data_ref(bytes)?)
+                #[cfg(feature = "secp256k1")]
+                {
+                    Ok(Self::schnorr_from_data_ref(bytes)?)
+                }
+                #[cfg(not(feature = "secp256k1"))]
+                {
+                    let _ = bytes;
+                    Err("Schnorr signature not available without secp256k1 feature".into())
+                }
             }
             CBORCase::Array(mut elements) => {
                 if elements.len() == 2 {
@@ -521,9 +563,11 @@ impl CBORTaggedDecodable for Signature {
                     let ele_0 = drain.next().unwrap().into_case();
                     let ele_1 = drain.next().unwrap().into_case();
                     match ele_0 {
+                        #[cfg(feature = "secp256k1")]
                         CBORCase::ByteString(data) => {
                             return Ok(Self::schnorr_from_data_ref(data)?);
                         }
+                        #[cfg(feature = "secp256k1")]
                         CBORCase::Unsigned(1) => {
                             if let CBORCase::ByteString(data) = ele_1 {
                                 return Ok(Self::ecdsa_from_data_ref(data)?);

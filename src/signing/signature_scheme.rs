@@ -2,8 +2,10 @@ use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
 use super::{SigningPrivateKey, SigningPublicKey};
+#[cfg(feature = "secp256k1")]
+use crate::ECPrivateKey;
 #[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
-use crate::{ECPrivateKey, Ed25519PrivateKey, Error, PrivateKeyBase, Result};
+use crate::{Ed25519PrivateKey, Error, PrivateKeyBase, Result};
 
 /// Supported digital signature schemes.
 ///
@@ -30,12 +32,15 @@ use crate::{ECPrivateKey, Ed25519PrivateKey, Error, PrivateKeyBase, Result};
 pub enum SignatureScheme {
     /// BIP-340 Schnorr signature scheme, used in Bitcoin Taproot (default)
     #[default]
+    #[cfg(feature = "secp256k1")]
     Schnorr,
 
     /// ECDSA signature scheme using the secp256k1 curve
+    #[cfg(feature = "secp256k1")]
     Ecdsa,
 
     /// Ed25519 signature scheme (RFC 8032)
+    #[cfg_attr(not(feature = "secp256k1"), default)]
     Ed25519,
 
     /// ML-DSA44 post-quantum signature scheme (NIST level 2)
@@ -85,7 +90,8 @@ impl SignatureScheme {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use bc_components::SignatureScheme;
     ///
     /// // Generate a Schnorr key pair
@@ -127,12 +133,14 @@ impl SignatureScheme {
         comment: impl Into<String>,
     ) -> (SigningPrivateKey, SigningPublicKey) {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr => {
                 let private_key =
                     SigningPrivateKey::new_schnorr(ECPrivateKey::new());
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
+            #[cfg(feature = "secp256k1")]
             Self::Ecdsa => {
                 let private_key =
                     SigningPrivateKey::new_ecdsa(ECPrivateKey::new());
@@ -252,7 +260,8 @@ impl SignatureScheme {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use bc_components::SignatureScheme;
     /// use bc_rand::SecureRandomNumberGenerator;
     ///
@@ -268,6 +277,7 @@ impl SignatureScheme {
         comment: impl Into<String>,
     ) -> Result<(SigningPrivateKey, SigningPublicKey)> {
         match self {
+            #[cfg(feature = "secp256k1")]
             Self::Schnorr => {
                 let private_key = SigningPrivateKey::new_schnorr(
                     ECPrivateKey::new_using(rng),
@@ -275,6 +285,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
+            #[cfg(feature = "secp256k1")]
             Self::Ecdsa => {
                 let private_key =
                     SigningPrivateKey::new_ecdsa(ECPrivateKey::new_using(rng));

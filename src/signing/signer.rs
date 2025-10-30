@@ -40,7 +40,8 @@ pub trait Signer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use std::{cell::RefCell, rc::Rc};
     ///
     /// use bc_components::{SignatureScheme, Signer, SigningOptions, Verifier};
@@ -84,7 +85,8 @@ pub trait Signer {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
+    /// # // Requires secp256k1 feature (enabled by default)
     /// use bc_components::{SignatureScheme, Signer};
     ///
     /// // Create a key pair
@@ -107,7 +109,8 @@ pub trait Signer {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{SignatureScheme, Signer, Verifier};
 ///
 /// // Create a key pair using the ECDSA signature scheme

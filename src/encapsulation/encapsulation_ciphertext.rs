@@ -124,9 +124,7 @@ impl EncapsulationCiphertext {
     /// // Check if it's an X25519 ciphertext
     /// assert!(ciphertext.is_x25519());
     /// ```
-    pub fn is_x25519(&self) -> bool {
-        matches!(self, Self::X25519(_))
-    }
+    pub fn is_x25519(&self) -> bool { matches!(self, Self::X25519(_)) }
 
     /// Returns true if this is an ML-KEM ciphertext.
     ///
@@ -150,9 +148,7 @@ impl EncapsulationCiphertext {
     /// assert!(!ciphertext.is_x25519());
     /// ```
     #[cfg(feature = "pqcrypto")]
-    pub fn is_mlkem(&self) -> bool {
-        matches!(self, Self::MLKEM(_))
-    }
+    pub fn is_mlkem(&self) -> bool { matches!(self, Self::MLKEM(_)) }
 
     /// Returns the encapsulation scheme associated with this ciphertext.
     ///

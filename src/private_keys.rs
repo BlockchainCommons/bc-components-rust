@@ -88,7 +88,8 @@ impl PrivateKeys {
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{PrivateKeyBase, PrivateKeysProvider};
 ///
 /// // Create a provider of private keys
@@ -110,7 +111,9 @@ pub trait PrivateKeysProvider {
 }
 
 impl PrivateKeysProvider for PrivateKeys {
-    fn private_keys(&self) -> PrivateKeys { self.clone() }
+    fn private_keys(&self) -> PrivateKeys {
+        self.clone()
+    }
 }
 
 impl ReferenceProvider for PrivateKeys {
@@ -122,11 +125,15 @@ impl ReferenceProvider for PrivateKeys {
 }
 
 impl AsRef<PrivateKeys> for PrivateKeys {
-    fn as_ref(&self) -> &PrivateKeys { self }
+    fn as_ref(&self) -> &PrivateKeys {
+        self
+    }
 }
 
 impl AsRef<SigningPrivateKey> for PrivateKeys {
-    fn as_ref(&self) -> &SigningPrivateKey { &self.signing_private_key }
+    fn as_ref(&self) -> &SigningPrivateKey {
+        &self.signing_private_key
+    }
 }
 
 impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
@@ -136,11 +143,15 @@ impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
 }
 
 impl CBORTagged for PrivateKeys {
-    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_PRIVATE_KEYS]) }
+    fn cbor_tags() -> Vec<Tag> {
+        tags_for_values(&[tags::TAG_PRIVATE_KEYS])
+    }
 }
 
 impl From<PrivateKeys> for CBOR {
-    fn from(value: PrivateKeys) -> Self { value.tagged_cbor() }
+    fn from(value: PrivateKeys) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 impl CBORTaggedEncodable for PrivateKeys {
@@ -211,6 +222,7 @@ impl std::fmt::Display for PrivateKeys {
 }
 
 #[cfg(test)]
+#[cfg(feature = "secp256k1")]
 mod tests {
     use bc_ur::{URDecodable, UREncodable};
     use dcbor::prelude::*;
@@ -223,6 +235,7 @@ mod tests {
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_private_keys() {
         crate::register_tags();
 

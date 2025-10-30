@@ -231,23 +231,17 @@ impl SealedMessage {
 
 /// Implementation of `AsRef` trait for `SealedMessage`.
 impl AsRef<SealedMessage> for SealedMessage {
-    fn as_ref(&self) -> &SealedMessage {
-        self
-    }
+    fn as_ref(&self) -> &SealedMessage { self }
 }
 
 /// Implementation of CBOR tagging for `SealedMessage`.
 impl CBORTagged for SealedMessage {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_SEALED_MESSAGE])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_SEALED_MESSAGE]) }
 }
 
 /// Conversion from `SealedMessage` to CBOR for serialization.
 impl From<SealedMessage> for CBOR {
-    fn from(value: SealedMessage) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SealedMessage) -> Self { value.tagged_cbor() }
 }
 
 /// Conversion from CBOR to `SealedMessage` for deserialization.

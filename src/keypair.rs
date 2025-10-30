@@ -141,7 +141,8 @@ pub fn keypair_opt(
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{
 ///     EncapsulationScheme, SignatureScheme, keypair_opt_using,
 /// };

@@ -12,12 +12,17 @@ use ssh_key::{
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    Decrypter, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey,
-    EncapsulationPrivateKey, EncapsulationPublicKey, Error, HKDFRng,
-    PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys,
-    PublicKeysProvider, Reference, ReferenceProvider, Result, Signature,
-    Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey,
-    tags,
+    Decrypter, Digest, Ed25519PrivateKey, EncapsulationPrivateKey,
+    EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider,
+    PrivateKeys, PublicKeys, Reference, ReferenceProvider, Result,
+    SigningPrivateKey, X25519PrivateKey, tags,
+};
+#[cfg(feature = "secp256k1")]
+use crate::{ECKey, ECPrivateKey};
+#[cfg(feature = "secp256k1")]
+use crate::{
+    PrivateKeysProvider, PublicKeysProvider, Signature, Signer, SigningOptions,
+    Verifier,
 };
 
 /// A secure foundation for deriving multiple cryptographic keys.
@@ -47,7 +52,8 @@ use crate::{
 ///
 /// Creating and using a PrivateKeyBase:
 ///
-/// ```
+/// ```ignore
+/// # // Requires secp256k1 feature (enabled by default)
 /// use bc_components::{
 ///     PrivateKeyBase, PrivateKeysProvider, PublicKeysProvider, Signer,
 /// };
@@ -66,6 +72,7 @@ use crate::{
 #[derive(Clone, Eq, PartialEq, ZeroizeOnDrop)]
 pub struct PrivateKeyBase(Vec<u8>);
 
+#[cfg(feature = "secp256k1")]
 impl Signer for PrivateKeyBase {
     fn sign_with_options(
         &self,
@@ -77,6 +84,7 @@ impl Signer for PrivateKeyBase {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl Verifier for PrivateKeyBase {
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool {
         let schnorr_key = self
@@ -134,6 +142,7 @@ impl PrivateKeyBase {
     }
 
     /// Derive a new ECDSA `SigningPrivateKey` from this `PrivateKeyBase`.
+    #[cfg(feature = "secp256k1")]
     pub fn ecdsa_signing_private_key(&self) -> SigningPrivateKey {
         SigningPrivateKey::new_ecdsa(ECPrivateKey::derive_from_key_material(
             &self.0,
@@ -141,6 +150,7 @@ impl PrivateKeyBase {
     }
 
     /// Derive a new Schnorr `SigningPrivateKey` from this `PrivateKeyBase`.
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_signing_private_key(&self) -> SigningPrivateKey {
         SigningPrivateKey::new_schnorr(ECPrivateKey::derive_from_key_material(
             &self.0,
@@ -196,6 +206,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes a Schnorr private key for signing.
     /// - Includes an X25519 private key for encryption.
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
             self.schnorr_signing_private_key(),
@@ -207,6 +218,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes a Schnorr public key for signing.
     /// - Includes an X25519 public key encryption.
+    #[cfg(feature = "secp256k1")]
     pub fn schnorr_public_keys(&self) -> PublicKeys {
         PublicKeys::new(
             self.schnorr_signing_private_key().public_key().unwrap(),
@@ -220,6 +232,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes an ECDSA private key for signing.
     /// - Includes an X25519 private key for encryption.
+    #[cfg(feature = "secp256k1")]
     pub fn ecdsa_private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
             self.ecdsa_signing_private_key(),
@@ -231,6 +244,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes an ECDSA public key for signing.
     /// - Includes an X25519 public key for encryption.
+    #[cfg(feature = "secp256k1")]
     pub fn ecdsa_public_keys(&self) -> PublicKeys {
         PublicKeys::new(
             self.ecdsa_signing_private_key().public_key().unwrap(),
@@ -275,9 +289,12 @@ impl PrivateKeyBase {
     }
 
     /// Get the raw data of this `PrivateKeyBase`.
-    pub fn as_bytes(&self) -> &[u8] { self.as_ref() }
+    pub fn as_bytes(&self) -> &[u8] {
+        self.as_ref()
+    }
 }
 
+#[cfg(feature = "secp256k1")]
 impl PrivateKeysProvider for PrivateKeyBase {
     fn private_keys(&self) -> PrivateKeys {
         PrivateKeys::with_keys(
@@ -287,12 +304,17 @@ impl PrivateKeysProvider for PrivateKeyBase {
     }
 }
 
+#[cfg(feature = "secp256k1")]
 impl PublicKeysProvider for PrivateKeyBase {
-    fn public_keys(&self) -> PublicKeys { self.schnorr_public_keys() }
+    fn public_keys(&self) -> PublicKeys {
+        self.schnorr_public_keys()
+    }
 }
 
 impl Default for PrivateKeyBase {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl std::fmt::Debug for PrivateKeyBase {
@@ -302,15 +324,21 @@ impl std::fmt::Debug for PrivateKeyBase {
 }
 
 impl<'a> From<&'a PrivateKeyBase> for &'a [u8] {
-    fn from(value: &'a PrivateKeyBase) -> Self { &value.0 }
+    fn from(value: &'a PrivateKeyBase) -> Self {
+        &value.0
+    }
 }
 
 impl AsRef<PrivateKeyBase> for PrivateKeyBase {
-    fn as_ref(&self) -> &PrivateKeyBase { self }
+    fn as_ref(&self) -> &PrivateKeyBase {
+        self
+    }
 }
 
 impl AsRef<[u8]> for PrivateKeyBase {
-    fn as_ref(&self) -> &[u8] { &self.0 }
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
 }
 
 impl CBORTagged for PrivateKeyBase {
@@ -320,11 +348,15 @@ impl CBORTagged for PrivateKeyBase {
 }
 
 impl From<PrivateKeyBase> for CBOR {
-    fn from(value: PrivateKeyBase) -> Self { value.tagged_cbor() }
+    fn from(value: PrivateKeyBase) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 impl CBORTaggedEncodable for PrivateKeyBase {
-    fn untagged_cbor(&self) -> CBOR { CBOR::to_byte_string(&self.0) }
+    fn untagged_cbor(&self) -> CBOR {
+        CBOR::to_byte_string(&self.0)
+    }
 }
 
 impl TryFrom<CBOR> for PrivateKeyBase {
@@ -359,14 +391,19 @@ impl std::fmt::Display for PrivateKeyBase {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "secp256k1")]
     use bc_ur::{URDecodable, UREncodable};
+    #[cfg(feature = "secp256k1")]
     use hex_literal::hex;
 
+    #[cfg(feature = "secp256k1")]
     use crate::PrivateKeyBase;
 
+    #[cfg(feature = "secp256k1")]
     const SEED: [u8; 16] = hex!("59f2293a5bce7d4de59e71b4207ac5d2");
 
     #[test]
+    #[cfg(feature = "secp256k1")]
     fn test_private_key_base() {
         crate::register_tags();
         let private_key_base = PrivateKeyBase::from_data(SEED);
