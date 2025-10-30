@@ -1,4 +1,5 @@
 use bc_ur::prelude::*;
+#[cfg(feature = "ssh")]
 use ssh_key::public::PublicKey as SSHPublicKey;
 
 #[cfg(feature = "pqcrypto")]
@@ -74,6 +75,7 @@ pub enum SigningPublicKey {
     Ed25519(Ed25519PublicKey),
 
     /// An SSH public key
+    #[cfg(feature = "ssh")]
     SSH(SSHPublicKey),
 
     /// A post-quantum ML-DSA public key
@@ -176,6 +178,7 @@ impl SigningPublicKey {
     /// # Returns
     ///
     /// A new signing public key containing the SSH key
+    #[cfg(feature = "ssh")]
     pub fn from_ssh(key: SSHPublicKey) -> Self {
         Self::SSH(key)
     }
@@ -235,6 +238,7 @@ impl SigningPublicKey {
     ///
     /// Some reference to the SSH public key if this is an SSH key,
     /// or None if it's a different key type.
+    #[cfg(feature = "ssh")]
     pub fn to_ssh(&self) -> Option<&SSHPublicKey> {
         match self {
             Self::SSH(key) => Some(key),
@@ -293,8 +297,14 @@ impl Verifier for SigningPublicKey {
             },
             SigningPublicKey::Ed25519(key) => match signature {
                 Signature::Ed25519(sig) => key.verify(sig, message),
+                #[cfg(any(
+                    feature = "secp256k1",
+                    feature = "ssh",
+                    feature = "pqcrypto"
+                ))]
                 _ => false,
             },
+            #[cfg(feature = "ssh")]
             SigningPublicKey::SSH(key) => match signature {
                 Signature::SSH(sig) => {
                     key.verify(sig.namespace(), message.as_ref(), sig).is_ok()
@@ -362,6 +372,7 @@ impl CBORTaggedEncodable for SigningPublicKey {
             SigningPublicKey::Ed25519(key) => {
                 vec![(2).into(), CBOR::to_byte_string(key.data())].into()
             }
+            #[cfg(feature = "ssh")]
             SigningPublicKey::SSH(key) => {
                 let string = key.to_openssh().unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PUBLIC_KEY, string)
@@ -443,7 +454,9 @@ impl CBORTaggedDecodable for SigningPublicKey {
                 }
                 Err("invalid signing public key".into())
             }
+            #[cfg_attr(not(feature = "ssh"), allow(unused_variables))]
             CBORCase::Tagged(tag, item) => match tag.value() {
+                #[cfg(feature = "ssh")]
                 tags::TAG_SSH_TEXT_PUBLIC_KEY => {
                     let string = item.try_into_text()?;
                     let key = SSHPublicKey::from_openssh(&string)
@@ -462,6 +475,7 @@ impl CBORTaggedDecodable for SigningPublicKey {
     }
 }
 
+#[cfg(feature = "ssh")]
 impl ReferenceProvider for SSHPublicKey {
     fn reference(&self) -> Reference {
         let string = self.to_openssh().unwrap();
@@ -487,6 +501,7 @@ impl std::fmt::Display for SigningPublicKey {
             #[cfg(feature = "secp256k1")]
             SigningPublicKey::ECDSA(key) => key.to_string(),
             SigningPublicKey::Ed25519(key) => key.to_string(),
+            #[cfg(feature = "ssh")]
             SigningPublicKey::SSH(key) => {
                 format!("SSHPublicKey({})", key.ref_hex_short())
             }

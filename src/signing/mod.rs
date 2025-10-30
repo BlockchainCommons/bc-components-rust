@@ -93,6 +93,7 @@ mod tests {
     use hex_literal::hex;
     #[cfg(feature = "secp256k1")]
     use indoc::indoc;
+    #[cfg(feature = "ssh")]
     use ssh_key::HashAlg;
 
     use super::SignatureScheme;
@@ -285,6 +286,7 @@ mod tests {
         test_keypair_signing(SignatureScheme::MLDSA87, None);
     }
 
+    #[cfg(feature = "ssh")]
     fn signing_options() -> SigningOptions {
         SigningOptions::Ssh {
             namespace: "ssh".into(),
@@ -293,6 +295,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_ed25519_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEd25519,
@@ -301,11 +304,13 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_dsa_keypair() {
         test_keypair_signing(SignatureScheme::SshDsa, Some(signing_options()));
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_ecdsa_p256_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEcdsaP256,
@@ -314,6 +319,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_ecdsa_p384_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEcdsaP384,

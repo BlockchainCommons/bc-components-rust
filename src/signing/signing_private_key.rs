@@ -4,14 +4,17 @@ use bc_rand::RandomNumberGenerator;
 #[cfg(feature = "secp256k1")]
 use bc_rand::SecureRandomNumberGenerator;
 use bc_ur::prelude::*;
+#[cfg(feature = "ssh")]
 use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
+#[cfg(any(feature = "secp256k1", feature = "ssh", feature = "pqcrypto"))]
+use crate::Error;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSAPrivateKey;
 use crate::{
-    Digest, Ed25519PrivateKey, Error, Reference, ReferenceProvider, Result,
-    Signature, Signer, SigningPublicKey, tags,
+    Digest, Ed25519PrivateKey, Reference, ReferenceProvider, Result, Signature,
+    Signer, SigningPublicKey, tags,
 };
 #[cfg(feature = "secp256k1")]
 use crate::{ECKey, ECPrivateKey};
@@ -41,7 +44,7 @@ use crate::{ECKey, ECPrivateKey};
 ///
 /// Creating SSH signing options:
 ///
-/// ```
+/// ```ignore
 /// use bc_components::SigningOptions;
 /// use ssh_key::HashAlg;
 ///
@@ -59,6 +62,7 @@ pub enum SigningOptions {
     },
 
     /// Options for SSH signatures
+    #[cfg(feature = "ssh")]
     Ssh {
         /// The namespace used for SSH signatures
         namespace: String,
@@ -136,6 +140,7 @@ pub enum SigningPrivateKey {
     Ed25519(Ed25519PrivateKey),
 
     /// An SSH private key
+    #[cfg(feature = "ssh")]
     SSH(Box<SSHPrivateKey>),
 
     /// A post-quantum ML-DSA private key
@@ -155,6 +160,7 @@ impl std::hash::Hash for SigningPrivateKey {
             #[cfg(feature = "secp256k1")]
             Self::ECDSA(key) => key.hash(state),
             Self::Ed25519(key) => key.hash(state),
+            #[cfg(feature = "ssh")]
             Self::SSH(key) => key.to_bytes().unwrap().hash(state),
             #[cfg(feature = "pqcrypto")]
             Self::MLDSA(key) => key.as_bytes().hash(state),
@@ -257,6 +263,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// A new SSH signing private key
+    #[cfg(feature = "ssh")]
     pub fn new_ssh(key: SSHPrivateKey) -> Self {
         Self::SSH(Box::new(key))
     }
@@ -332,6 +339,7 @@ impl SigningPrivateKey {
     ///
     /// Some reference to the SSH private key if this is an SSH key,
     /// or None if it's a different key type.
+    #[cfg(feature = "ssh")]
     pub fn to_ssh(&self) -> Option<&SSHPrivateKey> {
         match self {
             Self::SSH(key) => Some(key),
@@ -344,6 +352,7 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an SSH key, `false` otherwise
+    #[cfg(feature = "ssh")]
     pub fn is_ssh(&self) -> bool {
         self.to_ssh().is_some()
     }
@@ -382,6 +391,7 @@ impl SigningPrivateKey {
             Self::Ed25519(key) => {
                 Ok(SigningPublicKey::from_ed25519(key.public_key()))
             }
+            #[cfg(feature = "ssh")]
             Self::SSH(key) => {
                 Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
             }
@@ -508,11 +518,26 @@ impl SigningPrivateKey {
     /// let signature = private_key.sign(&message).unwrap();
     /// ```
     pub fn ed25519_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
+        #[cfg(any(
+            feature = "secp256k1",
+            feature = "ssh",
+            feature = "pqcrypto"
+        ))]
         if let Self::Ed25519(key) = self {
             let sig = key.sign(message.as_ref());
             Ok(Signature::ed25519_from_data(sig))
         } else {
             Err(Error::crypto("Invalid key type for Ed25519 signing"))
+        }
+        #[cfg(not(any(
+            feature = "secp256k1",
+            feature = "ssh",
+            feature = "pqcrypto"
+        )))]
+        {
+            let Self::Ed25519(key) = self;
+            let sig = key.sign(message.as_ref());
+            Ok(Signature::ed25519_from_data(sig))
         }
     }
 
@@ -530,6 +555,7 @@ impl SigningPrivateKey {
     ///
     /// A `Result` containing the SSH signature, or an error if the key is not
     /// an SSH key.
+    #[cfg(feature = "ssh")]
     fn ssh_sign(
         &self,
         message: impl AsRef<[u8]>,
@@ -611,6 +637,10 @@ impl Signer for SigningPrivateKey {
     fn sign_with_options(
         &self,
         message: &dyn AsRef<[u8]>,
+        #[cfg_attr(
+            not(any(feature = "secp256k1", feature = "ssh")),
+            allow(unused_variables)
+        )]
         options: Option<SigningOptions>,
     ) -> Result<Signature> {
         match self {
@@ -628,6 +658,7 @@ impl Signer for SigningPrivateKey {
             #[cfg(feature = "secp256k1")]
             Self::ECDSA(_) => self.ecdsa_sign(message),
             Self::Ed25519(_) => self.ed25519_sign(message),
+            #[cfg(feature = "ssh")]
             Self::SSH(_) => {
                 if let Some(SigningOptions::Ssh { namespace, hash_alg }) =
                     options
@@ -722,6 +753,7 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             SigningPrivateKey::Ed25519(key) => {
                 vec![(2).into(), CBOR::to_byte_string(key.data())].into()
             }
+            #[cfg(feature = "ssh")]
             SigningPrivateKey::SSH(key) => {
                 let string = key.to_openssh(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(
@@ -802,9 +834,14 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                     .into()),
                 }
             }
+            #[cfg_attr(
+                not(any(feature = "ssh", feature = "pqcrypto")),
+                allow(unused_variables)
+            )]
             CBORCase::Tagged(tag, item) => {
                 let value = tag.value();
                 match value {
+                    #[cfg(feature = "ssh")]
                     tags::TAG_SSH_TEXT_PRIVATE_KEY => {
                         let string = item.try_into_text()?;
                         let key = SSHPrivateKey::from_openssh(string).map_err(
@@ -846,6 +883,7 @@ impl From<&SigningPrivateKey> for SigningPrivateKey {
     }
 }
 
+#[cfg(feature = "ssh")]
 impl ReferenceProvider for SSHPrivateKey {
     fn reference(&self) -> Reference {
         let string = self.to_openssh(LineEnding::default()).unwrap();
@@ -871,6 +909,7 @@ impl std::fmt::Display for SigningPrivateKey {
             #[cfg(feature = "secp256k1")]
             SigningPrivateKey::ECDSA(key) => key.to_string(),
             SigningPrivateKey::Ed25519(key) => key.to_string(),
+            #[cfg(feature = "ssh")]
             SigningPrivateKey::SSH(key) => {
                 format!("SSHPrivateKey({})", key.ref_hex_short())
             }

@@ -1,15 +1,18 @@
 use std::sync::Arc;
 
 use bc_tags::*;
+#[cfg(feature = "ssh")]
 use ssh_key::{
     SshSig as SSHSignature, private::PrivateKey as SSHPrivateKey,
     public::PublicKey as SSHPublicKey,
 };
 
+#[cfg(feature = "ssh")]
+use crate::ReferenceProvider;
 use crate::{
     ARID, Digest, EncapsulationScheme, EncryptedKey, Nonce, PrivateKeyBase,
-    PrivateKeys, PublicKeys, Reference, ReferenceProvider, SSKRShare, Salt,
-    SealedMessage, Seed, Signature, SignatureScheme, URI, UUID, XID,
+    PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed,
+    Signature, SignatureScheme, URI, UUID, XID,
 };
 
 pub fn register_tags_in(tags_store: &mut TagsStore) {
@@ -163,6 +166,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         }),
     );
 
+    #[cfg(feature = "ssh")]
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PRIVATE_KEY,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
@@ -176,6 +180,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         }),
     );
 
+    #[cfg(feature = "ssh")]
     tags_store.set_summarizer(
         TAG_SSH_TEXT_PUBLIC_KEY,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
@@ -186,6 +191,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         }),
     );
 
+    #[cfg(feature = "ssh")]
     tags_store.set_summarizer(
         TAG_SSH_TEXT_SIGNATURE,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
@@ -195,6 +201,7 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         }),
     );
 
+    #[cfg(feature = "ssh")]
     tags_store.set_summarizer(
         TAG_SSH_TEXT_CERTIFICATE,
         Arc::new(move |_untagged_cbor: CBOR, _flat: bool| {

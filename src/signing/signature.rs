@@ -2,6 +2,7 @@ use bc_crypto::ED25519_SIGNATURE_SIZE;
 #[cfg(feature = "secp256k1")]
 use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
+#[cfg(feature = "ssh")]
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
@@ -75,6 +76,7 @@ pub enum Signature {
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
 
     /// An SSH signature
+    #[cfg(feature = "ssh")]
     SSH(SshSig),
 
     /// A post-quantum ML-DSA signature
@@ -96,9 +98,15 @@ impl PartialEq for Signature {
             #[cfg(feature = "secp256k1")]
             (Self::ECDSA(a), Self::ECDSA(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
+            #[cfg(feature = "ssh")]
             (Self::SSH(a), Self::SSH(b)) => a == b,
             #[cfg(feature = "pqcrypto")]
             (Self::MLDSA(a), Self::MLDSA(b)) => a.as_bytes() == b.as_bytes(),
+            #[cfg(any(
+                feature = "secp256k1",
+                feature = "ssh",
+                feature = "pqcrypto"
+            ))]
             _ => false,
         }
     }
@@ -295,6 +303,7 @@ impl Signature {
     /// # Returns
     ///
     /// A new SSH signature
+    #[cfg(feature = "ssh")]
     pub fn from_ssh(sig: SshSig) -> Self {
         Self::SSH(sig)
     }
@@ -357,6 +366,7 @@ impl Signature {
     ///
     /// Some reference to the SSH signature if this is an SSH signature,
     /// or None if it's a different signature type.
+    #[cfg(feature = "ssh")]
     pub fn to_ssh(&self) -> Option<&SshSig> {
         match self {
             Self::SSH(sig) => Some(sig),
@@ -394,6 +404,7 @@ impl Signature {
             #[cfg(feature = "secp256k1")]
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
+            #[cfg(feature = "ssh")]
             Self::SSH(sig) => match sig.algorithm() {
                 ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
                 ssh_key::Algorithm::Ecdsa { curve } => match curve {
@@ -441,6 +452,7 @@ impl std::fmt::Debug for Signature {
                 .debug_struct("Ed25519")
                 .field("data", &hex::encode(data))
                 .finish(),
+            #[cfg(feature = "ssh")]
             Signature::SSH(sig) => {
                 f.debug_struct("SSH").field("sig", sig).finish()
             }
@@ -502,6 +514,7 @@ impl CBORTaggedEncodable for Signature {
             Signature::Ed25519(data) => {
                 vec![(2).into(), CBOR::to_byte_string(data)].into()
             }
+            #[cfg(feature = "ssh")]
             Signature::SSH(sig) => {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_SIGNATURE, pem)
@@ -583,12 +596,14 @@ impl CBORTaggedDecodable for Signature {
                 }
                 Err("Invalid signature format".into())
             }
+            #[cfg_attr(not(feature = "ssh"), allow(unused_variables))]
             CBORCase::Tagged(tag, item) => match tag.value() {
                 #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLDSA_SIGNATURE => {
                     let sig = MLDSASignature::try_from(cbor)?;
                     Ok(Self::MLDSA(sig))
                 }
+                #[cfg(feature = "ssh")]
                 tags::TAG_SSH_TEXT_SIGNATURE => {
                     let string = item.try_into_text()?;
                     let pem = SshSig::from_pem(string)

@@ -29,7 +29,7 @@ ssh-key = { version = "=0.6.7", default-features = false, features = [
     "rand_core",
     "std",
     "crypto",
-] }
+], optional = true }
 zeroize = { version = "1.8.1", default-features = false, features = [
     "alloc",
     "zeroize_derive",
@@ -53,8 +53,9 @@ pre-release-replacements = [
 ]
 
 [features]
-default = ["secp256k1", "pqcrypto"]
+default = ["secp256k1", "pqcrypto", "ssh"]
 secp256k1 = ["bc-crypto/secp256k1"]
 pqcrypto = ["dep:pqcrypto-mlkem", "dep:pqcrypto-mldsa", "dep:pqcrypto-traits"]
-ssh-agent = ["dep:ssh-agent-client-rs"]
+ssh = ["dep:ssh-key"]
+ssh-agent = ["ssh", "dep:ssh-agent-client-rs"]
 ssh_agent_tests = ["ssh-agent"]

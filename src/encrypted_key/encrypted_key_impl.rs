@@ -5,6 +5,7 @@
 
 use dcbor::prelude::*;
 
+#[cfg(feature = "ssh-agent")]
 use super::SSHAgentParams;
 use crate::{
     Argon2idParams, EncryptedMessage, Error, HKDFParams, KeyDerivation,
@@ -101,6 +102,7 @@ impl EncryptedKey {
                 secret,
                 content_key,
             ),
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationMethod::SSHAgent => Self::lock_opt(
                 KeyDerivationParams::SSHAgent(SSHAgentParams::new()),
                 secret,
@@ -144,6 +146,7 @@ impl EncryptedKey {
                 let params = Argon2idParams::try_from(cbor)?;
                 params.unlock(encrypted_message, secret)
             }
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationMethod::SSHAgent => {
                 let params = SSHAgentParams::try_from(cbor)?;
                 params.unlock(encrypted_message, secret)
@@ -151,9 +154,13 @@ impl EncryptedKey {
         }
     }
 
-    pub fn is_password_based(&self) -> bool { self.params.is_password_based() }
+    pub fn is_password_based(&self) -> bool {
+        self.params.is_password_based()
+    }
 
-    pub fn is_ssh_agent(&self) -> bool { self.params.is_ssh_agent() }
+    pub fn is_ssh_agent(&self) -> bool {
+        self.params.is_ssh_agent()
+    }
 }
 
 impl std::fmt::Display for EncryptedKey {
@@ -163,15 +170,21 @@ impl std::fmt::Display for EncryptedKey {
 }
 
 impl CBORTagged for EncryptedKey {
-    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_ENCRYPTED_KEY]) }
+    fn cbor_tags() -> Vec<Tag> {
+        tags_for_values(&[tags::TAG_ENCRYPTED_KEY])
+    }
 }
 
 impl From<EncryptedKey> for CBOR {
-    fn from(value: EncryptedKey) -> Self { value.tagged_cbor() }
+    fn from(value: EncryptedKey) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 impl CBORTaggedEncodable for EncryptedKey {
-    fn untagged_cbor(&self) -> CBOR { self.encrypted_message().clone().into() }
+    fn untagged_cbor(&self) -> CBOR {
+        self.encrypted_message().clone().into()
+    }
 }
 
 impl TryFrom<CBOR> for EncryptedKey {
@@ -195,9 +208,13 @@ impl CBORTaggedDecodable for EncryptedKey {
 mod tests {
     use super::*;
 
-    fn test_secret() -> &'static [u8] { b"correct horse battery staple" }
+    fn test_secret() -> &'static [u8] {
+        b"correct horse battery staple"
+    }
 
-    fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
+    fn test_content_key() -> SymmetricKey {
+        SymmetricKey::new()
+    }
 
     #[test]
     fn test_encrypted_key_hkdf_roundtrip() {
@@ -346,54 +363,5 @@ mod tests {
         )
         .unwrap();
         matches!(argon2id.params, KeyDerivationParams::Argon2id(_));
-    }
-
-    #[test]
-    #[cfg(not(feature = "ssh-agent"))]
-    fn test_ssh_agent_lock_fails_without_feature() {
-        let secret = b"test";
-        let content_key = test_content_key();
-        let result = EncryptedKey::lock(
-            KeyDerivationMethod::SSHAgent,
-            secret,
-            &content_key,
-        );
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("SSH Agent support not enabled")
-        );
-    }
-
-    #[test]
-    #[cfg(not(feature = "ssh-agent"))]
-    fn test_ssh_agent_unlock_fails_without_feature() {
-        use crate::{SALT_LEN, Salt};
-
-        // Create a mock SSHAgentParams and EncryptedMessage
-        let params = SSHAgentParams::new_opt(
-            Salt::new_with_len(SALT_LEN).unwrap(),
-            "test",
-            None,
-        );
-        let content_key = test_content_key();
-
-        // Create a dummy encrypted message (just to test unlock failure)
-        let dummy_encrypted = SymmetricKey::new().encrypt(
-            &content_key,
-            Some(params.to_cbor_data()),
-            Option::<crate::Nonce>::None,
-        );
-
-        let result = params.unlock(&dummy_encrypted, b"test");
-        assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("SSH Agent support not enabled")
-        );
     }
 }

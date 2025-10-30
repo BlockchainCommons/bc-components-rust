@@ -16,7 +16,9 @@ mod key_derivation_method;
 pub use key_derivation_method::KeyDerivationMethod;
 mod encrypted_key_impl;
 pub use encrypted_key_impl::EncryptedKey;
+#[cfg(feature = "ssh-agent")]
 mod ssh_agent_params;
+#[cfg(feature = "ssh-agent")]
 pub use ssh_agent_params::SSHAgentParams;
 #[cfg(feature = "ssh-agent")]
 pub use ssh_agent_params::{SSHAgent, connect_to_ssh_agent};

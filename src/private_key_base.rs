@@ -2,6 +2,7 @@ use bc_rand::{
     RandomNumberGenerator, SecureRandomNumberGenerator, rng_random_data,
 };
 use bc_ur::prelude::*;
+#[cfg(feature = "ssh")]
 use ssh_key::{
     Algorithm as SSHAlgorithm,
     private::{
@@ -11,14 +12,19 @@ use ssh_key::{
 };
 use zeroize::ZeroizeOnDrop;
 
+#[cfg(any(feature = "secp256k1", feature = "ssh"))]
+use crate::Result;
 use crate::{
     Decrypter, Digest, Ed25519PrivateKey, EncapsulationPrivateKey,
-    EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider,
-    PrivateKeys, PublicKeys, Reference, ReferenceProvider, Result,
-    SigningPrivateKey, X25519PrivateKey, tags,
+    PrivateKeyDataProvider, Reference, ReferenceProvider, SigningPrivateKey,
+    X25519PrivateKey, tags,
 };
 #[cfg(feature = "secp256k1")]
 use crate::{ECKey, ECPrivateKey};
+#[cfg(any(feature = "secp256k1", feature = "ssh"))]
+use crate::{EncapsulationPublicKey, PrivateKeys, PublicKeys};
+#[cfg(feature = "ssh")]
+use crate::{Error, HKDFRng};
 #[cfg(feature = "secp256k1")]
 use crate::{
     PrivateKeysProvider, PublicKeysProvider, Signature, Signer, SigningOptions,
@@ -165,6 +171,7 @@ impl PrivateKeyBase {
     }
 
     /// Derive a new SSH `SigningPrivateKey` from this `PrivateKeyBase`.
+    #[cfg(feature = "ssh")]
     pub fn ssh_signing_private_key(
         &self,
         algorithm: SSHAlgorithm,
@@ -258,6 +265,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes an SSH private key for signing.
     /// - Includes an X25519 private key for encryption.
+    #[cfg(feature = "ssh")]
     pub fn ssh_private_keys(
         &self,
         algorithm: SSHAlgorithm,
@@ -274,6 +282,7 @@ impl PrivateKeyBase {
     ///
     /// - Includes an SSH public key for signing.
     /// - Includes an X25519 public key for encryption.
+    #[cfg(feature = "ssh")]
     pub fn ssh_public_keys(
         &self,
         algorithm: SSHAlgorithm,

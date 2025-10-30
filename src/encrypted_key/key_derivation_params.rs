@@ -1,8 +1,10 @@
 use dcbor::prelude::*;
 
+#[cfg(feature = "ssh-agent")]
+use super::SSHAgentParams;
 use super::{
     Argon2idParams, HKDFParams, KeyDerivation, KeyDerivationMethod,
-    PBKDF2Params, SSHAgentParams, ScryptParams,
+    PBKDF2Params, ScryptParams,
 };
 use crate::{EncryptedMessage, Result, SymmetricKey};
 
@@ -13,6 +15,7 @@ pub enum KeyDerivationParams {
     PBKDF2(PBKDF2Params),
     Scrypt(ScryptParams),
     Argon2id(Argon2idParams),
+    #[cfg(feature = "ssh-agent")]
     SSHAgent(SSHAgentParams),
 }
 
@@ -24,6 +27,7 @@ impl KeyDerivationParams {
             KeyDerivationParams::PBKDF2(_) => KeyDerivationMethod::PBKDF2,
             KeyDerivationParams::Scrypt(_) => KeyDerivationMethod::Scrypt,
             KeyDerivationParams::Argon2id(_) => KeyDerivationMethod::Argon2id,
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationParams::SSHAgent(_) => KeyDerivationMethod::SSHAgent,
         }
     }
@@ -38,7 +42,14 @@ impl KeyDerivationParams {
     }
 
     pub fn is_ssh_agent(&self) -> bool {
-        matches!(self, KeyDerivationParams::SSHAgent(_))
+        #[cfg(feature = "ssh-agent")]
+        {
+            matches!(self, KeyDerivationParams::SSHAgent(_))
+        }
+        #[cfg(not(feature = "ssh-agent"))]
+        {
+            false
+        }
     }
 
     pub fn lock(
@@ -59,6 +70,7 @@ impl KeyDerivationParams {
             KeyDerivationParams::Argon2id(params) => {
                 params.lock(content_key, secret)
             }
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationParams::SSHAgent(params) => {
                 params.lock(content_key, secret)
             }
@@ -73,6 +85,7 @@ impl std::fmt::Display for KeyDerivationParams {
             KeyDerivationParams::PBKDF2(params) => write!(f, "{}", params),
             KeyDerivationParams::Scrypt(params) => write!(f, "{}", params),
             KeyDerivationParams::Argon2id(params) => write!(f, "{}", params),
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationParams::SSHAgent(params) => write!(f, "{}", params),
         }
     }
@@ -85,6 +98,7 @@ impl From<KeyDerivationParams> for CBOR {
             KeyDerivationParams::PBKDF2(params) => params.into(),
             KeyDerivationParams::Scrypt(params) => params.into(),
             KeyDerivationParams::Argon2id(params) => params.into(),
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationParams::SSHAgent(params) => params.into(),
         }
     }
@@ -113,6 +127,7 @@ impl TryFrom<CBOR> for KeyDerivationParams {
             Some(KeyDerivationMethod::Argon2id) => Ok(
                 KeyDerivationParams::Argon2id(Argon2idParams::try_from(cbor)?),
             ),
+            #[cfg(feature = "ssh-agent")]
             Some(KeyDerivationMethod::SSHAgent) => Ok(
                 KeyDerivationParams::SSHAgent(SSHAgentParams::try_from(cbor)?),
             ),

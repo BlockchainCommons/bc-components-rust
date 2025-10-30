@@ -14,16 +14,19 @@ use crate::{Error, Result};
 /// ```
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum KeyDerivationMethod {
-    HKDF     = 0,
-    PBKDF2   = 1,
-    Scrypt   = 2,
+    HKDF = 0,
+    PBKDF2 = 1,
+    Scrypt = 2,
     Argon2id = 3,
+    #[cfg(feature = "ssh-agent")]
     SSHAgent = 4,
 }
 
 impl KeyDerivationMethod {
     /// Returns the zero-based index of the key derivation method.
-    pub fn index(&self) -> usize { *self as usize }
+    pub fn index(&self) -> usize {
+        *self as usize
+    }
 
     /// Attempts to create a `KeyDerivationMethod` from a zero-based index.
     pub fn from_index(index: usize) -> Option<Self> {
@@ -32,6 +35,7 @@ impl KeyDerivationMethod {
             1 => Some(KeyDerivationMethod::PBKDF2),
             2 => Some(KeyDerivationMethod::Scrypt),
             3 => Some(KeyDerivationMethod::Argon2id),
+            #[cfg(feature = "ssh-agent")]
             4 => Some(KeyDerivationMethod::SSHAgent),
             _ => None,
         }
@@ -45,6 +49,7 @@ impl std::fmt::Display for KeyDerivationMethod {
             KeyDerivationMethod::PBKDF2 => write!(f, "PBKDF2"),
             KeyDerivationMethod::Scrypt => write!(f, "Scrypt"),
             KeyDerivationMethod::Argon2id => write!(f, "Argon2id"),
+            #[cfg(feature = "ssh-agent")]
             KeyDerivationMethod::SSHAgent => write!(f, "SSHAgent"),
         }
     }

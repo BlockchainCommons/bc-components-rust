@@ -119,6 +119,7 @@ pub use keypair::{keypair, keypair_opt, keypair_opt_using, keypair_using};
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "ssh")]
     use std::ops::Deref;
 
     #[cfg(feature = "secp256k1")]
@@ -129,8 +130,11 @@ mod tests {
     };
     use bc_rand::make_fake_random_number_generator;
     use bc_ur::{URDecodable, UREncodable};
+    #[cfg(any(feature = "secp256k1", feature = "ssh"))]
     use hex_literal::hex;
+    #[cfg(feature = "ssh")]
     use indoc::indoc;
+    #[cfg(feature = "ssh")]
     use ssh_key::{
         Algorithm as SSHAlgorithm, EcdsaCurve, HashAlg, LineEnding,
         PrivateKey as SSHPrivateKey, PublicKey as SSHPublicKey,
@@ -138,10 +142,11 @@ mod tests {
 
     #[cfg(feature = "secp256k1")]
     use crate::ECPrivateKey;
-    use crate::{
-        PrivateKeyBase, Signature, Signer, SigningOptions, SigningPrivateKey,
-        SigningPublicKey, Verifier, X25519PrivateKey, X25519PublicKey,
-    };
+    #[cfg(feature = "ssh")]
+    use crate::{PrivateKeyBase, Signature, Signer, SigningOptions, Verifier};
+    #[cfg(any(feature = "secp256k1", feature = "ssh"))]
+    use crate::{SigningPrivateKey, SigningPublicKey};
+    use crate::{X25519PrivateKey, X25519PublicKey};
 
     #[test]
     fn test_x25519_keys() {
@@ -242,6 +247,7 @@ mod tests {
         );
     }
 
+    #[cfg(feature = "ssh")]
     fn test_ssh_signing(
         algorithm: SSHAlgorithm,
         expected_private_key: Option<&str>,
@@ -285,6 +291,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_dsa_signing() {
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
@@ -321,6 +328,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp256_signing() {
         #[rustfmt::skip]
@@ -346,6 +354,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp384_signing() {
         #[rustfmt::skip]
@@ -373,6 +382,7 @@ mod tests {
 
     // Should succeed but fails part of the time. See next test.
     #[test]
+    #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp521_signing() {
         #[rustfmt::skip]
@@ -401,6 +411,7 @@ mod tests {
     }
 
     // Filed as https://github.com/RustCrypto/SSH/issues/232
+    #[cfg(feature = "ssh")]
     #[ignore]
     #[test]
     fn test_dsa_nistp521() {
@@ -429,6 +440,7 @@ xLZXkgY29tbWVudC4BAgMEBQY=
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_ssh_ed25519_signing() {
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"

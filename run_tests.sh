@@ -36,6 +36,9 @@ cargo test --all-targets > /dev/null
 section "No Default Features"
 cargo test --no-default-features > /dev/null
 
+section "ssh Feature"
+test_only_features "ssh"
+
 section "ssh-agent Feature"
 test_additional_features "ssh-agent"
 
@@ -47,6 +50,9 @@ test_only_features "pqcrypto"
 
 section "secp256k1 Feature"
 test_only_features "secp256k1"
+
+section "Without ssh Feature"
+test_only_features "secp256k1,pqcrypto"
 
 section "Doc Tests"
 cargo test --doc > /dev/null
