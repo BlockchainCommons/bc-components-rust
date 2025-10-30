@@ -1,9 +1,11 @@
 use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
+#[cfg(feature = "pqcrypto")]
+use crate::MLDSAPublicKey;
 use crate::{
-    Digest, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey,
-    Reference, ReferenceProvider, SchnorrPublicKey, Signature, Verifier, tags,
+    Digest, ECKeyBase, ECPublicKey, Ed25519PublicKey, Reference,
+    ReferenceProvider, SchnorrPublicKey, Signature, Verifier, tags,
 };
 
 /// A public key used for verifying digital signatures.
@@ -69,6 +71,7 @@ pub enum SigningPublicKey {
     SSH(SSHPublicKey),
 
     /// A post-quantum ML-DSA public key
+    #[cfg(feature = "pqcrypto")]
     MLDSA(MLDSAPublicKey),
 }
 
@@ -94,7 +97,9 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_schnorr(schnorr_key);
     /// ```
-    pub fn from_schnorr(key: SchnorrPublicKey) -> Self { Self::Schnorr(key) }
+    pub fn from_schnorr(key: SchnorrPublicKey) -> Self {
+        Self::Schnorr(key)
+    }
 
     /// Creates a new signing public key from an ECDSA public key.
     ///
@@ -118,7 +123,9 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_ecdsa(public_key);
     /// ```
-    pub fn from_ecdsa(key: ECPublicKey) -> Self { Self::ECDSA(key) }
+    pub fn from_ecdsa(key: ECPublicKey) -> Self {
+        Self::ECDSA(key)
+    }
 
     /// Creates a new signing public key from an Ed25519 public key.
     ///
@@ -142,7 +149,9 @@ impl SigningPublicKey {
     /// // Create a signing public key from it
     /// let signing_key = SigningPublicKey::from_ed25519(public_key);
     /// ```
-    pub fn from_ed25519(key: Ed25519PublicKey) -> Self { Self::Ed25519(key) }
+    pub fn from_ed25519(key: Ed25519PublicKey) -> Self {
+        Self::Ed25519(key)
+    }
 
     /// Creates a new signing public key from an SSH public key.
     ///
@@ -153,7 +162,9 @@ impl SigningPublicKey {
     /// # Returns
     ///
     /// A new signing public key containing the SSH key
-    pub fn from_ssh(key: SSHPublicKey) -> Self { Self::SSH(key) }
+    pub fn from_ssh(key: SSHPublicKey) -> Self {
+        Self::SSH(key)
+    }
 
     /// Returns the underlying Schnorr public key if this is a Schnorr key.
     ///
@@ -268,6 +279,7 @@ impl Verifier for SigningPublicKey {
                 }
                 _ => false,
             },
+            #[cfg(feature = "pqcrypto")]
             SigningPublicKey::MLDSA(key) => match signature {
                 Signature::MLDSA(sig) => {
                     key.verify(sig, message).map_err(|_| false).unwrap_or(false)
@@ -281,7 +293,9 @@ impl Verifier for SigningPublicKey {
 /// Implementation of AsRef for SigningPublicKey
 impl AsRef<SigningPublicKey> for SigningPublicKey {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &SigningPublicKey { self }
+    fn as_ref(&self) -> &SigningPublicKey {
+        self
+    }
 }
 
 /// Implementation of the CBORTagged trait for SigningPublicKey
@@ -297,7 +311,9 @@ impl CBORTagged for SigningPublicKey {
 /// Conversion from SigningPublicKey to CBOR
 impl From<SigningPublicKey> for CBOR {
     /// Converts a SigningPublicKey to a tagged CBOR value.
-    fn from(value: SigningPublicKey) -> Self { value.tagged_cbor() }
+    fn from(value: SigningPublicKey) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPublicKey
@@ -326,6 +342,7 @@ impl CBORTaggedEncodable for SigningPublicKey {
                 let string = key.to_openssh().unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_PUBLIC_KEY, string)
             }
+            #[cfg(feature = "pqcrypto")]
             SigningPublicKey::MLDSA(key) => key.clone().into(),
         }
     }
@@ -397,6 +414,7 @@ impl CBORTaggedDecodable for SigningPublicKey {
                         .map_err(|_| "invalid SSH public key")?;
                     Ok(Self::SSH(key))
                 }
+                #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLDSA_PUBLIC_KEY => {
                     let key = MLDSAPublicKey::from_tagged_cbor(untagged_cbor)?;
                     Ok(Self::MLDSA(key))
@@ -434,6 +452,7 @@ impl std::fmt::Display for SigningPublicKey {
             SigningPublicKey::SSH(key) => {
                 format!("SSHPublicKey({})", key.ref_hex_short())
             }
+            #[cfg(feature = "pqcrypto")]
             SigningPublicKey::MLDSA(key) => key.to_string(),
         };
         write!(

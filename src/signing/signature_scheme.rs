@@ -2,6 +2,7 @@ use bc_rand::RandomNumberGenerator;
 use ssh_key::Algorithm;
 
 use super::{SigningPrivateKey, SigningPublicKey};
+#[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
 use crate::{ECPrivateKey, Ed25519PrivateKey, Error, PrivateKeyBase, Result};
 
 /// Supported digital signature schemes.
@@ -18,7 +19,10 @@ use crate::{ECPrivateKey, Ed25519PrivateKey, Error, PrivateKeyBase, Result};
 /// // Use the default signature scheme (Schnorr)
 /// let scheme = SignatureScheme::default();
 /// let (private_key, public_key) = scheme.keypair();
+/// ```
 ///
+/// ```ignore
+/// # use bc_components::SignatureScheme;
 /// // Create a key pair using a specific signature scheme
 /// let (mldsa_private, mldsa_public) = SignatureScheme::MLDSA65.keypair();
 /// ```
@@ -35,12 +39,15 @@ pub enum SignatureScheme {
     Ed25519,
 
     /// ML-DSA44 post-quantum signature scheme (NIST level 2)
+    #[cfg(feature = "pqcrypto")]
     MLDSA44,
 
     /// ML-DSA65 post-quantum signature scheme (NIST level 3)
+    #[cfg(feature = "pqcrypto")]
     MLDSA65,
 
     /// ML-DSA87 post-quantum signature scheme (NIST level 5)
+    #[cfg(feature = "pqcrypto")]
     MLDSA87,
 
     /// Ed25519 signature scheme for SSH
@@ -138,18 +145,21 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA44 => {
                 let (private_key, public_key) = crate::MLDSA::MLDSA44.keypair();
                 let private_key = SigningPrivateKey::MLDSA(private_key);
                 let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA65 => {
                 let (private_key, public_key) = crate::MLDSA::MLDSA65.keypair();
                 let private_key = SigningPrivateKey::MLDSA(private_key);
                 let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA87 => {
                 let (private_key, public_key) = crate::MLDSA::MLDSA87.keypair();
                 let private_key = SigningPrivateKey::MLDSA(private_key);
@@ -320,6 +330,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
+            #[cfg(feature = "pqcrypto")]
             _ => Err(Error::general(
                 "Deterministic keypair generation not supported for this signature scheme",
             )),

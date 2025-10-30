@@ -1,8 +1,10 @@
 use bc_ur::prelude::*;
 
+#[cfg(feature = "pqcrypto")]
+use crate::MLKEMPublicKey;
 use crate::{
     Digest, EncapsulationCiphertext, EncapsulationScheme, Encrypter,
-    MLKEMPublicKey, PrivateKeyBase, Reference, ReferenceProvider, SymmetricKey,
+    PrivateKeyBase, Reference, ReferenceProvider, SymmetricKey,
     X25519PublicKey, tags,
 };
 
@@ -22,6 +24,7 @@ pub enum EncapsulationPublicKey {
     /// An X25519 public key
     X25519(X25519PublicKey),
     /// An ML-KEM public key (post-quantum)
+    #[cfg(feature = "pqcrypto")]
     MLKEM(MLKEMPublicKey),
 }
 
@@ -55,6 +58,7 @@ impl EncapsulationPublicKey {
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
             Self::X25519(_) => EncapsulationScheme::X25519,
+            #[cfg(feature = "pqcrypto")]
             Self::MLKEM(pk) => match pk.level() {
                 crate::MLKEM::MLKEM512 => EncapsulationScheme::MLKEM512,
                 crate::MLKEM::MLKEM768 => EncapsulationScheme::MLKEM768,
@@ -116,6 +120,7 @@ impl EncapsulationPublicKey {
                     EncapsulationCiphertext::X25519(ephemeral_public_key),
                 )
             }
+            #[cfg(feature = "pqcrypto")]
             EncapsulationPublicKey::MLKEM(public_key) => {
                 let (shared_key, ciphertext) =
                     public_key.encapsulate_new_shared_secret();
@@ -146,6 +151,7 @@ impl From<EncapsulationPublicKey> for CBOR {
     fn from(public_key: EncapsulationPublicKey) -> Self {
         match public_key {
             EncapsulationPublicKey::X25519(public_key) => public_key.into(),
+            #[cfg(feature = "pqcrypto")]
             EncapsulationPublicKey::MLKEM(public_key) => public_key.into(),
         }
     }
@@ -163,6 +169,7 @@ impl TryFrom<CBOR> for EncapsulationPublicKey {
                         X25519PublicKey::try_from(cbor)?,
                     ))
                 }
+                #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLKEM_PUBLIC_KEY => {
                     Ok(EncapsulationPublicKey::MLKEM(MLKEMPublicKey::try_from(
                         cbor,
@@ -185,6 +192,7 @@ impl std::fmt::Display for EncapsulationPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let display_key = match self {
             EncapsulationPublicKey::X25519(key) => key.to_string(),
+            #[cfg(feature = "pqcrypto")]
             EncapsulationPublicKey::MLKEM(key) => key.to_string(),
         };
         write!(

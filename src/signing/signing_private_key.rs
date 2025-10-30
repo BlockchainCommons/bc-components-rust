@@ -5,10 +5,11 @@ use bc_ur::prelude::*;
 use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
+#[cfg(feature = "pqcrypto")]
+use crate::MLDSAPrivateKey;
 use crate::{
-    Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey,
-    Reference, ReferenceProvider, Result, Signature, Signer, SigningPublicKey,
-    tags,
+    Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, Reference,
+    ReferenceProvider, Result, Signature, Signer, SigningPublicKey, tags,
 };
 
 /// Options for configuring signature creation.
@@ -130,6 +131,7 @@ pub enum SigningPrivateKey {
     SSH(Box<SSHPrivateKey>),
 
     /// A post-quantum ML-DSA private key
+    #[cfg(feature = "pqcrypto")]
     MLDSA(MLDSAPrivateKey),
 }
 
@@ -144,6 +146,7 @@ impl std::hash::Hash for SigningPrivateKey {
             Self::ECDSA(key) => key.hash(state),
             Self::Ed25519(key) => key.hash(state),
             Self::SSH(key) => key.to_bytes().unwrap().hash(state),
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA(key) => key.as_bytes().hash(state),
         }
     }
@@ -173,7 +176,9 @@ impl SigningPrivateKey {
     /// // Create a Schnorr signing key from it
     /// let signing_key = SigningPrivateKey::new_schnorr(ec_key);
     /// ```
-    pub const fn new_schnorr(key: ECPrivateKey) -> Self { Self::Schnorr(key) }
+    pub const fn new_schnorr(key: ECPrivateKey) -> Self {
+        Self::Schnorr(key)
+    }
 
     /// Creates a new ECDSA signing private key from an `ECPrivateKey`.
     ///
@@ -196,7 +201,9 @@ impl SigningPrivateKey {
     /// // Create an ECDSA signing key from it
     /// let signing_key = SigningPrivateKey::new_ecdsa(ec_key);
     /// ```
-    pub const fn new_ecdsa(key: ECPrivateKey) -> Self { Self::ECDSA(key) }
+    pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
+        Self::ECDSA(key)
+    }
 
     /// Creates a new Ed25519 signing private key from an `Ed25519PrivateKey`.
     ///
@@ -232,7 +239,9 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// A new SSH signing private key
-    pub fn new_ssh(key: SSHPrivateKey) -> Self { Self::SSH(Box::new(key)) }
+    pub fn new_ssh(key: SSHPrivateKey) -> Self {
+        Self::SSH(Box::new(key))
+    }
 
     /// Returns the underlying Schnorr private key if this is a Schnorr key.
     ///
@@ -266,7 +275,9 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is a Schnorr key, `false` otherwise
-    pub fn is_schnorr(&self) -> bool { self.to_schnorr().is_some() }
+    pub fn is_schnorr(&self) -> bool {
+        self.to_schnorr().is_some()
+    }
 
     /// Returns the underlying ECDSA private key if this is an ECDSA key.
     ///
@@ -286,7 +297,9 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an ECDSA key, `false` otherwise
-    pub fn is_ecdsa(&self) -> bool { self.to_ecdsa().is_some() }
+    pub fn is_ecdsa(&self) -> bool {
+        self.to_ecdsa().is_some()
+    }
 
     /// Returns the underlying SSH private key if this is an SSH key.
     ///
@@ -306,7 +319,9 @@ impl SigningPrivateKey {
     /// # Returns
     ///
     /// `true` if this is an SSH key, `false` otherwise
-    pub fn is_ssh(&self) -> bool { self.to_ssh().is_some() }
+    pub fn is_ssh(&self) -> bool {
+        self.to_ssh().is_some()
+    }
 
     /// Derives the corresponding public key for this private key.
     ///
@@ -340,6 +355,7 @@ impl SigningPrivateKey {
             Self::SSH(key) => {
                 Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
             }
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA(_) => {
                 Err(Error::general("Deriving MLDSA public key not supported"))
             }
@@ -503,6 +519,7 @@ impl SigningPrivateKey {
     ///
     /// A `Result` containing the ML-DSA signature, or an error if the key is
     /// not an ML-DSA key.
+    #[cfg(feature = "pqcrypto")]
     fn mldsa_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
         if let Self::MLDSA(key) = self {
             let sig = key.sign(message.as_ref());
@@ -581,6 +598,7 @@ impl Signer for SigningPrivateKey {
                     ))
                 }
             }
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA(_) => self.mldsa_sign(message),
         }
     }
@@ -629,7 +647,9 @@ impl CBORTagged for SigningPrivateKey {
 /// Conversion from SigningPrivateKey to CBOR
 impl From<SigningPrivateKey> for CBOR {
     /// Converts a SigningPrivateKey to a tagged CBOR value.
-    fn from(value: SigningPrivateKey) -> Self { value.tagged_cbor() }
+    fn from(value: SigningPrivateKey) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPrivateKey
@@ -661,6 +681,7 @@ impl CBORTaggedEncodable for SigningPrivateKey {
                     (*string).clone(),
                 )
             }
+            #[cfg(feature = "pqcrypto")]
             SigningPrivateKey::MLDSA(key) => key.clone().into(),
         }
     }
@@ -734,6 +755,7 @@ impl CBORTaggedDecodable for SigningPrivateKey {
                         )?;
                         Ok(Self::SSH(Box::new(key)))
                     }
+                    #[cfg(feature = "pqcrypto")]
                     tags::TAG_MLDSA_PRIVATE_KEY => {
                         let key = MLDSAPrivateKey::from_untagged_cbor(item)?;
                         Ok(Self::MLDSA(key))
@@ -762,7 +784,9 @@ impl std::fmt::Debug for SigningPrivateKey {
 /// Implementation of the From trait for reference to SigningPrivateKey
 impl From<&SigningPrivateKey> for SigningPrivateKey {
     /// Clones a SigningPrivateKey from a reference.
-    fn from(key: &SigningPrivateKey) -> Self { key.clone() }
+    fn from(key: &SigningPrivateKey) -> Self {
+        key.clone()
+    }
 }
 
 impl ReferenceProvider for SSHPrivateKey {
@@ -791,6 +815,7 @@ impl std::fmt::Display for SigningPrivateKey {
             SigningPrivateKey::SSH(key) => {
                 format!("SSHPrivateKey({})", key.ref_hex_short())
             }
+            #[cfg(feature = "pqcrypto")]
             SigningPrivateKey::MLDSA(key) => key.to_string(),
         };
         write!(

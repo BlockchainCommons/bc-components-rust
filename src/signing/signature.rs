@@ -5,7 +5,9 @@ use bc_ur::prelude::*;
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
-use crate::{Error, MLDSASignature, Result, tags};
+#[cfg(feature = "pqcrypto")]
+use crate::MLDSASignature;
+use crate::{Error, Result, tags};
 
 /// A digital signature created with various signature algorithms.
 ///
@@ -72,6 +74,7 @@ pub enum Signature {
     SSH(SshSig),
 
     /// A post-quantum ML-DSA signature
+    #[cfg(feature = "pqcrypto")]
     MLDSA(MLDSASignature),
 }
 
@@ -88,6 +91,7 @@ impl PartialEq for Signature {
             (Self::ECDSA(a), Self::ECDSA(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
             (Self::SSH(a), Self::SSH(b)) => a == b,
+            #[cfg(feature = "pqcrypto")]
             (Self::MLDSA(a), Self::MLDSA(b)) => a.as_bytes() == b.as_bytes(),
             _ => false,
         }
@@ -269,7 +273,9 @@ impl Signature {
     /// # Returns
     ///
     /// A new SSH signature
-    pub fn from_ssh(sig: SshSig) -> Self { Self::SSH(sig) }
+    pub fn from_ssh(sig: SshSig) -> Self {
+        Self::SSH(sig)
+    }
 
     /// Returns the Schnorr signature data if this is a Schnorr signature.
     ///
@@ -372,6 +378,7 @@ impl Signature {
                 ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
                 _ => Err(Error::ssh("Unsupported SSH signature algorithm")),
             },
+            #[cfg(feature = "pqcrypto")]
             Self::MLDSA(sig) => match sig.level() {
                 crate::MLDSA::MLDSA44 => Ok(SignatureScheme::MLDSA44),
                 crate::MLDSA::MLDSA65 => Ok(SignatureScheme::MLDSA65),
@@ -405,6 +412,7 @@ impl std::fmt::Debug for Signature {
             Signature::SSH(sig) => {
                 f.debug_struct("SSH").field("sig", sig).finish()
             }
+            #[cfg(feature = "pqcrypto")]
             Signature::MLDSA(sig) => {
                 f.debug_struct("MLDSA").field("sig", sig).finish()
             }
@@ -415,7 +423,9 @@ impl std::fmt::Debug for Signature {
 /// Implementation of AsRef for Signature
 impl AsRef<Signature> for Signature {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &Signature { self }
+    fn as_ref(&self) -> &Signature {
+        self
+    }
 }
 
 /// Implementation of the CBORTagged trait for Signature
@@ -431,7 +441,9 @@ impl CBORTagged for Signature {
 /// Conversion from Signature to CBOR
 impl From<Signature> for CBOR {
     /// Converts a Signature to a tagged CBOR value.
-    fn from(value: Signature) -> Self { value.tagged_cbor() }
+    fn from(value: Signature) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for Signature
@@ -460,6 +472,7 @@ impl CBORTaggedEncodable for Signature {
                 let pem = sig.to_pem(LineEnding::LF).unwrap();
                 CBOR::to_tagged_value(tags::TAG_SSH_TEXT_SIGNATURE, pem)
             }
+            #[cfg(feature = "pqcrypto")]
             Signature::MLDSA(sig) => sig.clone().into(),
         }
     }
@@ -527,6 +540,7 @@ impl CBORTaggedDecodable for Signature {
                 Err("Invalid signature format".into())
             }
             CBORCase::Tagged(tag, item) => match tag.value() {
+                #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLDSA_SIGNATURE => {
                     let sig = MLDSASignature::try_from(cbor)?;
                     Ok(Self::MLDSA(sig))

@@ -49,7 +49,7 @@
 //!
 //! For post-quantum security, use one of the ML-KEM schemes:
 //!
-//! ```
+//! ```ignore
 //! use bc_components::{EncapsulationScheme, SealedMessage};
 //!
 //! // Generate post-quantum keypair for the recipient
@@ -63,6 +63,7 @@
 //! // Recipient decrypts the message
 //! let decrypted = sealed_message.decrypt(&recipient_private_key).unwrap();
 //! assert_eq!(decrypted, plaintext);
+//! ```
 //! ```
 
 mod encapsulation_scheme;
@@ -93,14 +94,25 @@ mod tests {
     }
 
     #[test]
-    fn test_x25519() { test_encapsulation(EncapsulationScheme::default()); }
+    fn test_x25519() {
+        test_encapsulation(EncapsulationScheme::default());
+    }
 
     #[test]
-    fn test_mlkem512() { test_encapsulation(EncapsulationScheme::MLKEM512); }
+    #[cfg(feature = "pqcrypto")]
+    fn test_mlkem512() {
+        test_encapsulation(EncapsulationScheme::MLKEM512);
+    }
 
     #[test]
-    fn test_mlkem768() { test_encapsulation(EncapsulationScheme::MLKEM768); }
+    #[cfg(feature = "pqcrypto")]
+    fn test_mlkem768() {
+        test_encapsulation(EncapsulationScheme::MLKEM768);
+    }
 
     #[test]
-    fn test_mlkem1024() { test_encapsulation(EncapsulationScheme::MLKEM1024); }
+    #[cfg(feature = "pqcrypto")]
+    fn test_mlkem1024() {
+        test_encapsulation(EncapsulationScheme::MLKEM1024);
+    }
 }

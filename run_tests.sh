@@ -36,11 +36,14 @@ cargo test --all-targets > /dev/null
 section "No Default Features"
 cargo test --no-default-features > /dev/null
 
-section "SSH Agent Feature"
+section "ssh-agent Feature"
 test_additional_features "ssh-agent"
 
-section "SSH Agent Tests Feature"
+section "ssh_agent_tests Feature"
 test_additional_features "ssh_agent_tests"
+
+section "pqcrypto Feature"
+test_only_features "pqcrypto"
 
 section "Doc Tests"
 cargo test --doc > /dev/null

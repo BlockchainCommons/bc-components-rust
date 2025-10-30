@@ -49,13 +49,18 @@
 //! let (schnorr_key, _) = SignatureScheme::Schnorr.keypair();
 //! let (ecdsa_key, _) = SignatureScheme::Ecdsa.keypair();
 //! let (ed25519_key, _) = SignatureScheme::Ed25519.keypair();
-//! let (mldsa_key, _) = SignatureScheme::MLDSA65.keypair();
 //!
 //! // Sign a message with each key
 //! let message = b"Hello, world!";
 //! let schnorr_sig = schnorr_key.sign(&message).unwrap();
 //! let ecdsa_sig = ecdsa_key.sign(&message).unwrap();
 //! let ed25519_sig = ed25519_key.sign(&message).unwrap();
+//! ```
+//!
+//! ```ignore
+//! # use bc_components::{SignatureScheme, Signer};
+//! # let message = b"Hello, world!";
+//! let (mldsa_key, _) = SignatureScheme::MLDSA65.keypair();
 //! let mldsa_sig = mldsa_key.sign(&message).unwrap();
 //! ```
 
@@ -86,9 +91,11 @@ mod tests {
 
     use super::SignatureScheme;
     use crate::{
-        ECPrivateKey, Ed25519PrivateKey, MLDSA, MLDSASignature, Signature,
-        Signer, SigningOptions, SigningPrivateKey, Verifier,
+        ECPrivateKey, Ed25519PrivateKey, Signature, Signer, SigningOptions,
+        SigningPrivateKey, Verifier,
     };
+    #[cfg(feature = "pqcrypto")]
+    use crate::{MLDSA, MLDSASignature};
 
     const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
         SigningPrivateKey::new_ecdsa(ECPrivateKey::from_data(hex!(
@@ -193,6 +200,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "pqcrypto")]
     fn test_mldsa_signing() {
         let (private_key, public_key) = MLDSA::MLDSA65.keypair();
         let signature = private_key.sign(MESSAGE);
@@ -205,6 +213,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "pqcrypto")]
     fn test_mldsa_cbor() {
         let (private_key, public_key) = MLDSA::MLDSA65.keypair();
         let signature = private_key.sign(MESSAGE);
@@ -242,16 +251,19 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "pqcrypto")]
     fn test_mldsa44_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA44, None);
     }
 
     #[test]
+    #[cfg(feature = "pqcrypto")]
     fn test_mldsa65_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA65, None);
     }
 
     #[test]
+    #[cfg(feature = "pqcrypto")]
     fn test_mldsa87_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA87, None);
     }

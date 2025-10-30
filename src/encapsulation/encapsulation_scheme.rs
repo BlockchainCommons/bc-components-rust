@@ -1,7 +1,10 @@
 use bc_rand::RandomNumberGenerator;
 
+#[cfg(feature = "pqcrypto")]
+use crate::MLKEM;
+#[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
 use crate::{
-    EncapsulationPrivateKey, EncapsulationPublicKey, Error, MLKEM, Result,
+    EncapsulationPrivateKey, EncapsulationPublicKey, Error, Result,
     X25519PrivateKey,
 };
 
@@ -23,10 +26,13 @@ pub enum EncapsulationScheme {
     #[default]
     X25519,
     /// ML-KEM512 post-quantum key encapsulation (NIST level 1)
+    #[cfg(feature = "pqcrypto")]
     MLKEM512,
     /// ML-KEM768 post-quantum key encapsulation (NIST level 3)
+    #[cfg(feature = "pqcrypto")]
     MLKEM768,
     /// ML-KEM1024 post-quantum key encapsulation (NIST level 5)
+    #[cfg(feature = "pqcrypto")]
     MLKEM1024,
 }
 
@@ -45,7 +51,10 @@ impl EncapsulationScheme {
     ///
     /// // Generate a key pair using X25519 (default)
     /// let (private_key, public_key) = EncapsulationScheme::default().keypair();
+    /// ```
     ///
+    /// ```ignore
+    /// # use bc_components::EncapsulationScheme;
     /// // Generate a key pair using ML-KEM768
     /// let (private_key, public_key) = EncapsulationScheme::MLKEM768.keypair();
     /// ```
@@ -58,6 +67,7 @@ impl EncapsulationScheme {
                     EncapsulationPublicKey::X25519(public_key),
                 )
             }
+            #[cfg(feature = "pqcrypto")]
             EncapsulationScheme::MLKEM512 => {
                 let (private_key, public_key) = MLKEM::MLKEM512.keypair();
                 (
@@ -65,6 +75,7 @@ impl EncapsulationScheme {
                     EncapsulationPublicKey::MLKEM(public_key),
                 )
             }
+            #[cfg(feature = "pqcrypto")]
             EncapsulationScheme::MLKEM768 => {
                 let (private_key, public_key) = MLKEM::MLKEM768.keypair();
                 (
@@ -72,6 +83,7 @@ impl EncapsulationScheme {
                     EncapsulationPublicKey::MLKEM(public_key),
                 )
             }
+            #[cfg(feature = "pqcrypto")]
             EncapsulationScheme::MLKEM1024 => {
                 let (private_key, public_key) = MLKEM::MLKEM1024.keypair();
                 (
@@ -110,7 +122,12 @@ impl EncapsulationScheme {
     /// let mut rng = SecureRandomNumberGenerator;
     /// let result = EncapsulationScheme::X25519.keypair_using(&mut rng);
     /// assert!(result.is_ok());
+    /// ```
     ///
+    /// ```ignore
+    /// # use bc_components::EncapsulationScheme;
+    /// # use bc_rand::SecureRandomNumberGenerator;
+    /// # let mut rng = SecureRandomNumberGenerator;
     /// // ML-KEM schemes don't support deterministic key generation
     /// let result = EncapsulationScheme::MLKEM512.keypair_using(&mut rng);
     /// assert!(result.is_err());
@@ -128,6 +145,7 @@ impl EncapsulationScheme {
                     EncapsulationPublicKey::X25519(public_key),
                 ))
             }
+            #[cfg(feature = "pqcrypto")]
             _ => Err(Error::general(
                 "Deterministic keypair generation not supported for this encapsulation scheme",
             )),

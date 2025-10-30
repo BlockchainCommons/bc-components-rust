@@ -86,10 +86,14 @@ pub use private_keys::{PrivateKeys, PrivateKeysProvider};
 mod public_keys;
 pub use public_keys::{PublicKeys, PublicKeysProvider};
 
+#[cfg(feature = "pqcrypto")]
 mod mldsa;
+#[cfg(feature = "pqcrypto")]
 pub use mldsa::{MLDSA, MLDSAPrivateKey, MLDSAPublicKey, MLDSASignature};
 
+#[cfg(feature = "pqcrypto")]
 mod mlkem;
+#[cfg(feature = "pqcrypto")]
 pub use mlkem::{MLKEM, MLKEMCiphertext, MLKEMPrivateKey, MLKEMPublicKey};
 
 mod encapsulation;

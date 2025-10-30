@@ -1,8 +1,9 @@
 use dcbor::prelude::*;
 
-use crate::{
-    EncapsulationScheme, Error, MLKEMCiphertext, Result, X25519PublicKey, tags,
-};
+#[cfg(feature = "pqcrypto")]
+use crate::MLKEMCiphertext;
+#[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
+use crate::{EncapsulationScheme, Error, Result, X25519PublicKey, tags};
 
 /// A ciphertext produced by a key encapsulation mechanism (KEM).
 ///
@@ -21,6 +22,7 @@ pub enum EncapsulationCiphertext {
     /// X25519 key agreement ciphertext (ephemeral public key)
     X25519(X25519PublicKey),
     /// ML-KEM post-quantum ciphertext
+    #[cfg(feature = "pqcrypto")]
     MLKEM(MLKEMCiphertext),
 }
 
@@ -58,6 +60,7 @@ impl EncapsulationCiphertext {
     pub fn x25519_public_key(&self) -> Result<&X25519PublicKey> {
         match self {
             Self::X25519(public_key) => Ok(public_key),
+            #[cfg(feature = "pqcrypto")]
             _ => Err(Error::crypto("Invalid key encapsulation type")),
         }
     }
@@ -75,7 +78,7 @@ impl EncapsulationCiphertext {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```ignore
     /// use bc_components::EncapsulationScheme;
     ///
     /// // Generate an ML-KEM keypair
@@ -93,6 +96,7 @@ impl EncapsulationCiphertext {
     ///     assert_eq!(mlkem_ciphertext.level(), bc_components::MLKEM::MLKEM768);
     /// }
     /// ```
+    #[cfg(feature = "pqcrypto")]
     pub fn mlkem_ciphertext(&self) -> Result<&MLKEMCiphertext> {
         match self {
             Self::MLKEM(ciphertext) => Ok(ciphertext),
@@ -119,9 +123,10 @@ impl EncapsulationCiphertext {
     ///
     /// // Check if it's an X25519 ciphertext
     /// assert!(ciphertext.is_x25519());
-    /// assert!(!ciphertext.is_mlkem());
     /// ```
-    pub fn is_x25519(&self) -> bool { matches!(self, Self::X25519(_)) }
+    pub fn is_x25519(&self) -> bool {
+        matches!(self, Self::X25519(_))
+    }
 
     /// Returns true if this is an ML-KEM ciphertext.
     ///
@@ -131,7 +136,7 @@ impl EncapsulationCiphertext {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```ignore
     /// use bc_components::EncapsulationScheme;
     ///
     /// // Generate an ML-KEM keypair
@@ -144,7 +149,10 @@ impl EncapsulationCiphertext {
     /// assert!(ciphertext.is_mlkem());
     /// assert!(!ciphertext.is_x25519());
     /// ```
-    pub fn is_mlkem(&self) -> bool { matches!(self, Self::MLKEM(_)) }
+    #[cfg(feature = "pqcrypto")]
+    pub fn is_mlkem(&self) -> bool {
+        matches!(self, Self::MLKEM(_))
+    }
 
     /// Returns the encapsulation scheme associated with this ciphertext.
     ///
@@ -155,7 +163,7 @@ impl EncapsulationCiphertext {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```ignore
     /// use bc_components::EncapsulationScheme;
     ///
     /// // Generate a key pair using ML-KEM768
@@ -173,6 +181,7 @@ impl EncapsulationCiphertext {
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
             Self::X25519(_) => EncapsulationScheme::X25519,
+            #[cfg(feature = "pqcrypto")]
             Self::MLKEM(ct) => match ct.level() {
                 crate::MLKEM::MLKEM512 => EncapsulationScheme::MLKEM512,
                 crate::MLKEM::MLKEM768 => EncapsulationScheme::MLKEM768,
@@ -187,6 +196,7 @@ impl From<EncapsulationCiphertext> for CBOR {
     fn from(ciphertext: EncapsulationCiphertext) -> Self {
         match ciphertext {
             EncapsulationCiphertext::X25519(public_key) => public_key.into(),
+            #[cfg(feature = "pqcrypto")]
             EncapsulationCiphertext::MLKEM(ciphertext) => ciphertext.into(),
         }
     }
@@ -204,6 +214,7 @@ impl TryFrom<CBOR> for EncapsulationCiphertext {
                         X25519PublicKey::try_from(cbor)?,
                     ))
                 }
+                #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLKEM_CIPHERTEXT => {
                     Ok(EncapsulationCiphertext::MLKEM(
                         MLKEMCiphertext::try_from(cbor)?,

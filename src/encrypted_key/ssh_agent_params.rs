@@ -123,27 +123,17 @@ impl SSHAgentParams {
         Self { salt, id: id.as_ref().to_string(), agent }
     }
 
-    pub fn salt(&self) -> &Salt {
-        &self.salt
-    }
+    pub fn salt(&self) -> &Salt { &self.salt }
 
-    pub fn id(&self) -> &String {
-        &self.id
-    }
+    pub fn id(&self) -> &String { &self.id }
 
-    pub fn agent(&self) -> Option<AgentBox> {
-        self.agent.clone()
-    }
+    pub fn agent(&self) -> Option<AgentBox> { self.agent.clone() }
 
-    pub fn set_agent(&mut self, agent: Option<AgentBox>) {
-        self.agent = agent;
-    }
+    pub fn set_agent(&mut self, agent: Option<AgentBox>) { self.agent = agent; }
 }
 
 impl Default for SSHAgentParams {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
@@ -405,9 +395,7 @@ mod tests_common {
         SSHAgentParams, Salt,
     };
 
-    pub fn test_id() -> String {
-        "your_email@example.com".to_string()
-    }
+    pub fn test_id() -> String { "your_email@example.com".to_string() }
 
     pub fn test_ssh_agent_params(agent: AgentBox) {
         // Create SSHAgentParams with the agent.
@@ -480,9 +468,7 @@ mod mock_agent_tests {
     }
 
     impl MockSSHAgent {
-        fn new() -> Self {
-            Self { identities: HashMap::new() }
-        }
+        fn new() -> Self { Self { identities: HashMap::new() } }
 
         fn add_identity(&mut self, key: ssh_key::PrivateKey) {
             self.identities.insert(key.comment().to_string(), key);
@@ -603,9 +589,7 @@ mod real_agent_tests {
     };
     use crate::{EncryptedKey, KeyDerivationMethod, SymmetricKey};
 
-    pub fn test_content_key() -> SymmetricKey {
-        SymmetricKey::new()
-    }
+    pub fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
 
     #[test]
     #[ignore = "Requires SSH agent with Ed25519 key"]

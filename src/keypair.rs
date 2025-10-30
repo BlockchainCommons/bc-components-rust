@@ -95,7 +95,7 @@ pub fn keypair_using(
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// use bc_components::{EncapsulationScheme, SignatureScheme, keypair_opt};
 ///
 /// // Generate a key pair with Ed25519 for signing and ML-KEM768 for encryption

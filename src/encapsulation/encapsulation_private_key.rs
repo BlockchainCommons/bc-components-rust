@@ -1,9 +1,11 @@
 use bc_ur::prelude::*;
 
+#[cfg(feature = "pqcrypto")]
+use crate::MLKEMPrivateKey;
+#[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
 use crate::{
     Decrypter, Digest, EncapsulationCiphertext, EncapsulationScheme, Error,
-    MLKEMPrivateKey, Reference, ReferenceProvider, Result, SymmetricKey,
-    X25519PrivateKey, tags,
+    Reference, ReferenceProvider, Result, SymmetricKey, X25519PrivateKey, tags,
 };
 
 /// A private key used for key encapsulation mechanisms (KEM).
@@ -22,6 +24,7 @@ pub enum EncapsulationPrivateKey {
     /// An X25519 private key
     X25519(X25519PrivateKey),
     /// An ML-KEM private key (post-quantum)
+    #[cfg(feature = "pqcrypto")]
     MLKEM(MLKEMPrivateKey),
 }
 
@@ -51,6 +54,7 @@ impl EncapsulationPrivateKey {
     pub fn encapsulation_scheme(&self) -> EncapsulationScheme {
         match self {
             Self::X25519(_) => EncapsulationScheme::X25519,
+            #[cfg(feature = "pqcrypto")]
             Self::MLKEM(pk) => match pk.level() {
                 crate::MLKEM::MLKEM512 => EncapsulationScheme::MLKEM512,
                 crate::MLKEM::MLKEM768 => EncapsulationScheme::MLKEM768,
@@ -108,10 +112,12 @@ impl EncapsulationPrivateKey {
                 EncapsulationPrivateKey::X25519(private_key),
                 EncapsulationCiphertext::X25519(public_key),
             ) => Ok(private_key.shared_key_with(public_key)),
+            #[cfg(feature = "pqcrypto")]
             (
                 EncapsulationPrivateKey::MLKEM(private_key),
                 EncapsulationCiphertext::MLKEM(ciphertext),
             ) => private_key.decapsulate_shared_secret(ciphertext),
+            #[cfg(feature = "pqcrypto")]
             _ => Err(Error::crypto(format!(
                 "Mismatched key encapsulation types. private key: {:?}, ciphertext: {:?}",
                 self.encapsulation_scheme(),
@@ -143,6 +149,7 @@ impl From<EncapsulationPrivateKey> for CBOR {
     fn from(private_key: EncapsulationPrivateKey) -> Self {
         match private_key {
             EncapsulationPrivateKey::X25519(private_key) => private_key.into(),
+            #[cfg(feature = "pqcrypto")]
             EncapsulationPrivateKey::MLKEM(private_key) => private_key.into(),
         }
     }
@@ -160,6 +167,7 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
                         X25519PrivateKey::try_from(cbor)?,
                     ))
                 }
+                #[cfg(feature = "pqcrypto")]
                 tags::TAG_MLKEM_PRIVATE_KEY => {
                     Ok(EncapsulationPrivateKey::MLKEM(
                         MLKEMPrivateKey::try_from(cbor)?,
@@ -184,6 +192,7 @@ impl std::fmt::Display for EncapsulationPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let display_key = match self {
             EncapsulationPrivateKey::X25519(key) => key.to_string(),
+            #[cfg(feature = "pqcrypto")]
             EncapsulationPrivateKey::MLKEM(key) => key.to_string(),
         };
         write!(
