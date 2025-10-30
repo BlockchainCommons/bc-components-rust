@@ -3,7 +3,7 @@ use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::{tags, Digest, Error, Reference, ReferenceProvider, Result};
+use crate::{Digest, Error, Reference, ReferenceProvider, Result, tags};
 
 /// A private key for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -217,9 +217,15 @@ impl ReferenceProvider for MLDSAPrivateKey {
 impl std::fmt::Display for MLDSAPrivateKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MLDSAPrivateKey::MLDSA44(_) => write!(f, "MLDSA44PrivateKey({})", self.ref_hex_short()),
-            MLDSAPrivateKey::MLDSA65(_) => write!(f, "MLDSA65PrivateKey({})", self.ref_hex_short()),
-            MLDSAPrivateKey::MLDSA87(_) => write!(f, "MLDSA87PrivateKey({})", self.ref_hex_short()),
+            MLDSAPrivateKey::MLDSA44(_) => {
+                write!(f, "MLDSA44PrivateKey({})", self.ref_hex_short())
+            }
+            MLDSAPrivateKey::MLDSA65(_) => {
+                write!(f, "MLDSA65PrivateKey({})", self.ref_hex_short())
+            }
+            MLDSAPrivateKey::MLDSA87(_) => {
+                write!(f, "MLDSA87PrivateKey({})", self.ref_hex_short())
+            }
         }
     }
 }

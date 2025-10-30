@@ -1,7 +1,8 @@
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Digest, ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, Error, Reference, ReferenceProvider, Result
+    Digest, ECKey, ECKeyBase, ECPublicKey, ECPublicKeyBase, Error, Reference,
+    ReferenceProvider, Result, tags,
 };
 
 /// The size of an ECDSA uncompressed public key in bytes (65 bytes).

@@ -2,7 +2,8 @@ use bc_crypto::ECDSA_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Digest, ECKey, ECKeyBase, ECPublicKeyBase, Error, Reference, ReferenceProvider, Result, Signature, Verifier
+    Digest, ECKey, ECKeyBase, ECPublicKeyBase, Error, Reference,
+    ReferenceProvider, Result, Signature, Verifier, tags,
 };
 
 /// The size of an ECDSA compressed public key in bytes (33 bytes).

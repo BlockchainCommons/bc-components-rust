@@ -12,7 +12,12 @@ use ssh_key::{
 use zeroize::ZeroizeOnDrop;
 
 use crate::{
-    tags, Decrypter, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, EncapsulationPrivateKey, EncapsulationPublicKey, Error, HKDFRng, PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys, PublicKeysProvider, Reference, ReferenceProvider, Result, Signature, Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey
+    Decrypter, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey,
+    EncapsulationPrivateKey, EncapsulationPublicKey, Error, HKDFRng,
+    PrivateKeyDataProvider, PrivateKeys, PrivateKeysProvider, PublicKeys,
+    PublicKeysProvider, Reference, ReferenceProvider, Result, Signature,
+    Signer, SigningOptions, SigningPrivateKey, Verifier, X25519PrivateKey,
+    tags,
 };
 
 /// A secure foundation for deriving multiple cryptographic keys.

@@ -108,9 +108,7 @@ impl AsRef<[u8]> for SchnorrPublicKey {
 
 impl ReferenceProvider for SchnorrPublicKey {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(
-            self.data(),
-        ))
+        Reference::from_digest(Digest::from_image(self.data()))
     }
 }
 

@@ -95,9 +95,7 @@ impl<'a> From<&'a Ed25519PublicKey> for &'a [u8] {
 
 impl ReferenceProvider for Ed25519PublicKey {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(
-            self.data()
-        ))
+        Reference::from_digest(Digest::from_image(self.data()))
     }
 }
 

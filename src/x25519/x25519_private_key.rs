@@ -5,7 +5,8 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Decrypter, Digest, EncapsulationPrivateKey, Error, Reference, ReferenceProvider, Result, SymmetricKey, X25519PublicKey
+    Decrypter, Digest, EncapsulationPrivateKey, Error, Reference,
+    ReferenceProvider, Result, SymmetricKey, X25519PublicKey, tags,
 };
 
 /// A private key for X25519 key agreement operations.

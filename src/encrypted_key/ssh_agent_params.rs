@@ -1,12 +1,19 @@
-use std::{cell::RefCell, env, path::Path, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
+#[cfg(feature = "ssh-agent")]
+use std::{env, path::Path};
 
+#[cfg(feature = "ssh-agent")]
 use bc_crypto::hkdf_hmac_sha256;
 use dcbor::prelude::*;
+#[cfg(feature = "ssh-agent")]
 use ssh_agent_client_rs::{Client, Identity};
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
-use crate::{EncryptedMessage, Error, Nonce, Result, Salt, SymmetricKey};
+#[cfg(feature = "ssh-agent")]
+use crate::Nonce;
+use crate::{EncryptedMessage, Error, Result, Salt, SymmetricKey};
 
+#[cfg(feature = "ssh-agent")]
 #[allow(dead_code)]
 pub trait SSHAgent {
     fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>>;
@@ -20,6 +27,7 @@ pub trait SSHAgent {
     ) -> Result<ssh_key::Signature>;
 }
 
+#[cfg(feature = "ssh-agent")]
 impl SSHAgent for Client {
     fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
         self.list_all_identities()
@@ -60,6 +68,13 @@ impl SSHAgent for Client {
     }
 }
 
+// Agent storage
+#[cfg(feature = "ssh-agent")]
+type AgentBox = Rc<RefCell<dyn SSHAgent>>;
+
+#[cfg(not(feature = "ssh-agent"))]
+type AgentBox = Rc<RefCell<dyn std::any::Any>>;
+
 /// Struct representing SSH Agent parameters.
 ///
 /// CDDL:
@@ -70,8 +85,8 @@ impl SSHAgent for Client {
 pub struct SSHAgentParams {
     salt: Salt,
     id: String,
-
-    agent: Option<Rc<RefCell<dyn SSHAgent + 'static>>>,
+    #[allow(dead_code)]
+    agent: Option<AgentBox>,
 }
 
 impl PartialEq for SSHAgentParams {
@@ -103,33 +118,37 @@ impl SSHAgentParams {
     pub fn new_opt(
         salt: Salt,
         id: impl AsRef<str>,
-        agent: Option<Rc<RefCell<dyn SSHAgent + 'static>>>,
+        agent: Option<AgentBox>,
     ) -> Self {
         Self { salt, id: id.as_ref().to_string(), agent }
     }
 
-    pub fn salt(&self) -> &Salt { &self.salt }
+    pub fn salt(&self) -> &Salt {
+        &self.salt
+    }
 
-    pub fn id(&self) -> &String { &self.id }
+    pub fn id(&self) -> &String {
+        &self.id
+    }
 
-    pub fn agent(&self) -> Option<Rc<RefCell<dyn SSHAgent + 'static>>> {
+    pub fn agent(&self) -> Option<AgentBox> {
         self.agent.clone()
     }
 
-    pub fn set_agent(
-        &mut self,
-        agent: Option<Rc<RefCell<dyn SSHAgent + 'static>>>,
-    ) {
+    pub fn set_agent(&mut self, agent: Option<AgentBox>) {
         self.agent = agent;
     }
 }
 
 impl Default for SSHAgentParams {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
-pub fn connect_to_ssh_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
+#[cfg(feature = "ssh-agent")]
+pub fn connect_to_ssh_agent() -> Result<AgentBox> {
     let sock = env::var("SSH_AUTH_SOCK")
         .map_err(|_| Error::ssh_agent("SSH_AUTH_SOCK env var not set"))?;
     let client = Client::connect(Path::new(&sock))
@@ -137,6 +156,7 @@ pub fn connect_to_ssh_agent() -> Result<Rc<RefCell<dyn SSHAgent + 'static>>> {
     Ok(Rc::new(RefCell::new(client)))
 }
 
+#[cfg(feature = "ssh-agent")]
 impl KeyDerivation for SSHAgentParams {
     const INDEX: usize = KeyDerivationMethod::SSHAgent as usize;
 
@@ -151,13 +171,17 @@ impl KeyDerivation for SSHAgentParams {
         })?;
 
         // If None call connect_to_agent to get the agent.
-        let agent = self
+        let agent_box = self
             .agent
             .as_ref()
             .map_or_else(|| connect_to_ssh_agent(), |a| Ok(a.clone()))?;
 
+        // Use the agent directly as SSHAgent trait object
+        let agent = agent_box.clone();
+        let mut ssh_agent = agent.borrow_mut();
+
         // List all identities in the SSH agent.
-        let ids = agent.borrow_mut().list_identities()?;
+        let ids = ssh_agent.list_identities()?;
 
         // Filter down to the identities that have Ed25519 keys.
         let ids: Vec<_> = ids
@@ -190,8 +214,7 @@ impl KeyDerivation for SSHAgentParams {
 
         // Sign the salt with the identity.
         let salt = self.salt().clone();
-        let sig = agent
-            .borrow_mut()
+        let sig = ssh_agent
             .sign(identity, salt.as_bytes())
             .map_err(|_| Error::ssh_agent("SSH agent refused to sign"))?;
 
@@ -229,13 +252,17 @@ impl KeyDerivation for SSHAgentParams {
         })?;
 
         // If None call connect_to_agent to get the agent.
-        let agent = self
+        let agent_box = self
             .agent
             .as_ref()
             .map_or_else(|| connect_to_ssh_agent(), |a| Ok(a.clone()))?;
 
+        // Use the agent directly as SSHAgent trait object
+        let agent = agent_box.clone();
+        let mut ssh_agent = agent.borrow_mut();
+
         // List all identities in the SSH agent.
-        let ids = agent.borrow_mut().list_identities()?;
+        let ids = ssh_agent.list_identities()?;
 
         // Filter down to the identities that have Ed25519 keys.
         let ids: Vec<_> = ids
@@ -267,8 +294,7 @@ impl KeyDerivation for SSHAgentParams {
         };
 
         // Sign the salt with the identity.
-        let sig = agent
-            .borrow_mut()
+        let sig = ssh_agent
             .sign(identity, self.salt.as_bytes())
             .map_err(|_| Error::ssh_agent("SSH agent refused to sign"))?;
 
@@ -298,6 +324,31 @@ impl KeyDerivation for SSHAgentParams {
 
         // If the decryption was successful, return the symmetric key.
         Ok(content_key)
+    }
+}
+
+#[cfg(not(feature = "ssh-agent"))]
+impl KeyDerivation for SSHAgentParams {
+    const INDEX: usize = KeyDerivationMethod::SSHAgent as usize;
+
+    fn lock(
+        &mut self,
+        _content_key: &SymmetricKey,
+        _secret: impl AsRef<[u8]>,
+    ) -> Result<EncryptedMessage> {
+        Err(Error::general(
+            "SSH Agent support not enabled. Recompile with --features ssh-agent",
+        ))
+    }
+
+    fn unlock(
+        &self,
+        _encrypted_message: &EncryptedMessage,
+        _secret: impl AsRef<[u8]>,
+    ) -> Result<SymmetricKey> {
+        Err(Error::general(
+            "SSH Agent support not enabled. Recompile with --features ssh-agent",
+        ))
     }
 }
 
@@ -344,20 +395,21 @@ impl TryFrom<CBOR> for SSHAgentParams {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "ssh-agent"))]
 mod tests_common {
-    use std::{cell::RefCell, rc::Rc};
-
     use dcbor::prelude::*;
 
+    use super::AgentBox;
     use crate::{
-        EncryptedKey, KeyDerivation, KeyDerivationParams, SALT_LEN, SSHAgent,
+        EncryptedKey, KeyDerivation, KeyDerivationParams, SALT_LEN,
         SSHAgentParams, Salt,
     };
 
-    pub fn test_id() -> String { "your_email@example.com".to_string() }
+    pub fn test_id() -> String {
+        "your_email@example.com".to_string()
+    }
 
-    pub fn test_ssh_agent_params(agent: Rc<RefCell<dyn SSHAgent>>) {
+    pub fn test_ssh_agent_params(agent: AgentBox) {
         // Create SSHAgentParams with the agent.
         let params = SSHAgentParams::new_opt(
             Salt::new_with_len(SALT_LEN).unwrap(),
@@ -413,19 +465,24 @@ mod tests_common {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "ssh-agent"))]
 mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-    use super::tests_common::{test_id, test_ssh_agent_params};
-    use crate::{Error, Result, SSHAgent};
+    use super::{
+        AgentBox, SSHAgent,
+        tests_common::{test_id, test_ssh_agent_params},
+    };
+    use crate::{Error, Result};
 
     struct MockSSHAgent {
         identities: HashMap<String, ssh_key::PrivateKey>,
     }
 
     impl MockSSHAgent {
-        fn new() -> Self { Self { identities: HashMap::new() } }
+        fn new() -> Self {
+            Self { identities: HashMap::new() }
+        }
 
         fn add_identity(&mut self, key: ssh_key::PrivateKey) {
             self.identities.insert(key.comment().to_string(), key);
@@ -461,24 +518,20 @@ mod mock_agent_tests {
             key: &ssh_key::PublicKey,
             data: &[u8],
         ) -> Result<ssh_key::Signature> {
-            // println!("Signing public key: {:?}", &key);
-            // println!("Data: {:?}", hex::encode(data));
             let private_key = self
                 .identities
                 .get(key.comment())
                 .ok_or_else(|| Error::ssh_agent("Identity not found"))?;
-            // println!("Signing Private key: {:?}", private_key);
             let sig: ssh_key::SshSig = private_key
                 .sign("test_namespace", ssh_key::HashAlg::Sha256, data)
                 .map_err(|e| {
                     Error::ssh_agent(format!("Failed to sign data: {}", e))
                 })?;
-            // println!("Signature: {:?}", sig.signature());
             Ok(sig.signature().clone())
         }
     }
 
-    fn mock_agent() -> Rc<RefCell<dyn SSHAgent>> {
+    fn mock_agent() -> AgentBox {
         let mut agent = MockSSHAgent::new();
         let mut rng = bc_rand::SecureRandomNumberGenerator;
         let keypair: ssh_key::private::Ed25519Keypair =
@@ -508,10 +561,7 @@ mod mock_agent_tests {
 
     #[test]
     fn test_ssh_agent_params_with_mock_agent() {
-        // Create a mock SSH agent.
         let agent = mock_agent();
-
-        // Test the SSHAgentParams with the mock agent.
         test_ssh_agent_params(agent);
     }
 }
@@ -543,28 +593,29 @@ mod mock_agent_tests {
 /// ssh-keygen -t ed25519 -C "your_email@example.com" -f <your_key_file>
 /// ssh-add <your_key_file>
 /// ```
-#[cfg(test)]
-#[cfg(feature = "ssh_agent_tests")]
+#[cfg(all(test, feature = "ssh_agent_tests"))]
 mod real_agent_tests {
     use dcbor::prelude::*;
 
-    use super::tests_common::{test_id, test_ssh_agent_params};
-    use crate::{
-        EncryptedKey, KeyDerivationMethod, SymmetricKey, connect_to_ssh_agent,
+    use super::{
+        connect_to_ssh_agent,
+        tests_common::{test_id, test_ssh_agent_params},
     };
+    use crate::{EncryptedKey, KeyDerivationMethod, SymmetricKey};
 
-    pub fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
+    pub fn test_content_key() -> SymmetricKey {
+        SymmetricKey::new()
+    }
 
     #[test]
+    #[ignore = "Requires SSH agent with Ed25519 key"]
     fn test_ssh_agent_params_with_real_agent() {
-        // Connect to the real SSH agent.
         let agent = connect_to_ssh_agent().expect("Connect to SSH agent");
-
-        // Test the SSHAgentParams with the real agent.
         test_ssh_agent_params(agent);
     }
 
     #[test]
+    #[ignore = "Requires SSH agent with Ed25519 key"]
     fn test_encrypted_key_ssh_agent_roundtrip() {
         let id = test_id();
         let content_key = test_content_key();
@@ -585,6 +636,7 @@ mod real_agent_tests {
     }
 
     #[test]
+    #[ignore = "Requires SSH agent with Ed25519 key"]
     fn test_encrypted_key_ssh_agent_wrong_secret_fails() {
         let secret = test_id();
         let content_key = test_content_key();
@@ -600,6 +652,7 @@ mod real_agent_tests {
     }
 
     #[test]
+    #[ignore = "Requires SSH agent with Ed25519 key"]
     fn test_ssh_agent_lock_fails_with_nonexistent_identity() {
         let secret = b"nonexistent_identity";
         let content_key = test_content_key();

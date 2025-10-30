@@ -2,7 +2,8 @@ use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Digest, ECKey, ECKeyBase, ECPublicKey, Error, Reference, ReferenceProvider, Result, SchnorrPublicKey
+    Digest, ECKey, ECKeyBase, ECPublicKey, Error, Reference, ReferenceProvider,
+    Result, SchnorrPublicKey, tags,
 };
 
 /// The size of an ECDSA private key in bytes (32 bytes).

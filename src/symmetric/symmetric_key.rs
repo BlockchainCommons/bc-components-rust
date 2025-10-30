@@ -4,7 +4,10 @@ use bc_crypto::{
 };
 use bc_ur::prelude::*;
 
-use crate::{tags, Digest, EncryptedMessage, Error, Nonce, Reference, ReferenceProvider, Result};
+use crate::{
+    Digest, EncryptedMessage, Error, Nonce, Reference, ReferenceProvider,
+    Result, tags,
+};
 
 /// A symmetric encryption key used for both encryption and decryption.
 ///

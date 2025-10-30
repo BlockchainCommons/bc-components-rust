@@ -1,7 +1,9 @@
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Decrypter, Digest, EncapsulationCiphertext, EncapsulationScheme, Error, MLKEMPrivateKey, Reference, ReferenceProvider, Result, SymmetricKey, X25519PrivateKey
+    Decrypter, Digest, EncapsulationCiphertext, EncapsulationScheme, Error,
+    MLKEMPrivateKey, Reference, ReferenceProvider, Result, SymmetricKey,
+    X25519PrivateKey, tags,
 };
 
 /// A private key used for key encapsulation mechanisms (KEM).
@@ -174,9 +176,7 @@ impl TryFrom<CBOR> for EncapsulationPrivateKey {
 
 impl ReferenceProvider for EncapsulationPrivateKey {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(
-            self.to_cbor_data(),
-        ))
+        Reference::from_digest(Digest::from_image(self.to_cbor_data()))
     }
 }
 
@@ -186,6 +186,11 @@ impl std::fmt::Display for EncapsulationPrivateKey {
             EncapsulationPrivateKey::X25519(key) => key.to_string(),
             EncapsulationPrivateKey::MLKEM(key) => key.to_string(),
         };
-        write!(f, "EncapsulationPrivateKey({}, {})", self.ref_hex_short(), display_key)
+        write!(
+            f,
+            "EncapsulationPrivateKey({}, {})",
+            self.ref_hex_short(),
+            display_key
+        )
     }
 }

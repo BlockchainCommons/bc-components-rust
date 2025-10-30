@@ -3,7 +3,7 @@ use pqcrypto_mldsa::*;
 use pqcrypto_traits::sign::*;
 
 use super::{MLDSA, MLDSASignature};
-use crate::{tags, Digest, Error, Reference, ReferenceProvider, Result};
+use crate::{Digest, Error, Reference, ReferenceProvider, Result, tags};
 
 /// A public key for the ML-DSA post-quantum digital signature algorithm.
 ///
@@ -272,9 +272,15 @@ impl ReferenceProvider for MLDSAPublicKey {
 impl std::fmt::Display for MLDSAPublicKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MLDSAPublicKey::MLDSA44(_) => write!(f, "MLDSA44PublicKey({})", self.ref_hex_short()),
-            MLDSAPublicKey::MLDSA65(_) => write!(f, "MLDSA65PublicKey({})", self.ref_hex_short()),
-            MLDSAPublicKey::MLDSA87(_) => write!(f, "MLDSA87PublicKey({})", self.ref_hex_short()),
+            MLDSAPublicKey::MLDSA44(_) => {
+                write!(f, "MLDSA44PublicKey({})", self.ref_hex_short())
+            }
+            MLDSAPublicKey::MLDSA65(_) => {
+                write!(f, "MLDSA65PublicKey({})", self.ref_hex_short())
+            }
+            MLDSAPublicKey::MLDSA87(_) => {
+                write!(f, "MLDSA87PublicKey({})", self.ref_hex_short())
+            }
         }
     }
 }

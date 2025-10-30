@@ -6,7 +6,9 @@ use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 
 use super::Verifier;
 use crate::{
-    tags, Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey, Reference, ReferenceProvider, Result, Signature, Signer, SigningPublicKey
+    Digest, ECKey, ECPrivateKey, Ed25519PrivateKey, Error, MLDSAPrivateKey,
+    Reference, ReferenceProvider, Result, Signature, Signer, SigningPublicKey,
+    tags,
 };
 
 /// Options for configuring signature creation.
@@ -786,9 +788,16 @@ impl std::fmt::Display for SigningPrivateKey {
             SigningPrivateKey::Schnorr(key) => key.to_string(),
             SigningPrivateKey::ECDSA(key) => key.to_string(),
             SigningPrivateKey::Ed25519(key) => key.to_string(),
-            SigningPrivateKey::SSH(key) => format!("SSHPrivateKey({})", key.ref_hex_short()),
+            SigningPrivateKey::SSH(key) => {
+                format!("SSHPrivateKey({})", key.ref_hex_short())
+            }
             SigningPrivateKey::MLDSA(key) => key.to_string(),
         };
-        write!(f, "SigningPrivateKey({}, {})", self.ref_hex_short(), display_key)
+        write!(
+            f,
+            "SigningPrivateKey({}, {})",
+            self.ref_hex_short(),
+            display_key
+        )
     }
 }

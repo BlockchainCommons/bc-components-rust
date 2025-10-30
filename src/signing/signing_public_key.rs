@@ -2,7 +2,8 @@ use bc_ur::prelude::*;
 use ssh_key::public::PublicKey as SSHPublicKey;
 
 use crate::{
-    tags, Digest, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey, Reference, ReferenceProvider, SchnorrPublicKey, Signature, Verifier
+    Digest, ECKeyBase, ECPublicKey, Ed25519PublicKey, MLDSAPublicKey,
+    Reference, ReferenceProvider, SchnorrPublicKey, Signature, Verifier, tags,
 };
 
 /// A public key used for verifying digital signatures.
@@ -430,9 +431,16 @@ impl std::fmt::Display for SigningPublicKey {
             SigningPublicKey::Schnorr(key) => key.to_string(),
             SigningPublicKey::ECDSA(key) => key.to_string(),
             SigningPublicKey::Ed25519(key) => key.to_string(),
-            SigningPublicKey::SSH(key) => format!("SSHPublicKey({})", key.ref_hex_short()),
+            SigningPublicKey::SSH(key) => {
+                format!("SSHPublicKey({})", key.ref_hex_short())
+            }
             SigningPublicKey::MLDSA(key) => key.to_string(),
         };
-        write!(f, "SigningPublicKey({}, {})", self.ref_hex_short(), display_key)
+        write!(
+            f,
+            "SigningPublicKey({}, {})",
+            self.ref_hex_short(),
+            display_key
+        )
     }
 }

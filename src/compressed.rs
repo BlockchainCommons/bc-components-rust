@@ -228,9 +228,7 @@ impl Compressed {
     /// // so the compressed_size might equal the original size
     /// println!("Compressed size: {}", compressed.compressed_size());
     /// ```
-    pub fn compressed_size(&self) -> usize {
-        self.compressed_data.len()
-    }
+    pub fn compressed_size(&self) -> usize { self.compressed_data.len() }
 
     /// Returns the compression ratio of the data.
     ///
@@ -281,9 +279,7 @@ impl Compressed {
     /// // We can retrieve the digest we associated with the compressed data
     /// assert_eq!(compressed.digest_ref_opt(), Some(&digest));
     /// ```
-    pub fn digest_ref_opt(&self) -> Option<&Digest> {
-        self.digest.as_ref()
-    }
+    pub fn digest_ref_opt(&self) -> Option<&Digest> { self.digest.as_ref() }
 
     /// Returns whether this compressed data has an associated digest.
     ///
@@ -306,9 +302,7 @@ impl Compressed {
     ///     Compressed::from_decompressed_data(b"Hello", Some(digest));
     /// assert!(compressed2.has_digest());
     /// ```
-    pub fn has_digest(&self) -> bool {
-        self.digest.is_some()
-    }
+    pub fn has_digest(&self) -> bool { self.digest.is_some() }
 }
 
 /// Implementation of the `DigestProvider` trait for `Compressed`.
@@ -357,25 +351,19 @@ impl std::fmt::Debug for Compressed {
 /// This allows passing a `Compressed` instance to functions that take
 /// `AsRef<Compressed>` parameters.
 impl AsRef<Compressed> for Compressed {
-    fn as_ref(&self) -> &Compressed {
-        self
-    }
+    fn as_ref(&self) -> &Compressed { self }
 }
 
 /// Implementation of the `CBORTagged` trait for `Compressed`.
 ///
 /// Defines the CBOR tag(s) used when serializing a `Compressed` object.
 impl CBORTagged for Compressed {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_COMPRESSED])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_COMPRESSED]) }
 }
 
 /// Conversion from `Compressed` to CBOR for serialization.
 impl From<Compressed> for CBOR {
-    fn from(value: Compressed) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Compressed) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of CBOR encoding for `Compressed`.

@@ -1,7 +1,9 @@
 use bc_ur::prelude::*;
 
 use crate::{
-    tags, Digest, EncapsulationCiphertext, EncapsulationScheme, Encrypter, MLKEMPublicKey, PrivateKeyBase, Reference, ReferenceProvider, SymmetricKey, X25519PublicKey
+    Digest, EncapsulationCiphertext, EncapsulationScheme, Encrypter,
+    MLKEMPublicKey, PrivateKeyBase, Reference, ReferenceProvider, SymmetricKey,
+    X25519PublicKey, tags,
 };
 
 /// A public key used for key encapsulation mechanisms (KEM).
@@ -175,9 +177,7 @@ impl TryFrom<CBOR> for EncapsulationPublicKey {
 
 impl ReferenceProvider for EncapsulationPublicKey {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(
-            self.to_cbor_data(),
-        ))
+        Reference::from_digest(Digest::from_image(self.to_cbor_data()))
     }
 }
 
@@ -187,6 +187,11 @@ impl std::fmt::Display for EncapsulationPublicKey {
             EncapsulationPublicKey::X25519(key) => key.to_string(),
             EncapsulationPublicKey::MLKEM(key) => key.to_string(),
         };
-        write!(f, "EncapsulationPublicKey({}, {})", self.ref_hex_short(), display_key)
+        write!(
+            f,
+            "EncapsulationPublicKey({}, {})",
+            self.ref_hex_short(),
+            display_key
+        )
     }
 }

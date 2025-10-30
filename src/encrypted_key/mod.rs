@@ -17,6 +17,8 @@ pub use key_derivation_method::KeyDerivationMethod;
 mod encrypted_key_impl;
 pub use encrypted_key_impl::EncryptedKey;
 mod ssh_agent_params;
-pub use ssh_agent_params::{SSHAgent, SSHAgentParams, connect_to_ssh_agent};
+pub use ssh_agent_params::SSHAgentParams;
+#[cfg(feature = "ssh-agent")]
+pub use ssh_agent_params::{SSHAgent, connect_to_ssh_agent};
 
 pub const SALT_LEN: usize = 16;

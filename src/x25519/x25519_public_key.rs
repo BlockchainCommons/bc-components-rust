@@ -2,7 +2,10 @@ use std::rc::Rc;
 
 use bc_ur::prelude::*;
 
-use crate::{tags, Digest, EncapsulationPublicKey, Encrypter, Error, Reference, ReferenceProvider, Result};
+use crate::{
+    Digest, EncapsulationPublicKey, Encrypter, Error, Reference,
+    ReferenceProvider, Result, tags,
+};
 
 /// A public key for X25519 key agreement operations.
 ///

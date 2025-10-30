@@ -3,7 +3,9 @@ use pqcrypto_mlkem::*;
 use pqcrypto_traits::kem::{PublicKey, SharedSecret};
 
 use super::{MLKEM, MLKEMCiphertext};
-use crate::{tags, Digest, Error, Reference, ReferenceProvider, Result, SymmetricKey};
+use crate::{
+    Digest, Error, Reference, ReferenceProvider, Result, SymmetricKey, tags,
+};
 
 /// A public key for the ML-KEM post-quantum key encapsulation mechanism.
 ///

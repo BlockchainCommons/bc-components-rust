@@ -200,7 +200,9 @@ impl Decrypter for PrivateKeys {
 
 impl std::fmt::Display for PrivateKeys {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PrivateKeys({}, {}, {})",
+        write!(
+            f,
+            "PrivateKeys({}, {}, {})",
             self.reference().ref_hex_short(),
             self.signing_private_key,
             self.encapsulation_private_key
@@ -243,7 +245,10 @@ mod tests {
         );
         assert_eq!(PrivateKeys::from_ur_string(&ur).unwrap(), private_keys);
 
-        assert_eq!(format!("{}", private_keys), "PrivateKeys(fa742ac8, SigningPrivateKey(2a645922, ECPrivateKey(0b02c820)), EncapsulationPrivateKey(ded5f016, X25519PrivateKey(ded5f016)))");
+        assert_eq!(
+            format!("{}", private_keys),
+            "PrivateKeys(fa742ac8, SigningPrivateKey(2a645922, ECPrivateKey(0b02c820)), EncapsulationPrivateKey(ded5f016, X25519PrivateKey(ded5f016)))"
+        );
         assert_eq!(
             format!("{}", private_keys.reference()),
             "Reference(fa742ac8)"

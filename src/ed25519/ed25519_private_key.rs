@@ -1,6 +1,8 @@
 use bc_rand::{RandomNumberGenerator, SecureRandomNumberGenerator};
 
-use crate::{Digest, Ed25519PublicKey, Error, Reference, ReferenceProvider, Result};
+use crate::{
+    Digest, Ed25519PublicKey, Error, Reference, ReferenceProvider, Result,
+};
 
 pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 
@@ -130,9 +132,7 @@ impl<'a> From<&'a Ed25519PrivateKey> for &'a [u8] {
 
 impl ReferenceProvider for Ed25519PrivateKey {
     fn reference(&self) -> Reference {
-        Reference::from_digest(Digest::from_image(
-            self.data()
-        ))
+        Reference::from_digest(Digest::from_image(self.data()))
     }
 }
 

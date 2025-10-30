@@ -4,7 +4,8 @@ use pqcrypto_traits::kem::{SecretKey, SharedSecret};
 
 use super::{MLKEM, MLKEMCiphertext};
 use crate::{
-    tags, Decrypter, Digest, EncapsulationPrivateKey, Error, Reference, ReferenceProvider, Result, SymmetricKey
+    Decrypter, Digest, EncapsulationPrivateKey, Error, Reference,
+    ReferenceProvider, Result, SymmetricKey, tags,
 };
 
 /// A private key for the ML-KEM post-quantum key encapsulation mechanism.
