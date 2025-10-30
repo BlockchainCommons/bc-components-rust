@@ -98,9 +98,11 @@ mod tests {
     use super::SignatureScheme;
     #[cfg(feature = "secp256k1")]
     use crate::ECPrivateKey;
-    use crate::{Ed25519PrivateKey, Signer, SigningOptions, SigningPrivateKey, Verifier};
     #[cfg(feature = "secp256k1")]
     use crate::Signature;
+    use crate::{
+        Ed25519PrivateKey, Signer, SigningOptions, SigningPrivateKey, Verifier,
+    };
     #[cfg(feature = "pqcrypto")]
     use crate::{MLDSA, MLDSASignature};
 
