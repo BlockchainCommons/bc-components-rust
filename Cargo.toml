@@ -12,7 +12,7 @@ keywords = ["cryptography"]                                            # Up to f
 categories = ["cryptography"]                                          # https://crates.io/category_slugs
 
 [dependencies]
-bc-crypto = { version = "^0.11.0", default-features = false }
+bc-crypto = { version = "^0.11.0", default-features = false, features = [] }
 bc-rand = "^0.4.1"
 dcbor = { version = "^0.23.1", features = ["multithreaded"] }
 bc-tags = "^0.7.0"
@@ -53,8 +53,9 @@ pre-release-replacements = [
 ]
 
 [features]
-default = ["secp256k1", "pqcrypto", "ssh"]
+default = ["secp256k1", "ed25519", "pqcrypto", "ssh"]
 secp256k1 = ["bc-crypto/secp256k1"]
+ed25519 = ["bc-crypto/ed25519"]
 pqcrypto = ["dep:pqcrypto-mlkem", "dep:pqcrypto-mldsa", "dep:pqcrypto-traits"]
 ssh = ["dep:ssh-key"]
 ssh-agent = ["ssh", "dep:ssh-agent-client-rs"]

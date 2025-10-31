@@ -28,6 +28,7 @@ use crate::{
 /// // The private_keys can be used for signing and decryption
 /// // The public_keys can be shared and used for verification and encryption
 /// ```
+#[cfg(any(feature = "secp256k1", feature = "ed25519"))]
 pub fn keypair() -> (PrivateKeys, PublicKeys) {
     keypair_opt(SignatureScheme::default(), EncapsulationScheme::default())
 }
@@ -65,6 +66,7 @@ pub fn keypair() -> (PrivateKeys, PublicKeys) {
 /// let result = keypair_using(&mut rng);
 /// assert!(result.is_ok());
 /// ```
+#[cfg(any(feature = "secp256k1", feature = "ed25519"))]
 pub fn keypair_using(
     rng: &mut impl RandomNumberGenerator,
 ) -> Result<(PrivateKeys, PublicKeys)> {
@@ -104,16 +106,36 @@ pub fn keypair_using(
 /// ```
 pub fn keypair_opt(
     signature_scheme: SignatureScheme,
-    encapsulation_scheme: EncapsulationScheme,
+    _encapsulation_scheme: EncapsulationScheme,
 ) -> (PrivateKeys, PublicKeys) {
-    let (signing_private_key, signing_public_key) = signature_scheme.keypair();
-    let (encapsulation_private_key, encapsulation_public_key) =
-        encapsulation_scheme.keypair();
-    let private_keys =
-        PrivateKeys::with_keys(signing_private_key, encapsulation_private_key);
-    let public_keys =
-        PublicKeys::new(signing_public_key, encapsulation_public_key);
-    (private_keys, public_keys)
+    #[cfg(any(
+        feature = "secp256k1",
+        feature = "ed25519",
+        feature = "ssh",
+        feature = "pqcrypto"
+    ))]
+    {
+        let (_signing_private_key, _signing_public_key) =
+            signature_scheme.keypair();
+        let (_encapsulation_private_key, _encapsulation_public_key) =
+            _encapsulation_scheme.keypair();
+        let private_keys = PrivateKeys::with_keys(
+            _signing_private_key,
+            _encapsulation_private_key,
+        );
+        let public_keys =
+            PublicKeys::new(_signing_public_key, _encapsulation_public_key);
+        (private_keys, public_keys)
+    }
+    #[cfg(not(any(
+        feature = "secp256k1",
+        feature = "ed25519",
+        feature = "ssh",
+        feature = "pqcrypto"
+    )))]
+    {
+        match signature_scheme {}
+    }
 }
 
 /// Generates a key pair with specified schemes using a custom random number

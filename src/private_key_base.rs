@@ -12,12 +12,15 @@ use ssh_key::{
 };
 use zeroize::ZeroizeOnDrop;
 
+#[cfg(feature = "ed25519")]
+use crate::Ed25519PrivateKey;
 #[cfg(any(feature = "secp256k1", feature = "ssh"))]
 use crate::Result;
+#[cfg(any(feature = "ed25519", feature = "secp256k1"))]
+use crate::SigningPrivateKey;
 use crate::{
-    Decrypter, Digest, Ed25519PrivateKey, EncapsulationPrivateKey,
-    PrivateKeyDataProvider, Reference, ReferenceProvider, SigningPrivateKey,
-    X25519PrivateKey, tags,
+    Decrypter, Digest, EncapsulationPrivateKey, PrivateKeyDataProvider,
+    Reference, ReferenceProvider, X25519PrivateKey, tags,
 };
 #[cfg(feature = "secp256k1")]
 use crate::{ECKey, ECPrivateKey};
@@ -164,6 +167,7 @@ impl PrivateKeyBase {
     }
 
     /// Derive a new Ed25519 `SigningPrivateKey` from this `PrivateKeyBase`.
+    #[cfg(feature = "ed25519")]
     pub fn ed25519_signing_private_key(&self) -> SigningPrivateKey {
         SigningPrivateKey::new_ed25519(
             Ed25519PrivateKey::derive_from_key_material(&self.0),
@@ -171,7 +175,10 @@ impl PrivateKeyBase {
     }
 
     /// Derive a new SSH `SigningPrivateKey` from this `PrivateKeyBase`.
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "ed25519", feature = "secp256k1")
+    ))]
     pub fn ssh_signing_private_key(
         &self,
         algorithm: SSHAlgorithm,

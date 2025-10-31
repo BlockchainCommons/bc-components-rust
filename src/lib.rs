@@ -49,7 +49,9 @@ pub use salt::Salt;
 mod x25519;
 pub use x25519::{X25519PrivateKey, X25519PublicKey};
 
+#[cfg(feature = "ed25519")]
 mod ed25519;
+#[cfg(feature = "ed25519")]
 pub use ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 
 mod seed;
@@ -115,7 +117,9 @@ mod hkdf_rng;
 pub use hkdf_rng::HKDFRng;
 
 mod keypair;
-pub use keypair::{keypair, keypair_opt, keypair_opt_using, keypair_using};
+#[cfg(any(feature = "secp256k1", feature = "ed25519"))]
+pub use keypair::{keypair, keypair_using};
+pub use keypair::{keypair_opt, keypair_opt_using};
 
 #[cfg(test)]
 mod tests {
@@ -247,7 +251,10 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_ssh_signing(
         algorithm: SSHAlgorithm,
         expected_private_key: Option<&str>,

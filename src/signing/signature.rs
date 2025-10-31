@@ -1,14 +1,17 @@
-use bc_crypto::ED25519_SIGNATURE_SIZE;
-#[cfg(feature = "secp256k1")]
-use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
 #[cfg(feature = "ssh")]
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
+#[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "ssh"))]
+use crate::Error;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSASignature;
-use crate::{Error, Result, tags};
+use crate::{Result, tags};
+#[cfg(feature = "ed25519")]
+use bc_crypto::ED25519_SIGNATURE_SIZE;
+#[cfg(feature = "secp256k1")]
+use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 
 /// A digital signature created with various signature algorithms.
 ///
@@ -73,6 +76,7 @@ pub enum Signature {
     ECDSA([u8; ECDSA_SIGNATURE_SIZE]),
 
     /// An Ed25519 signature (64 bytes)
+    #[cfg(feature = "ed25519")]
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
 
     /// An SSH signature
@@ -91,12 +95,14 @@ impl PartialEq for Signature {
     /// Signatures are equal if they have the same type and the same signature
     /// data. Signatures of different types (e.g., Schnorr vs ECDSA) are
     /// never equal.
+    #[allow(unreachable_patterns)]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             #[cfg(feature = "secp256k1")]
             (Self::Schnorr(a), Self::Schnorr(b)) => a == b,
             #[cfg(feature = "secp256k1")]
             (Self::ECDSA(a), Self::ECDSA(b)) => a == b,
+            #[cfg(feature = "ed25519")]
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
             #[cfg(feature = "ssh")]
             (Self::SSH(a), Self::SSH(b)) => a == b,
@@ -104,10 +110,18 @@ impl PartialEq for Signature {
             (Self::MLDSA(a), Self::MLDSA(b)) => a.as_bytes() == b.as_bytes(),
             #[cfg(any(
                 feature = "secp256k1",
+                feature = "ed25519",
                 feature = "ssh",
                 feature = "pqcrypto"
             ))]
             _ => false,
+            #[cfg(not(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "ssh",
+                feature = "pqcrypto"
+            )))]
+            _ => unreachable!(),
         }
     }
 }
@@ -252,11 +266,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "ed25519")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = [0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ed25519_from_data(data);
+    /// # }
     /// ```
+    #[cfg(feature = "ed25519")]
     pub fn ed25519_from_data(data: [u8; ED25519_SIGNATURE_SIZE]) -> Self {
         Self::Ed25519(data)
     }
@@ -275,11 +293,15 @@ impl Signature {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "ed25519")]
+    /// # {
     /// use bc_components::Signature;
     ///
     /// let data = vec![0u8; 64]; // In practice, this would be a real signature
     /// let signature = Signature::ed25519_from_data_ref(&data).unwrap();
+    /// # }
     /// ```
+    #[cfg(feature = "ed25519")]
     pub fn ed25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
         let data = data.as_ref();
         if data.len() != ED25519_SIGNATURE_SIZE {
@@ -397,14 +419,19 @@ impl Signature {
     /// let scheme = signature.scheme().unwrap();
     /// assert_eq!(scheme, SignatureScheme::Ecdsa);
     /// ```
+    #[allow(unreachable_patterns)]
     pub fn scheme(&self) -> Result<SignatureScheme> {
         match self {
             #[cfg(feature = "secp256k1")]
             Self::Schnorr(_) => Ok(SignatureScheme::Schnorr),
             #[cfg(feature = "secp256k1")]
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
+            #[cfg(feature = "ed25519")]
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
-            #[cfg(feature = "ssh")]
+            #[cfg(all(
+                feature = "ssh",
+                any(feature = "secp256k1", feature = "ed25519")
+            ))]
             Self::SSH(sig) => match sig.algorithm() {
                 ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
                 ssh_key::Algorithm::Ecdsa { curve } => match curve {
@@ -419,12 +446,24 @@ impl Signature {
                 ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
                 _ => Err(Error::ssh("Unsupported SSH signature algorithm")),
             },
+            #[cfg(all(
+                feature = "ssh",
+                not(any(feature = "secp256k1", feature = "ed25519"))
+            ))]
+            Self::SSH(_) => unreachable!(),
             #[cfg(feature = "pqcrypto")]
             Self::MLDSA(sig) => match sig.level() {
                 crate::MLDSA::MLDSA44 => Ok(SignatureScheme::MLDSA44),
                 crate::MLDSA::MLDSA65 => Ok(SignatureScheme::MLDSA65),
                 crate::MLDSA::MLDSA87 => Ok(SignatureScheme::MLDSA87),
             },
+            #[cfg(not(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "ssh",
+                feature = "pqcrypto"
+            )))]
+            _ => unreachable!(),
         }
     }
 }
@@ -436,30 +475,39 @@ impl std::fmt::Debug for Signature {
     /// For binary signatures (Schnorr, ECDSA, Ed25519), displays the
     /// hex-encoded signature data. For SSH and ML-DSA signatures, displays
     /// the signature object.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    #[allow(unreachable_patterns)]
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             #[cfg(feature = "secp256k1")]
-            Signature::Schnorr(data) => f
+            Signature::Schnorr(data) => _f
                 .debug_struct("Schnorr")
                 .field("data", &hex::encode(data))
                 .finish(),
             #[cfg(feature = "secp256k1")]
-            Signature::ECDSA(data) => f
+            Signature::ECDSA(data) => _f
                 .debug_struct("ECDSA")
                 .field("data", &hex::encode(data))
                 .finish(),
-            Signature::Ed25519(data) => f
+            #[cfg(feature = "ed25519")]
+            Signature::Ed25519(data) => _f
                 .debug_struct("Ed25519")
                 .field("data", &hex::encode(data))
                 .finish(),
             #[cfg(feature = "ssh")]
             Signature::SSH(sig) => {
-                f.debug_struct("SSH").field("sig", sig).finish()
+                _f.debug_struct("SSH").field("sig", sig).finish()
             }
             #[cfg(feature = "pqcrypto")]
             Signature::MLDSA(sig) => {
-                f.debug_struct("MLDSA").field("sig", sig).finish()
+                _f.debug_struct("MLDSA").field("sig", sig).finish()
             }
+            #[cfg(not(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "ssh",
+                feature = "pqcrypto"
+            )))]
+            _ => unreachable!(),
         }
     }
 }
@@ -503,6 +551,7 @@ impl CBORTaggedEncodable for Signature {
     ///   signature
     /// - SSH: A tagged text string containing the PEM-encoded signature
     /// - ML-DSA: Delegates to the MLDSASignature implementation
+    #[allow(unreachable_patterns)]
     fn untagged_cbor(&self) -> CBOR {
         match self {
             #[cfg(feature = "secp256k1")]
@@ -511,6 +560,7 @@ impl CBORTaggedEncodable for Signature {
             Signature::ECDSA(data) => {
                 vec![(1).into(), CBOR::to_byte_string(data)].into()
             }
+            #[cfg(feature = "ed25519")]
             Signature::Ed25519(data) => {
                 vec![(2).into(), CBOR::to_byte_string(data)].into()
             }
@@ -521,6 +571,13 @@ impl CBORTaggedEncodable for Signature {
             }
             #[cfg(feature = "pqcrypto")]
             Signature::MLDSA(sig) => sig.clone().into(),
+            #[cfg(not(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "ssh",
+                feature = "pqcrypto"
+            )))]
+            _ => unreachable!(),
         }
     }
 }
@@ -574,6 +631,10 @@ impl CBORTaggedDecodable for Signature {
                 if elements.len() == 2 {
                     let mut drain = elements.drain(0..);
                     let ele_0 = drain.next().unwrap().into_case();
+                    #[cfg_attr(
+                        not(any(feature = "secp256k1", feature = "ed25519")),
+                        allow(unused_variables)
+                    )]
                     let ele_1 = drain.next().unwrap().into_case();
                     match ele_0 {
                         #[cfg(feature = "secp256k1")]
@@ -586,6 +647,7 @@ impl CBORTaggedDecodable for Signature {
                                 return Ok(Self::ecdsa_from_data_ref(data)?);
                             }
                         }
+                        #[cfg(feature = "ed25519")]
                         CBORCase::Unsigned(2) => {
                             if let CBORCase::ByteString(data) = ele_1 {
                                 return Ok(Self::ed25519_from_data_ref(data)?);

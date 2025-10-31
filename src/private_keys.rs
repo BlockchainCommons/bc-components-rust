@@ -156,10 +156,28 @@ impl From<PrivateKeys> for CBOR {
 
 impl CBORTaggedEncodable for PrivateKeys {
     fn untagged_cbor(&self) -> CBOR {
-        let signing_key_cbor: CBOR = self.signing_private_key.clone().into();
-        let encapsulation_key_cbor: CBOR =
-            self.encapsulation_private_key.clone().into();
-        vec![signing_key_cbor, encapsulation_key_cbor].into()
+        #[cfg(any(
+            feature = "secp256k1",
+            feature = "ed25519",
+            feature = "ssh",
+            feature = "pqcrypto"
+        ))]
+        {
+            let _signing_key_cbor: CBOR =
+                self.signing_private_key.clone().into();
+            let _encapsulation_key_cbor: CBOR =
+                self.encapsulation_private_key.clone().into();
+            vec![_signing_key_cbor, _encapsulation_key_cbor].into()
+        }
+        #[cfg(not(any(
+            feature = "secp256k1",
+            feature = "ed25519",
+            feature = "ssh",
+            feature = "pqcrypto"
+        )))]
+        {
+            match self.signing_private_key {}
+        }
     }
 }
 

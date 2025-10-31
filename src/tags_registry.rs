@@ -9,10 +9,12 @@ use ssh_key::{
 
 #[cfg(feature = "ssh")]
 use crate::ReferenceProvider;
+#[cfg(any(feature = "secp256k1", feature = "ed25519"))]
+use crate::SignatureScheme;
 use crate::{
     ARID, Digest, EncapsulationScheme, EncryptedKey, Nonce, PrivateKeyBase,
     PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed,
-    Signature, SignatureScheme, URI, UUID, XID,
+    Signature, URI, UUID, XID,
 };
 
 pub fn register_tags_in(tags_store: &mut TagsStore) {
@@ -130,7 +132,12 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
             let signature = Signature::from_untagged_cbor(untagged_cbor)?;
             let scheme = signature.scheme();
             let summary = if let Ok(scheme) = scheme {
-                if scheme == SignatureScheme::default() {
+                #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
+                let is_default = scheme == SignatureScheme::default();
+                #[cfg(not(any(feature = "secp256k1", feature = "ed25519")))]
+                let is_default = false;
+
+                if is_default {
                     "Signature".to_string()
                 } else {
                     format!("Signature({scheme:?})")

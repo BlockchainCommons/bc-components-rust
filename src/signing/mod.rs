@@ -90,22 +90,32 @@ mod tests {
     use bc_rand::make_fake_random_number_generator;
     #[cfg(any(feature = "secp256k1", feature = "pqcrypto"))]
     use dcbor::prelude::*;
+    #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
     use hex_literal::hex;
     #[cfg(feature = "secp256k1")]
     use indoc::indoc;
     #[cfg(feature = "ssh")]
     use ssh_key::HashAlg;
 
+    #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
     use super::SignatureScheme;
     #[cfg(feature = "secp256k1")]
     use crate::ECPrivateKey;
     #[cfg(feature = "secp256k1")]
     use crate::Signature;
-    use crate::{
-        Ed25519PrivateKey, Signer, SigningOptions, SigningPrivateKey, Verifier,
-    };
+    #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
+    use crate::SigningOptions;
+    #[cfg(all(feature = "secp256k1", not(feature = "ed25519")))]
+    use crate::SigningPrivateKey;
+    #[cfg(feature = "ed25519")]
+    use crate::{Ed25519PrivateKey, Signer, SigningPrivateKey, Verifier};
     #[cfg(feature = "pqcrypto")]
     use crate::{MLDSA, MLDSASignature};
+    #[cfg(all(
+        not(feature = "ed25519"),
+        any(feature = "secp256k1", feature = "ssh")
+    ))]
+    use crate::{Signer, Verifier};
 
     #[cfg(feature = "secp256k1")]
     const ECDSA_SIGNING_PRIVATE_KEY: SigningPrivateKey =
@@ -118,10 +128,17 @@ mod tests {
             "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
         )));
 
+    #[cfg(feature = "ed25519")]
     const ED25519_SIGNING_PRIVATE_KEY: SigningPrivateKey =
         SigningPrivateKey::new_ed25519(Ed25519PrivateKey::from_data(hex!(
             "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
         )));
+
+    #[cfg(any(
+        feature = "secp256k1",
+        feature = "ed25519",
+        feature = "pqcrypto"
+    ))]
     const MESSAGE: &dyn AsRef<[u8]> = b"Wolf McNally";
 
     #[test]
@@ -202,6 +219,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ed25519")]
     fn test_ed25519_signing() {
         let public_key = ED25519_SIGNING_PRIVATE_KEY.public_key().unwrap();
         let signature = ED25519_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
@@ -241,6 +259,7 @@ mod tests {
         assert_eq!(signature, received_signature);
     }
 
+    #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
     fn test_keypair_signing(
         scheme: SignatureScheme,
         options: Option<SigningOptions>,
@@ -264,29 +283,42 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ed25519")]
     fn test_ed25519_keypair() {
         test_keypair_signing(SignatureScheme::Ed25519, None);
     }
 
     #[test]
-    #[cfg(feature = "pqcrypto")]
+    #[cfg(all(
+        feature = "pqcrypto",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_mldsa44_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA44, None);
     }
 
     #[test]
-    #[cfg(feature = "pqcrypto")]
+    #[cfg(all(
+        feature = "pqcrypto",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_mldsa65_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA65, None);
     }
 
     #[test]
-    #[cfg(feature = "pqcrypto")]
+    #[cfg(all(
+        feature = "pqcrypto",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_mldsa87_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA87, None);
     }
 
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn signing_options() -> SigningOptions {
         SigningOptions::Ssh {
             namespace: "ssh".into(),
@@ -295,7 +327,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_ssh_ed25519_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEd25519,
@@ -304,13 +339,19 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_ssh_dsa_keypair() {
         test_keypair_signing(SignatureScheme::SshDsa, Some(signing_options()));
     }
 
     #[test]
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_ssh_ecdsa_p256_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEcdsaP256,
@@ -319,7 +360,10 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "ssh")]
+    #[cfg(all(
+        feature = "ssh",
+        any(feature = "secp256k1", feature = "ed25519")
+    ))]
     fn test_ssh_ecdsa_p384_keypair() {
         test_keypair_signing(
             SignatureScheme::SshEcdsaP384,

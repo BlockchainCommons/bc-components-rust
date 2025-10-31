@@ -34,25 +34,26 @@ section "All Default Features"
 cargo test --all-targets > /dev/null
 
 section "No Default Features"
-cargo test --no-default-features > /dev/null
+# Skip doctests as they require at least one signing scheme
+cargo test --lib --bins --tests --benches --no-default-features > /dev/null
 
-section "ssh Feature"
-test_only_features "ssh"
+test_only_features "ssh,ed25519"
 
-section "ssh-agent Feature"
 test_additional_features "ssh-agent"
 
-section "ssh_agent_tests Feature"
 test_additional_features "ssh_agent_tests"
 
-section "pqcrypto Feature"
 test_only_features "pqcrypto"
 
-section "secp256k1 Feature"
 test_only_features "secp256k1"
 
-section "Without ssh Feature"
-test_only_features "secp256k1,pqcrypto"
+test_only_features "ed25519"
+
+test_only_features "secp256k1,ed25519,pqcrypto"
+
+test_only_features "secp256k1,pqcrypto,ssh"
+
+test_only_features "ed25519"
 
 section "Doc Tests"
 cargo test --doc > /dev/null

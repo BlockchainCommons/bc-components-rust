@@ -141,6 +141,8 @@ pub trait Verifier {
     /// # Examples
     ///
     /// ```
+    /// # #[cfg(feature = "ed25519")]
+    /// # {
     /// use bc_components::{SignatureScheme, Signer, Verifier};
     ///
     /// // Create a key pair
@@ -155,6 +157,7 @@ pub trait Verifier {
     ///
     /// // Verify the signature with an incorrect message (should fail)
     /// assert!(!public_key.verify(&signature, &b"Tampered message"));
+    /// # }
     /// ```
     fn verify(&self, signature: &Signature, message: &dyn AsRef<[u8]>) -> bool;
 }
