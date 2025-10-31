@@ -67,34 +67,22 @@ pub enum SignatureScheme {
     MLDSA87,
 
     /// Ed25519 signature scheme for SSH
-    #[cfg(all(
-        feature = "ssh",
-        any(feature = "secp256k1", feature = "ed25519")
-    ))]
+    #[cfg(feature = "ssh")]
     SshEd25519,
 
     // Disabled due to tests not working correctly for undiagnosed reasons.
     // SshRsaSha256,
     // SshRsaSha512,
     /// DSA signature scheme for SSH
-    #[cfg(all(
-        feature = "ssh",
-        any(feature = "secp256k1", feature = "ed25519")
-    ))]
+    #[cfg(feature = "ssh")]
     SshDsa,
 
     /// ECDSA signature scheme with NIST P-256 curve for SSH
-    #[cfg(all(
-        feature = "ssh",
-        any(feature = "secp256k1", feature = "ed25519")
-    ))]
+    #[cfg(feature = "ssh")]
     SshEcdsaP256,
 
     /// ECDSA signature scheme with NIST P-384 curve for SSH
-    #[cfg(all(
-        feature = "ssh",
-        any(feature = "secp256k1", feature = "ed25519")
-    ))]
+    #[cfg(feature = "ssh")]
     SshEcdsaP384,
     // Disabled due to a bug in the ssh-key crate.
     // See: https://github.com/RustCrypto/SSH/issues/232
@@ -205,10 +193,7 @@ impl SignatureScheme {
                 let public_key = SigningPublicKey::MLDSA(public_key);
                 (private_key, public_key)
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEd25519 => {
                 let private_key_base = PrivateKeyBase::new();
                 let private_key = private_key_base
@@ -239,10 +224,7 @@ impl SignatureScheme {
             //     let public_key = private_key.public_key().unwrap();
             //     (private_key, public_key)
             // }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshDsa => {
                 let private_key_base = PrivateKeyBase::new();
                 let private_key = private_key_base
@@ -251,10 +233,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEcdsaP256 => {
                 let private_key_base = PrivateKeyBase::new();
                 let private_key = private_key_base
@@ -268,10 +247,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEcdsaP384 => {
                 let private_key_base = PrivateKeyBase::new();
                 let private_key = private_key_base
@@ -356,10 +332,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEd25519 => {
                 let private_key_base = PrivateKeyBase::new_using(_rng);
                 let private_key = private_key_base
@@ -368,10 +341,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshDsa => {
                 let private_key_base = PrivateKeyBase::new_using(_rng);
                 let private_key = private_key_base
@@ -380,10 +350,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEcdsaP256 => {
                 let private_key_base = PrivateKeyBase::new_using(_rng);
                 let private_key = private_key_base
@@ -397,10 +364,7 @@ impl SignatureScheme {
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))
             }
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SshEcdsaP384 => {
                 let private_key_base = PrivateKeyBase::new_using(_rng);
                 let private_key = private_key_base

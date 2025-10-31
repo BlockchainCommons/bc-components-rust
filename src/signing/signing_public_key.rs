@@ -238,6 +238,11 @@ impl SigningPublicKey {
     pub fn to_ssh(&self) -> Option<&SSHPublicKey> {
         match self {
             Self::SSH(key) => Some(key),
+            #[cfg(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "pqcrypto"
+            ))]
             _ => None,
         }
     }

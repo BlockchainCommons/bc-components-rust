@@ -390,6 +390,11 @@ impl Signature {
     pub fn to_ssh(&self) -> Option<&SshSig> {
         match self {
             Self::SSH(sig) => Some(sig),
+            #[cfg(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "pqcrypto"
+            ))]
             _ => None,
         }
     }
@@ -426,10 +431,7 @@ impl Signature {
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
             #[cfg(feature = "ed25519")]
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
-            #[cfg(all(
-                feature = "ssh",
-                any(feature = "secp256k1", feature = "ed25519")
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SSH(sig) => match sig.algorithm() {
                 ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
                 ssh_key::Algorithm::Ecdsa { curve } => match curve {
@@ -444,10 +446,7 @@ impl Signature {
                 ssh_key::Algorithm::Ed25519 => Ok(SignatureScheme::SshEd25519),
                 _ => Err(Error::ssh("Unsupported SSH signature algorithm")),
             },
-            #[cfg(all(
-                feature = "ssh",
-                not(any(feature = "secp256k1", feature = "ed25519"))
-            ))]
+            #[cfg(feature = "ssh")]
             Self::SSH(_) => unreachable!(),
             #[cfg(feature = "pqcrypto")]
             Self::MLDSA(sig) => match sig.level() {

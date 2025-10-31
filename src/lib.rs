@@ -251,10 +251,7 @@ mod tests {
         );
     }
 
-    #[cfg(all(
-        feature = "ssh",
-        any(feature = "secp256k1", feature = "ed25519")
-    ))]
+    #[cfg(feature = "ssh")]
     fn test_ssh_signing(
         algorithm: SSHAlgorithm,
         expected_private_key: Option<&str>,

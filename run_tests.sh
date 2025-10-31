@@ -5,7 +5,7 @@
 #
 # Note: Tests requiring a real SSH agent are marked with #[ignore]
 # To run them manually, ensure you have an SSH agent running with an Ed25519 key
-# and run: cargo test --features ssh_agent_tests -- --ignored
+# and run: cargo test --features ssh-agent-tests -- --ignored
 
 set -e
 
@@ -37,23 +37,17 @@ section "No Default Features"
 # Skip doctests as they require at least one signing scheme
 cargo test --lib --bins --tests --benches --no-default-features > /dev/null
 
-test_only_features "ssh,ed25519"
-
-test_additional_features "ssh-agent"
-
-test_additional_features "ssh_agent_tests"
-
 test_only_features "pqcrypto"
-
 test_only_features "secp256k1"
-
 test_only_features "ed25519"
+test_only_features "ssh"
 
+test_only_features "ssh,ed25519"
 test_only_features "secp256k1,ed25519,pqcrypto"
-
 test_only_features "secp256k1,pqcrypto,ssh"
 
-test_only_features "ed25519"
+test_additional_features "ssh-agent"
+test_additional_features "ssh-agent-tests"
 
 section "Doc Tests"
 cargo test --doc > /dev/null

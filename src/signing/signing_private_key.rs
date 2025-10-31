@@ -208,7 +208,9 @@ impl SigningPrivateKey {
     /// # }
     /// ```
     #[cfg(feature = "secp256k1")]
-    pub const fn new_schnorr(key: ECPrivateKey) -> Self { Self::Schnorr(key) }
+    pub const fn new_schnorr(key: ECPrivateKey) -> Self {
+        Self::Schnorr(key)
+    }
 
     /// Creates a new ECDSA signing private key from an `ECPrivateKey`.
     ///
@@ -235,7 +237,9 @@ impl SigningPrivateKey {
     /// # }
     /// ```
     #[cfg(feature = "secp256k1")]
-    pub const fn new_ecdsa(key: ECPrivateKey) -> Self { Self::ECDSA(key) }
+    pub const fn new_ecdsa(key: ECPrivateKey) -> Self {
+        Self::ECDSA(key)
+    }
 
     /// Creates a new Ed25519 signing private key from an `Ed25519PrivateKey`.
     ///
@@ -276,7 +280,9 @@ impl SigningPrivateKey {
     ///
     /// A new SSH signing private key
     #[cfg(feature = "ssh")]
-    pub fn new_ssh(key: SSHPrivateKey) -> Self { Self::SSH(Box::new(key)) }
+    pub fn new_ssh(key: SSHPrivateKey) -> Self {
+        Self::SSH(Box::new(key))
+    }
 
     /// Returns the underlying Schnorr private key if this is a Schnorr key.
     ///
@@ -315,7 +321,9 @@ impl SigningPrivateKey {
     ///
     /// `true` if this is a Schnorr key, `false` otherwise
     #[cfg(feature = "secp256k1")]
-    pub fn is_schnorr(&self) -> bool { self.to_schnorr().is_some() }
+    pub fn is_schnorr(&self) -> bool {
+        self.to_schnorr().is_some()
+    }
 
     /// Returns the underlying ECDSA private key if this is an ECDSA key.
     ///
@@ -337,7 +345,9 @@ impl SigningPrivateKey {
     ///
     /// `true` if this is an ECDSA key, `false` otherwise
     #[cfg(feature = "secp256k1")]
-    pub fn is_ecdsa(&self) -> bool { self.to_ecdsa().is_some() }
+    pub fn is_ecdsa(&self) -> bool {
+        self.to_ecdsa().is_some()
+    }
 
     /// Returns the underlying SSH private key if this is an SSH key.
     ///
@@ -349,6 +359,11 @@ impl SigningPrivateKey {
     pub fn to_ssh(&self) -> Option<&SSHPrivateKey> {
         match self {
             Self::SSH(key) => Some(key),
+            #[cfg(any(
+                feature = "secp256k1",
+                feature = "ed25519",
+                feature = "pqcrypto"
+            ))]
             _ => None,
         }
     }
@@ -359,7 +374,9 @@ impl SigningPrivateKey {
     ///
     /// `true` if this is an SSH key, `false` otherwise
     #[cfg(feature = "ssh")]
-    pub fn is_ssh(&self) -> bool { self.to_ssh().is_some() }
+    pub fn is_ssh(&self) -> bool {
+        self.to_ssh().is_some()
+    }
 
     /// Derives the corresponding public key for this private key.
     ///
@@ -751,7 +768,9 @@ impl CBORTagged for SigningPrivateKey {
 /// Conversion from SigningPrivateKey to CBOR
 impl From<SigningPrivateKey> for CBOR {
     /// Converts a SigningPrivateKey to a tagged CBOR value.
-    fn from(value: SigningPrivateKey) -> Self { value.tagged_cbor() }
+    fn from(value: SigningPrivateKey) -> Self {
+        value.tagged_cbor()
+    }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPrivateKey
@@ -912,7 +931,9 @@ impl std::fmt::Debug for SigningPrivateKey {
 /// Implementation of the From trait for reference to SigningPrivateKey
 impl From<&SigningPrivateKey> for SigningPrivateKey {
     /// Clones a SigningPrivateKey from a reference.
-    fn from(key: &SigningPrivateKey) -> Self { key.clone() }
+    fn from(key: &SigningPrivateKey) -> Self {
+        key.clone()
+    }
 }
 
 #[cfg(feature = "ssh")]

@@ -558,7 +558,7 @@ mod mock_agent_tests {
 ///
 /// To run these tests, use the following command:
 /// ```bash
-/// cargo test real_agent_tests --features ssh_agent_tests
+/// cargo test real_agent_tests --features ssh-agent-tests
 /// ```
 ///
 /// Your `SSH_AUTH_SOCK` environment variable must be set to the socket
@@ -579,7 +579,7 @@ mod mock_agent_tests {
 /// ssh-keygen -t ed25519 -C "your_email@example.com" -f <your_key_file>
 /// ssh-add <your_key_file>
 /// ```
-#[cfg(all(test, feature = "ssh_agent_tests"))]
+#[cfg(all(test, feature = "ssh-agent-tests"))]
 mod real_agent_tests {
     use dcbor::prelude::*;
 
