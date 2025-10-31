@@ -112,9 +112,7 @@ pub trait PublicKeysProvider {
 }
 
 impl PublicKeysProvider for PublicKeys {
-    fn public_keys(&self) -> PublicKeys {
-        self.clone()
-    }
+    fn public_keys(&self) -> PublicKeys { self.clone() }
 }
 
 impl ReferenceProvider for PublicKeys {
@@ -126,15 +124,11 @@ impl ReferenceProvider for PublicKeys {
 }
 
 impl AsRef<PublicKeys> for PublicKeys {
-    fn as_ref(&self) -> &PublicKeys {
-        self
-    }
+    fn as_ref(&self) -> &PublicKeys { self }
 }
 
 impl AsRef<SigningPublicKey> for PublicKeys {
-    fn as_ref(&self) -> &SigningPublicKey {
-        &self.signing_public_key
-    }
+    fn as_ref(&self) -> &SigningPublicKey { &self.signing_public_key }
 }
 
 impl AsRef<EncapsulationPublicKey> for PublicKeys {
@@ -144,15 +138,11 @@ impl AsRef<EncapsulationPublicKey> for PublicKeys {
 }
 
 impl CBORTagged for PublicKeys {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_PUBLIC_KEYS])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_PUBLIC_KEYS]) }
 }
 
 impl From<PublicKeys> for CBOR {
-    fn from(value: PublicKeys) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PublicKeys) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PublicKeys {

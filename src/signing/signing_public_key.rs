@@ -109,9 +109,7 @@ impl SigningPublicKey {
     /// # }
     /// ```
     #[cfg(feature = "secp256k1")]
-    pub fn from_schnorr(key: SchnorrPublicKey) -> Self {
-        Self::Schnorr(key)
-    }
+    pub fn from_schnorr(key: SchnorrPublicKey) -> Self { Self::Schnorr(key) }
 
     /// Creates a new signing public key from an ECDSA public key.
     ///
@@ -139,9 +137,7 @@ impl SigningPublicKey {
     /// # }
     /// ```
     #[cfg(feature = "secp256k1")]
-    pub fn from_ecdsa(key: ECPublicKey) -> Self {
-        Self::ECDSA(key)
-    }
+    pub fn from_ecdsa(key: ECPublicKey) -> Self { Self::ECDSA(key) }
 
     /// Creates a new signing public key from an Ed25519 public key.
     ///
@@ -169,9 +165,7 @@ impl SigningPublicKey {
     /// # }
     /// ```
     #[cfg(feature = "ed25519")]
-    pub fn from_ed25519(key: Ed25519PublicKey) -> Self {
-        Self::Ed25519(key)
-    }
+    pub fn from_ed25519(key: Ed25519PublicKey) -> Self { Self::Ed25519(key) }
 
     /// Creates a new signing public key from an SSH public key.
     ///
@@ -183,9 +177,7 @@ impl SigningPublicKey {
     ///
     /// A new signing public key containing the SSH key
     #[cfg(feature = "ssh")]
-    pub fn from_ssh(key: SSHPublicKey) -> Self {
-        Self::SSH(key)
-    }
+    pub fn from_ssh(key: SSHPublicKey) -> Self { Self::SSH(key) }
 
     /// Returns the underlying Schnorr public key if this is a Schnorr key.
     ///
@@ -343,9 +335,7 @@ impl Verifier for SigningPublicKey {
 /// Implementation of AsRef for SigningPublicKey
 impl AsRef<SigningPublicKey> for SigningPublicKey {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &SigningPublicKey {
-        self
-    }
+    fn as_ref(&self) -> &SigningPublicKey { self }
 }
 
 /// Implementation of the CBORTagged trait for SigningPublicKey
@@ -361,9 +351,7 @@ impl CBORTagged for SigningPublicKey {
 /// Conversion from SigningPublicKey to CBOR
 impl From<SigningPublicKey> for CBOR {
     /// Converts a SigningPublicKey to a tagged CBOR value.
-    fn from(value: SigningPublicKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: SigningPublicKey) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for SigningPublicKey

@@ -111,9 +111,7 @@ pub trait PrivateKeysProvider {
 }
 
 impl PrivateKeysProvider for PrivateKeys {
-    fn private_keys(&self) -> PrivateKeys {
-        self.clone()
-    }
+    fn private_keys(&self) -> PrivateKeys { self.clone() }
 }
 
 impl ReferenceProvider for PrivateKeys {
@@ -125,15 +123,11 @@ impl ReferenceProvider for PrivateKeys {
 }
 
 impl AsRef<PrivateKeys> for PrivateKeys {
-    fn as_ref(&self) -> &PrivateKeys {
-        self
-    }
+    fn as_ref(&self) -> &PrivateKeys { self }
 }
 
 impl AsRef<SigningPrivateKey> for PrivateKeys {
-    fn as_ref(&self) -> &SigningPrivateKey {
-        &self.signing_private_key
-    }
+    fn as_ref(&self) -> &SigningPrivateKey { &self.signing_private_key }
 }
 
 impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
@@ -143,15 +137,11 @@ impl AsRef<EncapsulationPrivateKey> for PrivateKeys {
 }
 
 impl CBORTagged for PrivateKeys {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_PRIVATE_KEYS])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_PRIVATE_KEYS]) }
 }
 
 impl From<PrivateKeys> for CBOR {
-    fn from(value: PrivateKeys) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: PrivateKeys) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for PrivateKeys {

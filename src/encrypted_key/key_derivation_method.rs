@@ -14,9 +14,9 @@ use crate::{Error, Result};
 /// ```
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum KeyDerivationMethod {
-    HKDF = 0,
-    PBKDF2 = 1,
-    Scrypt = 2,
+    HKDF     = 0,
+    PBKDF2   = 1,
+    Scrypt   = 2,
     Argon2id = 3,
     #[cfg(feature = "ssh-agent")]
     SSHAgent = 4,
@@ -24,9 +24,7 @@ pub enum KeyDerivationMethod {
 
 impl KeyDerivationMethod {
     /// Returns the zero-based index of the key derivation method.
-    pub fn index(&self) -> usize {
-        *self as usize
-    }
+    pub fn index(&self) -> usize { *self as usize }
 
     /// Attempts to create a `KeyDerivationMethod` from a zero-based index.
     pub fn from_index(index: usize) -> Option<Self> {

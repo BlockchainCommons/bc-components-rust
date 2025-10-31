@@ -154,13 +154,9 @@ impl EncryptedKey {
         }
     }
 
-    pub fn is_password_based(&self) -> bool {
-        self.params.is_password_based()
-    }
+    pub fn is_password_based(&self) -> bool { self.params.is_password_based() }
 
-    pub fn is_ssh_agent(&self) -> bool {
-        self.params.is_ssh_agent()
-    }
+    pub fn is_ssh_agent(&self) -> bool { self.params.is_ssh_agent() }
 }
 
 impl std::fmt::Display for EncryptedKey {
@@ -170,21 +166,15 @@ impl std::fmt::Display for EncryptedKey {
 }
 
 impl CBORTagged for EncryptedKey {
-    fn cbor_tags() -> Vec<Tag> {
-        tags_for_values(&[tags::TAG_ENCRYPTED_KEY])
-    }
+    fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_ENCRYPTED_KEY]) }
 }
 
 impl From<EncryptedKey> for CBOR {
-    fn from(value: EncryptedKey) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: EncryptedKey) -> Self { value.tagged_cbor() }
 }
 
 impl CBORTaggedEncodable for EncryptedKey {
-    fn untagged_cbor(&self) -> CBOR {
-        self.encrypted_message().clone().into()
-    }
+    fn untagged_cbor(&self) -> CBOR { self.encrypted_message().clone().into() }
 }
 
 impl TryFrom<CBOR> for EncryptedKey {
@@ -208,13 +198,9 @@ impl CBORTaggedDecodable for EncryptedKey {
 mod tests {
     use super::*;
 
-    fn test_secret() -> &'static [u8] {
-        b"correct horse battery staple"
-    }
+    fn test_secret() -> &'static [u8] { b"correct horse battery staple" }
 
-    fn test_content_key() -> SymmetricKey {
-        SymmetricKey::new()
-    }
+    fn test_content_key() -> SymmetricKey { SymmetricKey::new() }
 
     #[test]
     fn test_encrypted_key_hkdf_roundtrip() {

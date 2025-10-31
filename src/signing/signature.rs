@@ -1,3 +1,7 @@
+#[cfg(feature = "ed25519")]
+use bc_crypto::ED25519_SIGNATURE_SIZE;
+#[cfg(feature = "secp256k1")]
+use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 use bc_ur::prelude::*;
 #[cfg(feature = "ssh")]
 use ssh_key::{LineEnding, SshSig};
@@ -8,10 +12,6 @@ use crate::Error;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSASignature;
 use crate::{Result, tags};
-#[cfg(feature = "ed25519")]
-use bc_crypto::ED25519_SIGNATURE_SIZE;
-#[cfg(feature = "secp256k1")]
-use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
 
 /// A digital signature created with various signature algorithms.
 ///
@@ -326,9 +326,7 @@ impl Signature {
     ///
     /// A new SSH signature
     #[cfg(feature = "ssh")]
-    pub fn from_ssh(sig: SshSig) -> Self {
-        Self::SSH(sig)
-    }
+    pub fn from_ssh(sig: SshSig) -> Self { Self::SSH(sig) }
 
     /// Returns the Schnorr signature data if this is a Schnorr signature.
     ///
@@ -515,9 +513,7 @@ impl std::fmt::Debug for Signature {
 /// Implementation of AsRef for Signature
 impl AsRef<Signature> for Signature {
     /// Returns a reference to self.
-    fn as_ref(&self) -> &Signature {
-        self
-    }
+    fn as_ref(&self) -> &Signature { self }
 }
 
 /// Implementation of the CBORTagged trait for Signature
@@ -533,9 +529,7 @@ impl CBORTagged for Signature {
 /// Conversion from Signature to CBOR
 impl From<Signature> for CBOR {
     /// Converts a Signature to a tagged CBOR value.
-    fn from(value: Signature) -> Self {
-        value.tagged_cbor()
-    }
+    fn from(value: Signature) -> Self { value.tagged_cbor() }
 }
 
 /// Implementation of the CBORTaggedEncodable trait for Signature
