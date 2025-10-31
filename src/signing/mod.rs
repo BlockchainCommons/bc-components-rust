@@ -97,13 +97,21 @@ mod tests {
     #[cfg(feature = "ssh")]
     use ssh_key::HashAlg;
 
-    #[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "ssh"))]
+    #[cfg(any(
+        feature = "secp256k1",
+        feature = "ed25519",
+        feature = "ssh"
+    ))]
     use super::SignatureScheme;
     #[cfg(feature = "secp256k1")]
     use crate::ECPrivateKey;
     #[cfg(feature = "secp256k1")]
     use crate::Signature;
-    #[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "ssh"))]
+    #[cfg(any(
+        feature = "secp256k1",
+        feature = "ed25519",
+        feature = "ssh"
+    ))]
     use crate::SigningOptions;
     #[cfg(all(feature = "secp256k1", not(feature = "ed25519")))]
     use crate::SigningPrivateKey;
