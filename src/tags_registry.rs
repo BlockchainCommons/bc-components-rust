@@ -87,42 +87,35 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
     tags_store.set_summarizer(
         TAG_PRIVATE_KEYS,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
-            let private_keys = PrivateKeys::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("{private_keys}"))
+            Ok(PrivateKeys::from_untagged_cbor(untagged_cbor)?.to_string())
         }),
     );
 
     tags_store.set_summarizer(
         TAG_PUBLIC_KEYS,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
-            let public_keys = PublicKeys::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("{public_keys}"))
+            Ok(PublicKeys::from_untagged_cbor(untagged_cbor)?.to_string())
         }),
     );
 
     tags_store.set_summarizer(
         TAG_REFERENCE,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
-            let reference = Reference::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("{reference}"))
+            Ok(Reference::from_untagged_cbor(untagged_cbor)?.to_string())
         }),
     );
 
     tags_store.set_summarizer(
         TAG_ENCRYPTED_KEY,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
-            let encrypted_key =
-                EncryptedKey::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("{encrypted_key}"))
+            Ok(EncryptedKey::from_untagged_cbor(untagged_cbor)?.to_string())
         }),
     );
 
     tags_store.set_summarizer(
         TAG_PRIVATE_KEY_BASE,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
-            let private_key_base =
-                PrivateKeyBase::from_untagged_cbor(untagged_cbor)?;
-            Ok(format!("PrivateKeyBase({})", private_key_base))
+            Ok(PrivateKeyBase::from_untagged_cbor(untagged_cbor)?.to_string())
         }),
     );
 

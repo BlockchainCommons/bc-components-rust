@@ -1,35 +1,30 @@
 use std::{cell::RefCell, rc::Rc};
-#[cfg(feature = "ssh-agent")]
 use std::{env, path::Path};
 
-#[cfg(feature = "ssh-agent")]
 use bc_crypto::hkdf_hmac_sha256;
 use dcbor::prelude::*;
-#[cfg(feature = "ssh-agent")]
 use ssh_agent_client_rs::{Client, Identity};
+use ssh_key::{PrivateKey, PublicKey, Signature};
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
-#[cfg(feature = "ssh-agent")]
 use crate::Nonce;
 use crate::{EncryptedMessage, Error, Result, Salt, SymmetricKey};
 
-#[cfg(feature = "ssh-agent")]
 #[allow(dead_code)]
 pub trait SSHAgent {
-    fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>>;
-    fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()>;
-    fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()>;
+    fn list_identities(&mut self) -> Result<Vec<PublicKey>>;
+    fn add_identity(&mut self, key: &PrivateKey) -> Result<()>;
+    fn remove_identity(&mut self, key: &PrivateKey) -> Result<()>;
     fn remove_all_identities(&mut self) -> Result<()>;
     fn sign(
         &mut self,
-        key: &ssh_key::PublicKey,
+        key: &PublicKey,
         data: &[u8],
-    ) -> Result<ssh_key::Signature>;
+    ) -> Result<Signature>;
 }
 
-#[cfg(feature = "ssh-agent")]
 impl SSHAgent for Client {
-    fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
+    fn list_identities(&mut self) -> Result<Vec<PublicKey>> {
         self.list_all_identities()
             .map(|identities| {
                 identities
@@ -43,12 +38,12 @@ impl SSHAgent for Client {
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
-    fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+    fn add_identity(&mut self, key: &PrivateKey) -> Result<()> {
         self.add_identity(key)
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
-    fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+    fn remove_identity(&mut self, key: &PrivateKey) -> Result<()> {
         self.remove_identity(key)
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
@@ -60,16 +55,15 @@ impl SSHAgent for Client {
 
     fn sign(
         &mut self,
-        key: &ssh_key::PublicKey,
+        key: &PublicKey,
         data: &[u8],
-    ) -> Result<ssh_key::Signature> {
+    ) -> Result<Signature> {
         self.sign(key, data)
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 }
 
 // Agent storage
-#[cfg(feature = "ssh-agent")]
 type AgentBox = Rc<RefCell<dyn SSHAgent>>;
 
 #[cfg(not(feature = "ssh-agent"))]
@@ -137,7 +131,6 @@ impl Default for SSHAgentParams {
 }
 
 /// Connect to whatever socket/pipe `$SSH_AUTH_SOCK` points at.
-#[cfg(feature = "ssh-agent")]
 pub fn connect_to_ssh_agent() -> Result<AgentBox> {
     let sock = env::var("SSH_AUTH_SOCK")
         .map_err(|_| Error::ssh_agent("SSH_AUTH_SOCK env var not set"))?;
@@ -146,7 +139,6 @@ pub fn connect_to_ssh_agent() -> Result<AgentBox> {
     Ok(Rc::new(RefCell::new(client)))
 }
 
-#[cfg(feature = "ssh-agent")]
 impl KeyDerivation for SSHAgentParams {
     const INDEX: usize = KeyDerivationMethod::SSHAgent as usize;
 
@@ -456,6 +448,7 @@ mod tests_common {
 #[cfg(all(test, feature = "ssh-agent"))]
 mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
+    use ssh_key::{ PrivateKey, PublicKey, Signature, SshSig, HashAlg, private::Ed25519Keypair };
 
     use super::{
         AgentBox, SSHAgent,
@@ -464,19 +457,19 @@ mod mock_agent_tests {
     use crate::{Error, Result};
 
     struct MockSSHAgent {
-        identities: HashMap<String, ssh_key::PrivateKey>,
+        identities: HashMap<String, PrivateKey>,
     }
 
     impl MockSSHAgent {
         fn new() -> Self { Self { identities: HashMap::new() } }
 
-        fn add_identity(&mut self, key: ssh_key::PrivateKey) {
+        fn add_identity(&mut self, key: PrivateKey) {
             self.identities.insert(key.comment().to_string(), key);
         }
     }
 
     impl SSHAgent for MockSSHAgent {
-        fn list_identities(&mut self) -> Result<Vec<ssh_key::PublicKey>> {
+        fn list_identities(&mut self) -> Result<Vec<PublicKey>> {
             Ok(self
                 .identities
                 .values()
@@ -484,12 +477,12 @@ mod mock_agent_tests {
                 .collect())
         }
 
-        fn add_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+        fn add_identity(&mut self, key: &PrivateKey) -> Result<()> {
             self.add_identity(key.clone());
             Ok(())
         }
 
-        fn remove_identity(&mut self, key: &ssh_key::PrivateKey) -> Result<()> {
+        fn remove_identity(&mut self, key: &PrivateKey) -> Result<()> {
             self.identities.remove(key.comment());
             Ok(())
         }
@@ -501,15 +494,15 @@ mod mock_agent_tests {
 
         fn sign(
             &mut self,
-            key: &ssh_key::PublicKey,
+            key: &PublicKey,
             data: &[u8],
-        ) -> Result<ssh_key::Signature> {
+        ) -> Result<Signature> {
             let private_key = self
                 .identities
                 .get(key.comment())
                 .ok_or_else(|| Error::ssh_agent("Identity not found"))?;
-            let sig: ssh_key::SshSig = private_key
-                .sign("test_namespace", ssh_key::HashAlg::Sha256, data)
+            let sig: SshSig = private_key
+                .sign("test_namespace", HashAlg::Sha256, data)
                 .map_err(|e| {
                     Error::ssh_agent(format!("Failed to sign data: {}", e))
                 })?;
@@ -520,10 +513,10 @@ mod mock_agent_tests {
     fn mock_agent() -> AgentBox {
         let mut agent = MockSSHAgent::new();
         let mut rng = bc_rand::SecureRandomNumberGenerator;
-        let keypair: ssh_key::private::Ed25519Keypair =
-            ssh_key::private::Ed25519Keypair::random(&mut rng);
+        let keypair: Ed25519Keypair =
+            Ed25519Keypair::random(&mut rng);
         let private_key =
-            ssh_key::PrivateKey::new(keypair.into(), test_id()).unwrap();
+            PrivateKey::new(keypair.into(), test_id()).unwrap();
         agent.add_identity(private_key);
         Rc::new(RefCell::new(agent))
     }
