@@ -275,7 +275,7 @@ mod tests {
 
         assert_eq!(
             format!("{}", private_keys),
-            "PrivateKeys(fa742ac8, SigningPrivateKey(2a645922, ECPrivateKey(0b02c820)), EncapsulationPrivateKey(ded5f016, X25519PrivateKey(ded5f016)))"
+            "PrivateKeys(fa742ac8, SigningPrivateKey(2a645922, SchnorrPrivateKey(0b02c820)), EncapsulationPrivateKey(ded5f016, X25519PrivateKey(ded5f016)))"
         );
         assert_eq!(
             format!("{}", private_keys.reference()),
