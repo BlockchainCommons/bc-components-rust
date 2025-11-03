@@ -1,5 +1,6 @@
 use bc_ur::prelude::*;
 
+use crate::EncapsulationPublicKey;
 #[cfg(feature = "pqcrypto")]
 use crate::MLKEMPrivateKey;
 #[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
@@ -123,6 +124,18 @@ impl EncapsulationPrivateKey {
                 self.encapsulation_scheme(),
                 ciphertext.encapsulation_scheme()
             ))),
+        }
+    }
+
+    pub fn public_key(&self) -> Result<EncapsulationPublicKey> {
+        match self {
+            Self::X25519(private_key) => {
+                Ok(EncapsulationPublicKey::X25519(private_key.public_key()))
+            }
+            #[cfg(feature = "pqcrypto")]
+            Self::MLKEM(_) => {
+                Err(Error::crypto("Deriving ML-KEM public key not supported"))
+            }
         }
     }
 }

@@ -14,7 +14,7 @@ use crate::SignatureScheme;
 use crate::{
     ARID, Digest, EncapsulationScheme, EncryptedKey, Nonce, PrivateKeyBase,
     PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed,
-    Signature, URI, UUID, XID,
+    Signature, SigningPrivateKey, SigningPublicKey, URI, UUID, XID,
 };
 
 pub fn register_tags_in(tags_store: &mut TagsStore) {
@@ -116,6 +116,24 @@ pub fn register_tags_in(tags_store: &mut TagsStore) {
         TAG_PRIVATE_KEY_BASE,
         Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
             Ok(PrivateKeyBase::from_untagged_cbor(untagged_cbor)?.to_string())
+        }),
+    );
+
+    tags_store.set_summarizer(
+        TAG_SIGNING_PRIVATE_KEY,
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
+            Ok(SigningPrivateKey::from_untagged_cbor(untagged_cbor)?
+                .to_string())
+        }),
+    );
+
+    tags_store.set_summarizer(
+        TAG_SIGNING_PUBLIC_KEY,
+        Arc::new(move |untagged_cbor: CBOR, _flat: bool| {
+            Ok(
+                SigningPublicKey::from_untagged_cbor(untagged_cbor)?
+                    .to_string(),
+            )
         }),
     );
 

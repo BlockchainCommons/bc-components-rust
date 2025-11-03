@@ -408,7 +408,7 @@ impl SigningPrivateKey {
             }
             #[cfg(feature = "pqcrypto")]
             Self::MLDSA(_) => {
-                Err(Error::general("Deriving MLDSA public key not supported"))
+                Err(Error::general("Deriving ML-DSA public key not supported"))
             }
             #[cfg(not(any(
                 feature = "secp256k1",
@@ -950,9 +950,13 @@ impl std::fmt::Display for SigningPrivateKey {
         {
             let display_key = match self {
                 #[cfg(feature = "secp256k1")]
-                SigningPrivateKey::Schnorr(key) => key.to_string(),
+                SigningPrivateKey::Schnorr(key) => {
+                    format!("SchnorrPrivateKey({})", key.ref_hex_short())
+                }
                 #[cfg(feature = "secp256k1")]
-                SigningPrivateKey::ECDSA(key) => key.to_string(),
+                SigningPrivateKey::ECDSA(key) => {
+                    format!("ECDSAPrivateKey({})", key.ref_hex_short())
+                }
                 #[cfg(feature = "ed25519")]
                 SigningPrivateKey::Ed25519(key) => key.to_string(),
                 #[cfg(feature = "ssh")]

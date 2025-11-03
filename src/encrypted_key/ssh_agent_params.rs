@@ -1,5 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-use std::{env, path::Path};
+use std::{cell::RefCell, env, path::Path, rc::Rc};
 
 use bc_crypto::hkdf_hmac_sha256;
 use dcbor::prelude::*;
@@ -7,8 +6,7 @@ use ssh_agent_client_rs::{Client, Identity};
 use ssh_key::{PrivateKey, PublicKey, Signature};
 
 use super::{KeyDerivation, KeyDerivationMethod, SALT_LEN};
-use crate::Nonce;
-use crate::{EncryptedMessage, Error, Result, Salt, SymmetricKey};
+use crate::{EncryptedMessage, Error, Nonce, Result, Salt, SymmetricKey};
 
 #[allow(dead_code)]
 pub trait SSHAgent {
@@ -16,11 +14,7 @@ pub trait SSHAgent {
     fn add_identity(&mut self, key: &PrivateKey) -> Result<()>;
     fn remove_identity(&mut self, key: &PrivateKey) -> Result<()>;
     fn remove_all_identities(&mut self) -> Result<()>;
-    fn sign(
-        &mut self,
-        key: &PublicKey,
-        data: &[u8],
-    ) -> Result<Signature>;
+    fn sign(&mut self, key: &PublicKey, data: &[u8]) -> Result<Signature>;
 }
 
 impl SSHAgent for Client {
@@ -53,11 +47,7 @@ impl SSHAgent for Client {
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
 
-    fn sign(
-        &mut self,
-        key: &PublicKey,
-        data: &[u8],
-    ) -> Result<Signature> {
+    fn sign(&mut self, key: &PublicKey, data: &[u8]) -> Result<Signature> {
         self.sign(key, data)
             .map_err(|e| Error::ssh_agent(e.to_string()))
     }
@@ -448,7 +438,11 @@ mod tests_common {
 #[cfg(all(test, feature = "ssh-agent"))]
 mod mock_agent_tests {
     use std::{cell::RefCell, collections::HashMap, rc::Rc};
-    use ssh_key::{ PrivateKey, PublicKey, Signature, SshSig, HashAlg, private::Ed25519Keypair };
+
+    use ssh_key::{
+        HashAlg, PrivateKey, PublicKey, Signature, SshSig,
+        private::Ed25519Keypair,
+    };
 
     use super::{
         AgentBox, SSHAgent,
@@ -492,11 +486,7 @@ mod mock_agent_tests {
             Ok(())
         }
 
-        fn sign(
-            &mut self,
-            key: &PublicKey,
-            data: &[u8],
-        ) -> Result<Signature> {
+        fn sign(&mut self, key: &PublicKey, data: &[u8]) -> Result<Signature> {
             let private_key = self
                 .identities
                 .get(key.comment())
@@ -513,10 +503,8 @@ mod mock_agent_tests {
     fn mock_agent() -> AgentBox {
         let mut agent = MockSSHAgent::new();
         let mut rng = bc_rand::SecureRandomNumberGenerator;
-        let keypair: Ed25519Keypair =
-            Ed25519Keypair::random(&mut rng);
-        let private_key =
-            PrivateKey::new(keypair.into(), test_id()).unwrap();
+        let keypair: Ed25519Keypair = Ed25519Keypair::random(&mut rng);
+        let private_key = PrivateKey::new(keypair.into(), test_id()).unwrap();
         agent.add_identity(private_key);
         Rc::new(RefCell::new(agent))
     }

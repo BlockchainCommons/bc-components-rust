@@ -1,8 +1,8 @@
 use bc_ur::prelude::*;
 
 use crate::{
-    Decrypter, Digest, EncapsulationPrivateKey, Reference, ReferenceProvider,
-    Result, Signature, Signer, SigningPrivateKey, tags,
+    Decrypter, Digest, EncapsulationPrivateKey, PublicKeys, Reference,
+    ReferenceProvider, Result, Signature, Signer, SigningPrivateKey, tags,
 };
 
 /// A container for an entity's private cryptographic keys.
@@ -75,6 +75,13 @@ impl PrivateKeys {
     /// Returns the `EncapsulationPrivateKey` of this `PrivateKeys`.
     pub fn enapsulation_private_key(&self) -> &EncapsulationPrivateKey {
         &self.encapsulation_private_key
+    }
+
+    pub fn public_keys(&self) -> Result<PublicKeys> {
+        Ok(PublicKeys::new(
+            self.signing_private_key.public_key()?,
+            self.encapsulation_private_key.public_key()?,
+        ))
     }
 }
 
