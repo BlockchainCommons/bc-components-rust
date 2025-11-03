@@ -21,7 +21,7 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.26.0"
+bc-components = "0.27.0"
 ```
 
 ## Types
@@ -129,6 +129,7 @@ The library is organized into several categories of cryptographic primitives and
 
 ## Version History
 
+- **0.27.0, November 3, 2025** - Align to dependencies. Feature gate cryptographic schemes. Improve Display formatting for keys.
 - **0.26.0, October 20, 2025** - Rename uncompress() to decompress(). Format.
 - **0.25.0, September 16, 2025** - Remove all dependency on anyhow, migrate to thiserror v2. Update ssh-agent-client-rs to 1.1.0. Improve error handling throughout the codebase. Align to dependencies.
 - **0.24.0, July 3, 2025** - Align to dependencies.
