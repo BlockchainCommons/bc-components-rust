@@ -187,7 +187,7 @@ impl AsRef<Reference> for Reference {
 
 impl std::cmp::PartialOrd for Reference {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
+        Some(self.cmp(other))
     }
 }
 

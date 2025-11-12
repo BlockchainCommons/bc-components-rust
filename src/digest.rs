@@ -173,7 +173,7 @@ impl AsRef<Digest> for Digest {
 /// Enables partial ordering of Digests by comparing their underlying bytes.
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
+        Some(self.cmp(other))
     }
 }
 

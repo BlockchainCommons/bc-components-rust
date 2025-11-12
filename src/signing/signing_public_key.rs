@@ -459,23 +459,21 @@ impl CBORTaggedDecodable for SigningPublicKey {
                     )]
                     let ele_1 = drain.next().unwrap().into_case();
                     #[cfg(feature = "secp256k1")]
-                    if let CBORCase::Unsigned(1) = ele_0 {
-                        if let CBORCase::ByteString(data) = ele_1 {
+                    if let CBORCase::Unsigned(1) = ele_0
+                        && let CBORCase::ByteString(data) = ele_1 {
                             return Ok(Self::ECDSA(
                                 ECPublicKey::from_data_ref(data)?,
                             ));
                         }
-                    }
                     #[cfg(not(feature = "secp256k1"))]
                     let _ = ele_0;
                     #[cfg(feature = "ed25519")]
-                    if let CBORCase::Unsigned(2) = ele_0 {
-                        if let CBORCase::ByteString(data) = ele_1 {
+                    if let CBORCase::Unsigned(2) = ele_0
+                        && let CBORCase::ByteString(data) = ele_1 {
                             return Ok(Self::Ed25519(
                                 Ed25519PublicKey::from_data_ref(data)?,
                             ));
                         }
-                    }
                 }
                 Err("invalid signing public key".into())
             }

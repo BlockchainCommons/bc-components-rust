@@ -135,7 +135,7 @@ impl AsRef<[u8]> for XID {
 /// Implements PartialOrd to allow XIDs to be compared and partially ordered.
 impl std::cmp::PartialOrd for XID {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.0.cmp(&other.0))
+        Some(self.cmp(other))
     }
 }
 
