@@ -24,7 +24,7 @@ use crate::{
 /// - CBOR serialization and deserialization
 /// - Support for the Encrypter trait for key encapsulation
 /// - Various utility and conversion methods
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct X25519PublicKey([u8; Self::KEY_SIZE]);
 
 impl X25519PublicKey {
@@ -75,7 +75,7 @@ impl AsRef<[u8]> for X25519PublicKey {
 /// Implements conversion from a reference-counted X25519PublicKey to an owned
 /// X25519PublicKey.
 impl From<Rc<X25519PublicKey>> for X25519PublicKey {
-    fn from(value: Rc<X25519PublicKey>) -> Self { value.as_ref().clone() }
+    fn from(value: Rc<X25519PublicKey>) -> Self { *value.as_ref() }
 }
 
 /// Implements conversion from an X25519PublicKey reference to a byte array
@@ -134,7 +134,7 @@ impl std::fmt::Debug for X25519PublicKey {
 /// Implements conversion from an X25519PublicKey reference to an owned
 /// X25519PublicKey.
 impl From<&X25519PublicKey> for X25519PublicKey {
-    fn from(key: &X25519PublicKey) -> Self { key.clone() }
+    fn from(key: &X25519PublicKey) -> Self { *key }
 }
 
 /// Implements conversion from an X25519PublicKey to a byte vector.
@@ -150,7 +150,7 @@ impl From<&X25519PublicKey> for Vec<u8> {
 /// Implements the Encrypter trait to support key encapsulation mechanisms.
 impl Encrypter for X25519PublicKey {
     fn encapsulation_public_key(&self) -> EncapsulationPublicKey {
-        EncapsulationPublicKey::X25519(self.clone())
+        EncapsulationPublicKey::X25519(*self)
     }
 }
 

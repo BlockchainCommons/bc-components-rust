@@ -43,7 +43,7 @@ pub const ECDSA_PUBLIC_KEY_SIZE: usize = bc_crypto::ECDSA_PUBLIC_KEY_SIZE;
 /// // Verify the signature
 /// assert!(public_key.verify(&signature, message));
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ECPublicKey([u8; ECDSA_PUBLIC_KEY_SIZE]);
 
 impl ECPublicKey {
@@ -135,7 +135,7 @@ impl Verifier for ECPublicKey {
 /// Implements the `ECKey` trait for `ECPublicKey`.
 impl ECKey for ECPublicKey {
     /// Returns the public key (self).
-    fn public_key(&self) -> ECPublicKey { self.clone() }
+    fn public_key(&self) -> ECPublicKey { *self }
 }
 
 /// Implements the `ECPublicKeyBase` trait for converting to uncompressed

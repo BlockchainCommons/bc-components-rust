@@ -110,9 +110,11 @@ impl SymmetricKey {
         digest: Digest,
         nonce: Option<Nonce>,
     ) -> EncryptedMessage {
-        let cbor: CBOR = (*digest.as_ref()).into();
-        let data = cbor.to_cbor_data();
-        self.encrypt(plaintext, Some(data), nonce)
+        self.encrypt(
+            plaintext,
+            Some(digest.tagged_cbor().to_cbor_data()),
+            nonce,
+        )
     }
 
     /// Decrypt the given encrypted message with this key.

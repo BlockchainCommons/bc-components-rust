@@ -28,7 +28,7 @@ use crate::{
 /// - Shared key generation with another party's public key
 /// - CBOR serialization and deserialization
 /// - Various utility and conversion methods
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct X25519PrivateKey([u8; Self::KEY_SIZE]);
 
 impl X25519PrivateKey {
@@ -133,7 +133,7 @@ impl AsRef<[u8]> for X25519PrivateKey {
 /// Implements the Decrypter trait to support key encapsulation mechanisms.
 impl Decrypter for X25519PrivateKey {
     fn encapsulation_private_key(&self) -> EncapsulationPrivateKey {
-        EncapsulationPrivateKey::X25519(self.clone())
+        EncapsulationPrivateKey::X25519(*self)
     }
 }
 
@@ -151,7 +151,7 @@ impl<'a> From<&'a X25519PrivateKey> for &'a [u8; X25519PrivateKey::KEY_SIZE] {
 /// Implements conversion from a reference-counted X25519PrivateKey to an owned
 /// X25519PrivateKey.
 impl From<Rc<X25519PrivateKey>> for X25519PrivateKey {
-    fn from(value: Rc<X25519PrivateKey>) -> Self { value.as_ref().clone() }
+    fn from(value: Rc<X25519PrivateKey>) -> Self { *value.as_ref() }
 }
 
 /// Implements `AsRef<X25519PrivateKey>` to allow self-reference.
@@ -204,7 +204,7 @@ impl std::fmt::Debug for X25519PrivateKey {
 /// Implements conversion from an X25519PrivateKey reference to an owned
 /// X25519PrivateKey.
 impl From<&X25519PrivateKey> for X25519PrivateKey {
-    fn from(key: &X25519PrivateKey) -> Self { key.clone() }
+    fn from(key: &X25519PrivateKey) -> Self { *key }
 }
 
 /// Implements conversion from an X25519PrivateKey to a byte vector.

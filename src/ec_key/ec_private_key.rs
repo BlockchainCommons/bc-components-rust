@@ -49,7 +49,7 @@ pub const ECDSA_PRIVATE_KEY_SIZE: usize = bc_crypto::ECDSA_PRIVATE_KEY_SIZE;
 /// let message = b"Hello, world!";
 /// let signature = private_key.ecdsa_sign(message);
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ECPrivateKey([u8; ECDSA_PRIVATE_KEY_SIZE]);
 
 impl ECPrivateKey {

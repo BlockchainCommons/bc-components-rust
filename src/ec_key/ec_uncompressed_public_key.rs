@@ -51,7 +51,7 @@ pub const ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE: usize =
 /// // They should be equal
 /// assert_eq!(compressed_key, compressed_again);
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ECUncompressedPublicKey([u8; ECDSA_UNCOMPRESSED_PUBLIC_KEY_SIZE]);
 
 impl ECUncompressedPublicKey {
@@ -112,7 +112,7 @@ impl ECKey for ECUncompressedPublicKey {
 impl ECPublicKeyBase for ECUncompressedPublicKey {
     /// Returns this uncompressed public key (self).
     fn uncompressed_public_key(&self) -> ECUncompressedPublicKey {
-        self.clone()
+        *self
     }
 }
 

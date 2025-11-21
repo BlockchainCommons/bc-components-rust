@@ -46,7 +46,7 @@ pub const SCHNORR_PUBLIC_KEY_SIZE: usize = bc_crypto::SCHNORR_PUBLIC_KEY_SIZE;
 /// // Verify the signature
 /// assert!(schnorr_public_key.schnorr_verify(&signature, message));
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct SchnorrPublicKey([u8; SCHNORR_PUBLIC_KEY_SIZE]);
 
 impl SchnorrPublicKey {

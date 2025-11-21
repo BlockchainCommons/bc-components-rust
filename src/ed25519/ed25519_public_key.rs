@@ -15,7 +15,7 @@ pub const ED25519_PUBLIC_KEY_SIZE: usize = bc_crypto::ED25519_PUBLIC_KEY_SIZE;
 /// - Creating Ed25519 public keys from raw data
 /// - Verifying signatures against messages
 /// - Converting between various formats
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Ed25519PublicKey([u8; ED25519_PUBLIC_KEY_SIZE]);
 
 impl Ed25519PublicKey {

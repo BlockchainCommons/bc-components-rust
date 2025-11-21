@@ -133,11 +133,6 @@ impl<'a> From<&'a Nonce> for &'a [u8; Nonce::NONCE_SIZE] {
     fn from(value: &'a Nonce) -> Self { &value.0 }
 }
 
-/// Provides a self-reference, enabling API consistency with other types.
-impl AsRef<Nonce> for Nonce {
-    fn as_ref(&self) -> &Self { self }
-}
-
 /// Identifies the CBOR tags used for Nonce serialization.
 impl CBORTagged for Nonce {
     fn cbor_tags() -> Vec<Tag> { tags_for_values(&[tags::TAG_NONCE]) }

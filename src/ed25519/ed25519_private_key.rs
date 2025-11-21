@@ -23,7 +23,7 @@ pub const ED25519_PRIVATE_KEY_SIZE: usize = bc_crypto::ED25519_PRIVATE_KEY_SIZE;
 /// - Deriving the corresponding public key
 /// - Signing messages
 /// - Converting between various formats
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Ed25519PrivateKey([u8; ED25519_PRIVATE_KEY_SIZE]);
 
 impl Ed25519PrivateKey {

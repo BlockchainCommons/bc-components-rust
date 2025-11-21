@@ -81,7 +81,7 @@ pub trait ReferenceProvider {
 /// A `Reference` can be displayed in various formats, including hexadecimal,
 /// ByteWords (a human-readable partial hash as words), and Bytemoji (a
 /// human-readable partial hash based on emojis).
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Reference([u8; Self::REFERENCE_SIZE]);
 
 impl Reference {
@@ -240,7 +240,7 @@ impl CBORTaggedDecodable for Reference {
 
 // Convert from an instance reference to an instance.
 impl From<&Reference> for Reference {
-    fn from(digest: &Reference) -> Self { digest.clone() }
+    fn from(digest: &Reference) -> Self { *digest }
 }
 
 // Convert from a byte vector to an instance.
