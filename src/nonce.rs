@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use bc_rand::fill_random_data;
 use dcbor::prelude::*;
 
@@ -72,7 +70,7 @@ use crate::{Error, Result, tags};
 /// let nonce_from_hex = Nonce::from_hex(&hex_string);
 /// assert_eq!(nonce, nonce_from_hex);
 /// ```
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Nonce([u8; Self::NONCE_SIZE]);
 
 impl Nonce {
@@ -130,11 +128,6 @@ impl Default for Nonce {
     fn default() -> Self { Self::new() }
 }
 
-/// Converts an Rc-wrapped Nonce into a Nonce by cloning the inner value.
-impl From<Rc<Nonce>> for Nonce {
-    fn from(value: Rc<Nonce>) -> Self { value.as_ref().clone() }
-}
-
 /// Allows accessing the underlying data as a fixed-size byte array reference.
 impl<'a> From<&'a Nonce> for &'a [u8; Nonce::NONCE_SIZE] {
     fn from(value: &'a Nonce) -> Self { &value.0 }
@@ -182,11 +175,6 @@ impl std::fmt::Debug for Nonce {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Nonce({})", self.hex())
     }
-}
-
-/// Enables cloning a Nonce from a reference using From trait.
-impl From<&Nonce> for Nonce {
-    fn from(nonce: &Nonce) -> Self { nonce.clone() }
 }
 
 /// Converts a Nonce into a `Vec<u8>` containing the nonce bytes.
@@ -244,7 +232,7 @@ mod test {
     #[test]
     fn test_nonce_cbor_roundtrip() {
         let nonce = Nonce::new();
-        let cbor: CBOR = nonce.clone().into();
+        let cbor: CBOR = nonce.into();
         let decoded_nonce = Nonce::try_from(cbor).unwrap();
         assert_eq!(nonce, decoded_nonce);
     }

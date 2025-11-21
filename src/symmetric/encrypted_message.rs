@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use bc_ur::prelude::*;
 
 use crate::{AuthenticationTag, Digest, DigestProvider, Nonce, tags};
@@ -109,9 +107,8 @@ impl AsRef<EncryptedMessage> for EncryptedMessage {
 
 /// Implements DigestProvider to provide the digest stored in the AAD field.
 impl DigestProvider for EncryptedMessage {
-    fn digest(&self) -> Cow<'_, Digest> {
-        let a = self.aad_digest().unwrap();
-        Cow::Owned(a)
+    fn digest(&self) -> Digest {
+        self.aad_digest().unwrap()
     }
 }
 

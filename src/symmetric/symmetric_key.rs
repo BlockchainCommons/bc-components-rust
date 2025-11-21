@@ -88,16 +88,15 @@ impl SymmetricKey {
         &self,
         plaintext: impl AsRef<[u8]>,
         aad: Option<impl AsRef<[u8]>>,
-        nonce: Option<impl AsRef<Nonce>>,
+        nonce: Option<Nonce>,
     ) -> EncryptedMessage {
         let aad: Vec<u8> = aad.map(|a| a.as_ref().to_vec()).unwrap_or_default();
-        let nonce: Nonce =
-            nonce.map(|n| n.as_ref().clone()).unwrap_or_default();
+        let nonce = nonce.unwrap_or_default();
         let plaintext = plaintext.as_ref().to_vec();
         let (ciphertext, auth) = aead_chacha20_poly1305_encrypt_with_aad(
             plaintext,
             self.into(),
-            (&nonce).into(),
+            nonce.data(),
             &aad,
         );
         EncryptedMessage::new(ciphertext, aad, nonce, auth.into())
@@ -108,10 +107,10 @@ impl SymmetricKey {
     pub fn encrypt_with_digest(
         &self,
         plaintext: impl AsRef<[u8]>,
-        digest: impl AsRef<Digest>,
-        nonce: Option<impl AsRef<Nonce>>,
+        digest: Digest,
+        nonce: Option<Nonce>,
     ) -> EncryptedMessage {
-        let cbor: CBOR = digest.as_ref().clone().into();
+        let cbor: CBOR = (*digest.as_ref()).into();
         let data = cbor.to_cbor_data();
         self.encrypt(plaintext, Some(data), nonce)
     }

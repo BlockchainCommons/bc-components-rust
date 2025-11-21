@@ -160,7 +160,7 @@ impl Seed {
     pub fn set_note(&mut self, note: &str) { self.note = note.to_string(); }
 
     /// Return the creation date of the seed.
-    pub fn creation_date(&self) -> &Option<Date> { &self.creation_date }
+    pub fn creation_date(&self) -> Option<Date> { self.creation_date }
 
     /// Set the creation date of the seed.
     pub fn set_creation_date(&mut self, creation_date: Option<Date>) {
@@ -207,7 +207,7 @@ impl CBORTaggedEncodable for Seed {
     fn untagged_cbor(&self) -> CBOR {
         let mut map = dcbor::Map::new();
         map.insert(1, CBOR::to_byte_string(self.as_bytes()));
-        if let Some(creation_date) = self.creation_date().clone() {
+        if let Some(creation_date) = self.creation_date() {
             map.insert(2, creation_date);
         }
         if !self.name().is_empty() {

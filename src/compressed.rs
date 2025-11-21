@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt::Formatter};
+use std::fmt::Formatter;
 
 use bc_crypto::hash::crc32;
 use bc_ur::prelude::*;
@@ -277,9 +277,9 @@ impl Compressed {
     ///     Compressed::from_decompressed_data(data, Some(digest.clone()));
     ///
     /// // We can retrieve the digest we associated with the compressed data
-    /// assert_eq!(compressed.digest_ref_opt(), Some(&digest));
+    /// assert_eq!(compressed.digest_opt(), Some(digest));
     /// ```
-    pub fn digest_ref_opt(&self) -> Option<&Digest> { self.digest.as_ref() }
+    pub fn digest_opt(&self) -> Option<Digest> { self.digest }
 
     /// Returns whether this compressed data has an associated digest.
     ///
@@ -314,15 +314,15 @@ impl DigestProvider for Compressed {
     ///
     /// # Returns
     ///
-    /// A `Cow<'_, Digest>` containing the digest.
+    /// A `Digest`.
     ///
     /// # Panics
     ///
     /// Panics if there is no digest associated with this compressed data.
     /// Use `has_digest()` or `digest_ref_opt()` to check before calling this
     /// method.
-    fn digest(&self) -> Cow<'_, Digest> {
-        Cow::Owned(self.digest.as_ref().unwrap().clone())
+    fn digest(&self) -> Digest {
+        self.digest.unwrap()
     }
 }
 
@@ -339,7 +339,7 @@ impl std::fmt::Debug for Compressed {
             self.compressed_size(),
             self.decompressed_size,
             self.compression_ratio(),
-            self.digest_ref_opt()
+            self.digest_opt()
                 .map(|d| d.short_description())
                 .unwrap_or_else(|| "None".to_string())
         )
@@ -385,7 +385,7 @@ impl CBORTaggedEncodable for Compressed {
             self.decompressed_size.into(),
             CBOR::to_byte_string(&self.compressed_data),
         ];
-        if let Some(digest) = self.digest.clone() {
+        if let Some(digest) = self.digest {
             elements.push(digest.into());
         }
         CBORCase::Array(elements).into()

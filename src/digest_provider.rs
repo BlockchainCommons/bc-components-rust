@@ -1,4 +1,4 @@
-use std::{borrow::Cow, rc::Rc};
+use std::rc::Rc;
 
 use crate::digest::Digest;
 
@@ -7,7 +7,7 @@ use crate::digest::Digest;
 ///
 /// This trait is used to define a common interface for objects that can produce
 /// a cryptographic digest (hash) of their content. Implementations of this
-/// trait use a `Cow<'_, Digest>` to avoid unnecessary cloning:
+/// trait use a `Digest` to avoid unnecessary cloning:
 /// - If the digest is already owned by the implementor, it can be returned by
 ///   borrowing
 /// - If it doesn't exist yet, it can be created and returned by owning
@@ -42,10 +42,10 @@ use crate::digest::Digest;
 /// }
 ///
 /// impl DigestProvider for Document {
-///     fn digest(&self) -> Cow<'_, Digest> {
+///     fn digest(&self) -> Digest {
 ///         match &self.cached_digest {
-///             Some(digest) => Cow::Borrowed(digest),
-///             None => Cow::Owned(Digest::from_image(&self.content)),
+///             Some(digest) => *digest,
+///             None => Digest::from_image(&self.content),
 ///         }
 ///     }
 /// }
@@ -64,18 +64,18 @@ use crate::digest::Digest;
 ///
 /// // The DigestProvider is implemented for &[u8], not for &[u8; N]
 /// let data: &[u8] = b"hello world";
-/// let digest_cow: Cow<'_, Digest> = data.digest();
+/// let digest_cow: Digest = data.digest();
 /// ```
 pub trait DigestProvider {
     /// Returns a digest that uniquely characterizes the content of the
     /// implementing type.
-    fn digest(&self) -> Cow<'_, Digest>;
+    fn digest(&self) -> Digest;
 }
 
 /// Implements DigestProvider for byte slices, creating a digest from the
 /// slice's contents.
 impl DigestProvider for &[u8] {
-    fn digest(&self) -> Cow<'_, Digest> { Cow::Owned(Digest::from_image(self)) }
+    fn digest(&self) -> Digest { Digest::from_image(self) }
 }
 
 /// Implements DigestProvider for Rc-wrapped types that implement
@@ -84,5 +84,5 @@ impl<T> DigestProvider for Rc<T>
 where
     T: DigestProvider,
 {
-    fn digest(&self) -> Cow<'_, Digest> { self.as_ref().digest() }
+    fn digest(&self) -> Digest { self.as_ref().digest() }
 }

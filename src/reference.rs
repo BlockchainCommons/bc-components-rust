@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use bc_ur::prelude::*;
 
 use crate::{Digest, Error, Result, digest_provider::DigestProvider, tags};
@@ -165,7 +163,7 @@ impl Reference {
 /// Yes, this creates a Reference to a Reference.
 impl ReferenceProvider for Reference {
     fn reference(&self) -> Reference {
-        Reference::from_digest(self.digest().into_owned())
+        Reference::from_digest(self.digest())
     }
 }
 
@@ -196,8 +194,8 @@ impl std::cmp::Ord for Reference {
 }
 
 impl DigestProvider for Reference {
-    fn digest(&self) -> Cow<'_, Digest> {
-        Cow::Owned(Digest::from_image(self.tagged_cbor().to_cbor_data()))
+    fn digest(&self) -> Digest {
+        Digest::from_image(self.tagged_cbor().to_cbor_data())
     }
 }
 

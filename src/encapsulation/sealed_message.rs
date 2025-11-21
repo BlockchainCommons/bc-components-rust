@@ -142,7 +142,7 @@ impl SealedMessage {
         plaintext: impl AsRef<[u8]>,
         recipient: &dyn Encrypter,
         aad: Option<impl AsRef<[u8]>>,
-        test_nonce: Option<impl AsRef<Nonce>>,
+        test_nonce: Option<Nonce>,
     ) -> Self {
         let (shared_key, encapsulated_key) =
             recipient.encapsulate_new_shared_secret();

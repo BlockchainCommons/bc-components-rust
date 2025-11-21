@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use bc_crypto::hash::sha256;
 use dcbor::prelude::*;
 
@@ -51,7 +49,7 @@ use crate::{Error, Result, digest_provider::DigestProvider, tags};
 /// // Retrieve the digest as hex
 /// assert_eq!(digest.hex(), hex_string);
 /// ```
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Digest([u8; Self::DIGEST_SIZE]);
 
 impl Digest {
@@ -141,7 +139,7 @@ impl Digest {
     /// image's digest.
     pub fn validate_opt(
         image: impl AsRef<[u8]>,
-        digest: Option<&Digest>,
+        digest: Option<Digest>,
     ) -> bool {
         match digest {
             Some(digest) => digest.validate(image),
@@ -165,11 +163,6 @@ impl AsRef<[u8]> for Digest {
     fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
-/// Provides a self-reference, enabling API consistency with other types.
-impl AsRef<Digest> for Digest {
-    fn as_ref(&self) -> &Digest { self }
-}
-
 /// Enables partial ordering of Digests by comparing their underlying bytes.
 impl std::cmp::PartialOrd for Digest {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
@@ -186,7 +179,7 @@ impl std::cmp::Ord for Digest {
 /// Implements DigestProvider to return itself without copying, as a Digest is
 /// already a digest.
 impl DigestProvider for Digest {
-    fn digest(&self) -> Cow<'_, Digest> { Cow::Borrowed(self) }
+    fn digest(&self) -> Digest { *self }
 }
 
 /// Provides a debug representation showing the digest's hexadecimal value.
@@ -235,19 +228,9 @@ impl CBORTaggedDecodable for Digest {
     }
 }
 
-/// Enables cloning a Digest from a reference using From trait.
-impl From<&Digest> for Digest {
-    fn from(digest: &Digest) -> Self { digest.clone() }
-}
-
 /// Converts a Digest into a `Vec<u8>` containing the digest bytes.
 impl From<Digest> for Vec<u8> {
     fn from(digest: Digest) -> Self { digest.0.to_vec() }
-}
-
-/// Converts a Digest reference into a `Vec<u8>` containing the digest bytes.
-impl From<&Digest> for Vec<u8> {
-    fn from(digest: &Digest) -> Self { digest.0.to_vec() }
 }
 
 #[cfg(test)]
