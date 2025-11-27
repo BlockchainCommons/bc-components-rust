@@ -321,9 +321,7 @@ impl DigestProvider for Compressed {
     /// Panics if there is no digest associated with this compressed data.
     /// Use `has_digest()` or `digest_ref_opt()` to check before calling this
     /// method.
-    fn digest(&self) -> Digest {
-        self.digest.unwrap()
-    }
+    fn digest(&self) -> Digest { self.digest.unwrap() }
 }
 
 /// Implementation of the `Debug` trait for `Compressed`.

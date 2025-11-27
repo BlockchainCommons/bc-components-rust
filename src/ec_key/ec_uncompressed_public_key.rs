@@ -111,9 +111,7 @@ impl ECKey for ECUncompressedPublicKey {
 /// Implements the `ECPublicKeyBase` trait.
 impl ECPublicKeyBase for ECUncompressedPublicKey {
     /// Returns this uncompressed public key (self).
-    fn uncompressed_public_key(&self) -> ECUncompressedPublicKey {
-        *self
-    }
+    fn uncompressed_public_key(&self) -> ECUncompressedPublicKey { *self }
 }
 
 /// Converts a fixed-size byte array to an `ECUncompressedPublicKey`.

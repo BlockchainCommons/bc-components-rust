@@ -107,9 +107,7 @@ impl AsRef<EncryptedMessage> for EncryptedMessage {
 
 /// Implements DigestProvider to provide the digest stored in the AAD field.
 impl DigestProvider for EncryptedMessage {
-    fn digest(&self) -> Digest {
-        self.aad_digest().unwrap()
-    }
+    fn digest(&self) -> Digest { self.aad_digest().unwrap() }
 }
 
 /// Implements CBORTagged to provide the CBOR tag for the EncryptedMessage.

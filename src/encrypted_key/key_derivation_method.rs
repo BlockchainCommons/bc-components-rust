@@ -12,11 +12,12 @@ use crate::{Error, Result};
 /// Scrypt = 2
 /// Argon2id = 3
 /// ```
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, Default)]
 pub enum KeyDerivationMethod {
     HKDF     = 0,
     PBKDF2   = 1,
     Scrypt   = 2,
+    #[default]
     Argon2id = 3,
     #[cfg(feature = "ssh-agent")]
     SSHAgent = 4,

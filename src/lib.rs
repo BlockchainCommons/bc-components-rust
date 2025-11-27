@@ -46,6 +46,9 @@ pub use encrypted_key::*;
 mod salt;
 pub use salt::Salt;
 
+mod json;
+pub use json::JSON;
+
 mod x25519;
 pub use x25519::{X25519PrivateKey, X25519PublicKey};
 

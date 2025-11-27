@@ -162,9 +162,7 @@ impl Reference {
 ///
 /// Yes, this creates a Reference to a Reference.
 impl ReferenceProvider for Reference {
-    fn reference(&self) -> Reference {
-        Reference::from_digest(self.digest())
-    }
+    fn reference(&self) -> Reference { Reference::from_digest(self.digest()) }
 }
 
 impl<'a> From<&'a Reference> for &'a [u8; Reference::REFERENCE_SIZE] {
