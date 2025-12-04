@@ -502,7 +502,7 @@ mod mock_agent_tests {
 
     fn mock_agent() -> AgentBox {
         let mut agent = MockSSHAgent::new();
-        let mut rng = bc_rand::SecureRandomNumberGenerator;
+        let mut rng = ssh_key::rand_core::OsRng;
         let keypair: Ed25519Keypair = Ed25519Keypair::random(&mut rng);
         let private_key = PrivateKey::new(keypair.into(), test_id()).unwrap();
         agent.add_identity(private_key);

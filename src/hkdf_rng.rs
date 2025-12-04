@@ -1,5 +1,8 @@
 use bc_crypto::hash::hkdf_hmac_sha256;
+#[cfg(not(feature = "ssh"))]
 use rand_core::{CryptoRng, RngCore};
+#[cfg(feature = "ssh")]
+use ssh_key::rand_core::{CryptoRng, RngCore};
 use zeroize::ZeroizeOnDrop;
 
 /// A deterministic random number generator based on HKDF-HMAC-SHA256.
@@ -56,7 +59,10 @@ impl HKDFRng {
     ///
     /// ```
     /// use bc_components::HKDFRng;
+    /// #[cfg(not(feature = "ssh"))]
     /// use rand_core::RngCore;
+    /// #[cfg(feature = "ssh")]
+    /// use ssh_key::rand_core::RngCore;
     ///
     /// // Create an HKDF-based RNG with a 64-byte page length
     /// let mut rng = HKDFRng::new_with_page_length(
@@ -99,7 +105,10 @@ impl HKDFRng {
     ///
     /// ```
     /// use bc_components::HKDFRng;
+    /// #[cfg(not(feature = "ssh"))]
     /// use rand_core::RngCore;
+    /// #[cfg(feature = "ssh")]
+    /// use ssh_key::rand_core::RngCore;
     ///
     /// // Create an HKDF-based RNG
     /// let mut rng = HKDFRng::new(b"my secure seed", "wallet-derivation");
@@ -196,18 +205,12 @@ impl RngCore for HKDFRng {
     /// Attempts to fill the provided buffer with random bytes.
     ///
     /// This implementation never fails, so it simply calls `fill_bytes`.
-    ///
-    /// # Parameters
-    ///
-    /// * `dest` - The buffer to fill with random bytes
-    ///
-    /// # Returns
-    ///
-    /// Always returns `Ok(())` as this implementation cannot fail.
+    /// Only available when the `ssh` feature is enabled (rand_core 0.6.x).
+    #[cfg(feature = "ssh")]
     fn try_fill_bytes(
         &mut self,
         dest: &mut [u8],
-    ) -> Result<(), rand_core::Error> {
+    ) -> Result<(), ssh_key::rand_core::Error> {
         self.fill_bytes(dest);
         Ok(())
     }
@@ -287,6 +290,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "ssh")]
     fn test_hkdf_rng_try_fill_bytes() {
         let mut rng = HKDFRng::new(b"key_material", "salt");
         let mut dest = [0u8; 16];
