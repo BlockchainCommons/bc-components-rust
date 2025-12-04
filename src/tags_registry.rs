@@ -12,9 +12,10 @@ use crate::ReferenceProvider;
 #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
 use crate::SignatureScheme;
 use crate::{
-    ARID, Digest, EncapsulationScheme, EncryptedKey, JSON, Nonce, PrivateKeyBase,
-    PrivateKeys, PublicKeys, Reference, SSKRShare, Salt, SealedMessage, Seed,
-    Signature, SigningPrivateKey, SigningPublicKey, URI, UUID, XID,
+    ARID, Digest, EncapsulationScheme, EncryptedKey, JSON, Nonce,
+    PrivateKeyBase, PrivateKeys, PublicKeys, Reference, SSKRShare, Salt,
+    SealedMessage, Seed, Signature, SigningPrivateKey, SigningPublicKey, URI,
+    UUID, XID,
 };
 
 pub fn register_tags_in(tags_store: &mut TagsStore) {
