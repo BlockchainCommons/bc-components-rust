@@ -21,7 +21,7 @@ Also includes a library of CBOR tags and UR types for use with these types.
 
 ```toml
 [dependencies]
-bc-components = "0.29.0"
+bc-components = "0.30.0"
 ```
 
 ## Types
@@ -129,6 +129,7 @@ The library is organized into several categories of cryptographic primitives and
 
 ## Version History
 
+- **0.30.0, December 4, 2025** - Align to workspace dependencies. Update third-party dependencies. Fix rand_core compatibility for ssh feature.
 - **0.29.0, December 3, 2025** - Add JSON type for CBOR-tagged UTF-8 JSON text. Add Copy trait to small atomic types (Digest, Nonce, Reference, and key types). Change DigestProvider trait to return Digest by value instead of Cow. Simplify APIs to take advantage of Copy implementations. Align to dependencies.
 - **0.28.0, November 12, 2025** - Align to dependencies. Format.
 - **0.27.0, November 3, 2025** - Align to dependencies. Feature gate cryptographic schemes. Improve Display formatting for keys.
