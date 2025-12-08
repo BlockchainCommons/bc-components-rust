@@ -242,6 +242,22 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "sr25519")]
+    fn test_sr25519_cbor() {
+        let private_key = sr25519_signing_private_key();
+        let signature = private_key.sign(MESSAGE).unwrap();
+        let signature_cbor: CBOR = signature.clone().into();
+        let tagged_cbor_data = signature_cbor.to_cbor_data();
+
+        let received_signature =
+            Signature::from_tagged_cbor_data(&tagged_cbor_data).unwrap();
+
+        let public_key = private_key.public_key().unwrap();
+        assert!(public_key.verify(&signature, MESSAGE));
+        assert!(public_key.verify(&received_signature, MESSAGE));
+    }
+
+    #[test]
     #[cfg(feature = "ed25519")]
     fn test_ed25519_signing() {
         let public_key = ED25519_SIGNING_PRIVATE_KEY.public_key().unwrap();

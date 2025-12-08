@@ -707,7 +707,7 @@ impl CBORTaggedDecodable for Signature {
                     let mut drain = elements.drain(0..);
                     let ele_0 = drain.next().unwrap().into_case();
                     #[cfg_attr(
-                        not(any(feature = "secp256k1", feature = "ed25519")),
+                        not(any(feature = "secp256k1", feature = "ed25519", feature = "sr25519")),
                         allow(unused_variables)
                     )]
                     let ele_1 = drain.next().unwrap().into_case();
@@ -726,6 +726,12 @@ impl CBORTaggedDecodable for Signature {
                         CBORCase::Unsigned(2) => {
                             if let CBORCase::ByteString(data) = ele_1 {
                                 return Ok(Self::ed25519_from_data_ref(data)?);
+                            }
+                        }
+                        #[cfg(feature = "sr25519")]
+                        CBORCase::Unsigned(3) => {
+                            if let CBORCase::ByteString(data) = ele_1 {
+                                return Ok(Self::sr25519_from_data_ref(data)?);
                             }
                         }
                         _ => (),
