@@ -4,6 +4,8 @@ use ssh_key::public::PublicKey as SSHPublicKey;
 
 #[cfg(feature = "ed25519")]
 use crate::Ed25519PublicKey;
+#[cfg(feature = "sr25519")]
+use crate::Sr25519PublicKey;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSAPublicKey;
 use crate::{Digest, Reference, ReferenceProvider, Signature, Verifier, tags};
@@ -73,6 +75,10 @@ pub enum SigningPublicKey {
     /// An Ed25519 public key
     #[cfg(feature = "ed25519")]
     Ed25519(Ed25519PublicKey),
+
+    /// An SR25519 (Schnorr-Ristretto) public key
+    #[cfg(feature = "sr25519")]
+    Sr25519(Sr25519PublicKey),
 
     /// An SSH public key
     #[cfg(feature = "ssh")]
@@ -166,6 +172,34 @@ impl SigningPublicKey {
     /// ```
     #[cfg(feature = "ed25519")]
     pub fn from_ed25519(key: Ed25519PublicKey) -> Self { Self::Ed25519(key) }
+
+    /// Creates a new signing public key from an SR25519 public key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - An SR25519 public key
+    ///
+    /// # Returns
+    ///
+    /// A new signing public key containing the SR25519 key
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "sr25519")]
+    /// # {
+    /// use bc_components::{Sr25519PrivateKey, SigningPublicKey};
+    ///
+    /// // Create an SR25519 private key and get its public key
+    /// let private_key = Sr25519PrivateKey::new();
+    /// let public_key = private_key.public_key();
+    ///
+    /// // Create a signing public key from it
+    /// let signing_key = SigningPublicKey::from_sr25519(public_key);
+    /// # }
+    /// ```
+    #[cfg(feature = "sr25519")]
+    pub fn from_sr25519(key: Sr25519PublicKey) -> Self { Self::Sr25519(key) }
 
     /// Creates a new signing public key from an SSH public key.
     ///
@@ -306,6 +340,18 @@ impl Verifier for SigningPublicKey {
                 Signature::Ed25519(sig) => key.verify(sig, _message),
                 #[cfg(any(
                     feature = "secp256k1",
+                    feature = "sr25519",
+                    feature = "ssh",
+                    feature = "pqcrypto"
+                ))]
+                _ => false,
+            },
+            #[cfg(feature = "sr25519")]
+            SigningPublicKey::Sr25519(key) => match _signature {
+                Signature::Sr25519(sig) => key.verify(sig, _message),
+                #[cfg(any(
+                    feature = "secp256k1",
+                    feature = "ed25519",
                     feature = "ssh",
                     feature = "pqcrypto"
                 ))]
@@ -384,6 +430,10 @@ impl CBORTaggedEncodable for SigningPublicKey {
             #[cfg(feature = "ed25519")]
             SigningPublicKey::Ed25519(key) => {
                 vec![(2).into(), CBOR::to_byte_string(key.data())].into()
+            }
+            #[cfg(feature = "sr25519")]
+            SigningPublicKey::Sr25519(key) => {
+                vec![(3).into(), CBOR::to_byte_string(key.data())].into()
             }
             #[cfg(feature = "ssh")]
             SigningPublicKey::SSH(key) => {
@@ -524,6 +574,7 @@ impl std::fmt::Display for SigningPublicKey {
         #[cfg(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         ))]
@@ -553,6 +604,7 @@ impl std::fmt::Display for SigningPublicKey {
         #[cfg(not(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         )))]

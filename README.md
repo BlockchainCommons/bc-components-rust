@@ -65,6 +65,8 @@ The library is organized into several categories of cryptographic primitives and
 | `SchnorrPublicKey`        | A Schnorr (x-only) elliptic curve public key (BIP-340)          |
 | `Ed25519PrivateKey`       | An Edwards curve (Ed25519) private key for signatures           |
 | `Ed25519PublicKey`        | An Edwards curve (Ed25519) public key                           |
+| `Sr25519PrivateKey`       | A Schnorr-Ristretto (SR25519) private key for signatures        |
+| `Sr25519PublicKey`        | A Schnorr-Ristretto (SR25519) public key                        |
 | `X25519PrivateKey`        | A Curve25519 private key used for key agreement                 |
 | `X25519PublicKey`         | A Curve25519 public key used for key agreement                  |
 
@@ -81,14 +83,14 @@ The library is organized into several categories of cryptographic primitives and
 
 ### Digital Signatures
 
-| Name                | Description                                                                   |
-| ------------------- | ----------------------------------------------------------------------------- |
-| `SigningPrivateKey` | A private key for digital signatures (Schnorr, ECDSA, Ed25519, MLDSA, or SSH) |
-| `SigningPublicKey`  | A public key for signature verification                                       |
-| `Signature`         | A digital signature supporting multiple algorithms                            |
-| `SignatureScheme`   | Enumeration of supported signature schemes                                    |
-| `Signer`            | A trait for types that can create signatures                                  |
-| `Verifier`          | A trait for types that can verify signatures                                  |
+| Name                | Description                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------- |
+| `SigningPrivateKey` | A private key for digital signatures (Schnorr, ECDSA, Ed25519, Sr25519, MLDSA, or SSH) |
+| `SigningPublicKey`  | A public key for signature verification                                                |
+| `Signature`         | A digital signature supporting multiple algorithms                                     |
+| `SignatureScheme`   | Enumeration of supported signature schemes                                             |
+| `Signer`            | A trait for types that can create signatures                                           |
+| `Verifier`          | A trait for types that can verify signatures                                           |
 
 ### Key Encapsulation and Encryption
 

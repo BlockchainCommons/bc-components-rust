@@ -61,6 +61,7 @@ The `bc-ur` crate is also in this workspace and provides the UR serialization/de
 | `SymmetricKey`, `EncryptedMessage` | Types for symmetric encryption |
 | `ECPrivateKey`, `ECPublicKey` | Elliptic curve cryptography keys |
 | `Ed25519PrivateKey`, `Ed25519PublicKey` | Ed25519 cryptographic keys |
+| `Sr25519PrivateKey`, `Sr25519PublicKey` | SR25519 (Schnorr-Ristretto) cryptographic keys |
 | `X25519PrivateKey`, `X25519PublicKey` | X25519 key agreement keys |
 | `SigningPrivateKey`, `SigningPublicKey` | Keys for digital signatures |
 | `MLDSAPrivateKey`, `MLDSAPublicKey` | Post-quantum digital signature keys |
@@ -154,10 +155,11 @@ This section inventories all public API items that need documentation, ordered f
 2. **✅ `AuthenticationTag`** (`symmetric/authentication_tag.rs`) - Authentication tag for authenticated encryption
 3. **✅ `EncryptedMessage`** (`symmetric/encrypted_message.rs`) - A symmetrically-encrypted message
 
-#### Ed25519 and X25519
+#### Ed25519, SR25519, and X25519
 
 1. **✅ `Ed25519PrivateKey`**, **✅ `Ed25519PublicKey`** (`ed25519/ed25519_private_key.rs`, `ed25519/ed25519_public_key.rs`) - Ed25519 keys
-2. **✅ `X25519PrivateKey`**, **✅ `X25519PublicKey`** (`x25519/x25519_private_key.rs`, `x25519/x25519_public_key.rs`) - X25519 keys
+2. **✅ `Sr25519PrivateKey`**, **✅ `Sr25519PublicKey`** (`sr25519/sr25519_private_key.rs`, `sr25519/sr25519_public_key.rs`) - SR25519 keys
+3. **✅ `X25519PrivateKey`**, **✅ `X25519PublicKey`** (`x25519/x25519_private_key.rs`, `x25519/x25519_public_key.rs`) - X25519 keys
 
 #### ECDSA
 

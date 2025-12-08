@@ -2,12 +2,14 @@
 use bc_crypto::ED25519_SIGNATURE_SIZE;
 #[cfg(feature = "secp256k1")]
 use bc_crypto::{ECDSA_SIGNATURE_SIZE, SCHNORR_SIGNATURE_SIZE};
+#[cfg(feature = "sr25519")]
+use crate::sr25519::SR25519_SIGNATURE_SIZE;
 use bc_ur::prelude::*;
 #[cfg(feature = "ssh")]
 use ssh_key::{LineEnding, SshSig};
 
 use super::SignatureScheme;
-#[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "ssh"))]
+#[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "sr25519", feature = "ssh"))]
 use crate::Error;
 #[cfg(feature = "pqcrypto")]
 use crate::MLDSASignature;
@@ -78,6 +80,10 @@ pub enum Signature {
     /// An Ed25519 signature (64 bytes)
     #[cfg(feature = "ed25519")]
     Ed25519([u8; ED25519_SIGNATURE_SIZE]),
+
+    /// An SR25519 (Schnorr-Ristretto) signature (64 bytes)
+    #[cfg(feature = "sr25519")]
+    Sr25519([u8; SR25519_SIGNATURE_SIZE]),
 
     /// An SSH signature
     #[cfg(feature = "ssh")]
@@ -316,6 +322,69 @@ impl Signature {
         Ok(Self::Ed25519(arr))
     }
 
+    /// Creates a new SR25519 signature from a 64-byte array.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - The 64-byte SR25519 signature data
+    ///
+    /// # Returns
+    ///
+    /// A new SR25519 signature
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "sr25519")]
+    /// # {
+    /// use bc_components::Signature;
+    ///
+    /// let data = [0u8; 64]; // In practice, this would be a real signature
+    /// let signature = Signature::sr25519_from_data(data);
+    /// # }
+    /// ```
+    #[cfg(feature = "sr25519")]
+    pub fn sr25519_from_data(data: [u8; SR25519_SIGNATURE_SIZE]) -> Self {
+        Self::Sr25519(data)
+    }
+
+    /// Creates an SR25519 signature from a byte slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A byte slice containing the signature data
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the signature or an error if the data is not
+    /// exactly 64 bytes in length.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "sr25519")]
+    /// # {
+    /// use bc_components::Signature;
+    ///
+    /// let data = vec![0u8; 64]; // In practice, this would be a real signature
+    /// let signature = Signature::sr25519_from_data_ref(&data).unwrap();
+    /// # }
+    /// ```
+    #[cfg(feature = "sr25519")]
+    pub fn sr25519_from_data_ref(data: impl AsRef<[u8]>) -> Result<Self> {
+        let data = data.as_ref();
+        if data.len() != SR25519_SIGNATURE_SIZE {
+            return Err(Error::invalid_size(
+                "SR25519 signature",
+                SR25519_SIGNATURE_SIZE,
+                data.len(),
+            ));
+        }
+        let mut arr = [0u8; SR25519_SIGNATURE_SIZE];
+        arr.copy_from_slice(data);
+        Ok(Self::Sr25519(arr))
+    }
+
     /// Creates an SSH signature from an `SshSig` object.
     ///
     /// # Arguments
@@ -431,6 +500,8 @@ impl Signature {
             Self::ECDSA(_) => Ok(SignatureScheme::Ecdsa),
             #[cfg(feature = "ed25519")]
             Self::Ed25519(_) => Ok(SignatureScheme::Ed25519),
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519(_) => Ok(SignatureScheme::Sr25519),
             #[cfg(feature = "ssh")]
             Self::SSH(sig) => match sig.algorithm() {
                 ssh_key::Algorithm::Dsa => Ok(SignatureScheme::SshDsa),
@@ -488,6 +559,11 @@ impl std::fmt::Debug for Signature {
             #[cfg(feature = "ed25519")]
             Signature::Ed25519(data) => _f
                 .debug_struct("Ed25519")
+                .field("data", &hex::encode(data))
+                .finish(),
+            #[cfg(feature = "sr25519")]
+            Signature::Sr25519(data) => _f
+                .debug_struct("Sr25519")
                 .field("data", &hex::encode(data))
                 .finish(),
             #[cfg(feature = "ssh")]
@@ -556,6 +632,10 @@ impl CBORTaggedEncodable for Signature {
             #[cfg(feature = "ed25519")]
             Signature::Ed25519(data) => {
                 vec![(2).into(), CBOR::to_byte_string(data)].into()
+            }
+            #[cfg(feature = "sr25519")]
+            Signature::Sr25519(data) => {
+                vec![(3).into(), CBOR::to_byte_string(data)].into()
             }
             #[cfg(feature = "ssh")]
             Signature::SSH(sig) => {

@@ -90,7 +90,7 @@ mod tests {
     use bc_rand::make_fake_random_number_generator;
     #[cfg(any(feature = "secp256k1", feature = "pqcrypto"))]
     use dcbor::prelude::*;
-    #[cfg(any(feature = "secp256k1", feature = "ed25519"))]
+    #[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "sr25519"))]
     use hex_literal::hex;
     #[cfg(feature = "secp256k1")]
     use indoc::indoc;
@@ -100,6 +100,7 @@ mod tests {
     #[cfg(any(
         feature = "secp256k1",
         feature = "ed25519",
+        feature = "sr25519",
         feature = "ssh"
     ))]
     use super::SignatureScheme;
@@ -110,17 +111,22 @@ mod tests {
     #[cfg(any(
         feature = "secp256k1",
         feature = "ed25519",
+        feature = "sr25519",
         feature = "ssh"
     ))]
     use crate::SigningOptions;
     #[cfg(all(feature = "secp256k1", not(feature = "ed25519")))]
     use crate::SigningPrivateKey;
     #[cfg(feature = "ed25519")]
-    use crate::{Ed25519PrivateKey, Signer, SigningPrivateKey, Verifier};
+    use crate::Ed25519PrivateKey;
+    #[cfg(feature = "sr25519")]
+    use crate::Sr25519PrivateKey;
+    #[cfg(any(feature = "ed25519", feature = "sr25519"))]
+    use crate::{Signer, SigningPrivateKey, Verifier};
     #[cfg(feature = "pqcrypto")]
     use crate::{MLDSA, MLDSASignature};
     #[cfg(all(
-        not(feature = "ed25519"),
+        not(any(feature = "ed25519", feature = "sr25519")),
         any(feature = "secp256k1", feature = "ssh")
     ))]
     use crate::{Signer, Verifier};
@@ -142,9 +148,17 @@ mod tests {
             "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
         )));
 
+    #[cfg(feature = "sr25519")]
+    fn sr25519_signing_private_key() -> SigningPrivateKey {
+        SigningPrivateKey::new_sr25519(Sr25519PrivateKey::from_seed(hex!(
+            "322b5c1dd5a17c3481c2297990c85c232ed3c17b52ce9905c6ec5193ad132c36"
+        )))
+    }
+
     #[cfg(any(
         feature = "secp256k1",
         feature = "ed25519",
+        feature = "sr25519",
         feature = "pqcrypto",
         feature = "ssh"
     ))]
@@ -243,6 +257,22 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "sr25519")]
+    fn test_sr25519_signing() {
+        let private_key = sr25519_signing_private_key();
+        let public_key = private_key.public_key().unwrap();
+        let signature = private_key.sign(MESSAGE).unwrap();
+
+        assert!(public_key.verify(&signature, MESSAGE));
+        assert!(!public_key.verify(&signature, b"Wolf Mcnally"));
+
+        // SR25519 signatures include randomness, so they differ each time
+        let another_signature = private_key.sign(MESSAGE).unwrap();
+        assert_ne!(signature, another_signature);
+        assert!(public_key.verify(&another_signature, MESSAGE));
+    }
+
+    #[test]
     #[cfg(feature = "pqcrypto")]
     fn test_mldsa_signing() {
         let (private_key, public_key) = MLDSA::MLDSA65.keypair();
@@ -268,7 +298,7 @@ mod tests {
         assert_eq!(signature, received_signature);
     }
 
-    #[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "ssh"))]
+    #[cfg(any(feature = "secp256k1", feature = "ed25519", feature = "sr25519", feature = "ssh"))]
     fn test_keypair_signing(
         scheme: SignatureScheme,
         options: Option<SigningOptions>,
@@ -298,9 +328,15 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "sr25519")]
+    fn test_sr25519_keypair() {
+        test_keypair_signing(SignatureScheme::Sr25519, None);
+    }
+
+    #[test]
     #[cfg(all(
         feature = "pqcrypto",
-        any(feature = "secp256k1", feature = "ed25519")
+        any(feature = "secp256k1", feature = "ed25519", feature = "sr25519")
     ))]
     fn test_mldsa44_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA44, None);
@@ -309,7 +345,7 @@ mod tests {
     #[test]
     #[cfg(all(
         feature = "pqcrypto",
-        any(feature = "secp256k1", feature = "ed25519")
+        any(feature = "secp256k1", feature = "ed25519", feature = "sr25519")
     ))]
     fn test_mldsa65_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA65, None);
@@ -318,7 +354,7 @@ mod tests {
     #[test]
     #[cfg(all(
         feature = "pqcrypto",
-        any(feature = "secp256k1", feature = "ed25519")
+        any(feature = "secp256k1", feature = "ed25519", feature = "sr25519")
     ))]
     fn test_mldsa87_keypair() {
         test_keypair_signing(SignatureScheme::MLDSA87, None);

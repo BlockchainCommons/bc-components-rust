@@ -156,6 +156,7 @@ impl CBORTaggedEncodable for PrivateKeys {
         #[cfg(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         ))]
@@ -169,6 +170,7 @@ impl CBORTaggedEncodable for PrivateKeys {
         #[cfg(not(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         )))]

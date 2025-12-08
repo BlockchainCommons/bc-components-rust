@@ -40,11 +40,14 @@ cargo test --lib --bins --tests --benches --no-default-features > /dev/null
 test_only_features "pqcrypto"
 test_only_features "secp256k1"
 test_only_features "ed25519"
+test_only_features "sr25519"
 test_only_features "ssh"
 
 test_only_features "ssh,ed25519"
 test_only_features "secp256k1,ed25519,pqcrypto"
 test_only_features "secp256k1,pqcrypto,ssh"
+test_only_features "sr25519,ed25519"
+test_only_features "sr25519,secp256k1"
 
 test_additional_features "ssh-agent"
 test_additional_features "ssh-agent-tests"
