@@ -10,7 +10,7 @@
 //! over the Ristretto group. It provides:
 //!
 //! - High security and performance
-//! - Deterministic signatures
+//! - Non-deterministic signatures
 //! - Compatibility with Substrate and Polkadot ecosystems
 //! - Support for hierarchical deterministic key derivation (HDKD)
 //!

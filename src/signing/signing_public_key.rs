@@ -418,6 +418,8 @@ impl CBORTaggedEncodable for SigningPublicKey {
     ///   public key
     /// - SSH: A tagged text string containing the OpenSSH-encoded public key
     /// - ML-DSA: Delegates to the MLDSAPublicKey implementation
+    /// - Sr25519: An array containing the discriminator 3 and the 32-byte
+    ///   public key
     #[allow(unreachable_patterns)]
     fn untagged_cbor(&self) -> CBOR {
         match self {

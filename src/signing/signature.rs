@@ -620,6 +620,8 @@ impl CBORTaggedEncodable for Signature {
     ///   signature
     /// - SSH: A tagged text string containing the PEM-encoded signature
     /// - ML-DSA: Delegates to the MLDSASignature implementation
+    /// - Sr25519: An array containing the discriminator 3 and the 64-byte
+    ///   signature
     #[allow(unreachable_patterns)]
     fn untagged_cbor(&self) -> CBOR {
         match self {
