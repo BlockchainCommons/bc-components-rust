@@ -7,6 +7,8 @@ use super::{SigningPrivateKey, SigningPublicKey};
 use crate::ECPrivateKey;
 #[cfg(feature = "ed25519")]
 use crate::Ed25519PrivateKey;
+#[cfg(feature = "sr25519")]
+use crate::Sr25519PrivateKey;
 #[cfg(feature = "ssh")]
 use crate::PrivateKeyBase;
 #[cfg_attr(not(feature = "pqcrypto"), allow(unused_imports))]
@@ -53,6 +55,10 @@ pub enum SignatureScheme {
     #[cfg(feature = "ed25519")]
     #[cfg_attr(all(feature = "ed25519", not(feature = "secp256k1")), default)]
     Ed25519,
+
+    /// SR25519 (Schnorr-Ristretto) signature scheme
+    #[cfg(feature = "sr25519")]
+    Sr25519,
 
     /// ML-DSA44 post-quantum signature scheme (NIST level 2)
     #[cfg(feature = "pqcrypto")]
@@ -169,6 +175,13 @@ impl SignatureScheme {
             Self::Ed25519 => {
                 let private_key =
                     SigningPrivateKey::new_ed25519(Ed25519PrivateKey::new());
+                let public_key = private_key.public_key().unwrap();
+                (private_key, public_key)
+            }
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519 => {
+                let private_key =
+                    SigningPrivateKey::new_sr25519(Sr25519PrivateKey::new());
                 let public_key = private_key.public_key().unwrap();
                 (private_key, public_key)
             }
@@ -328,6 +341,14 @@ impl SignatureScheme {
             Self::Ed25519 => {
                 let private_key = SigningPrivateKey::new_ed25519(
                     Ed25519PrivateKey::new_using(_rng),
+                );
+                let public_key = private_key.public_key().unwrap();
+                Ok((private_key, public_key))
+            }
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519 => {
+                let private_key = SigningPrivateKey::new_sr25519(
+                    Sr25519PrivateKey::new_using(_rng),
                 );
                 let public_key = private_key.public_key().unwrap();
                 Ok((private_key, public_key))

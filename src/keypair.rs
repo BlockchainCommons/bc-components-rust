@@ -111,6 +111,7 @@ pub fn keypair_opt(
     #[cfg(any(
         feature = "secp256k1",
         feature = "ed25519",
+        feature = "sr25519",
         feature = "ssh",
         feature = "pqcrypto"
     ))]
@@ -130,6 +131,7 @@ pub fn keypair_opt(
     #[cfg(not(any(
         feature = "secp256k1",
         feature = "ed25519",
+        feature = "sr25519",
         feature = "ssh",
         feature = "pqcrypto"
     )))]

@@ -150,6 +150,7 @@ impl CBORTaggedEncodable for PublicKeys {
         #[cfg(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         ))]
@@ -163,6 +164,7 @@ impl CBORTaggedEncodable for PublicKeys {
         #[cfg(not(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         )))]

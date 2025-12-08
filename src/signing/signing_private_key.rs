@@ -10,6 +10,8 @@ use ssh_key::{HashAlg, LineEnding, private::PrivateKey as SSHPrivateKey};
 use super::Verifier;
 #[cfg(feature = "ed25519")]
 use crate::Ed25519PrivateKey;
+#[cfg(feature = "sr25519")]
+use crate::Sr25519PrivateKey;
 #[cfg(any(feature = "secp256k1", feature = "ssh", feature = "pqcrypto"))]
 use crate::Error;
 #[cfg(feature = "pqcrypto")]
@@ -142,6 +144,10 @@ pub enum SigningPrivateKey {
     #[cfg(feature = "ed25519")]
     Ed25519(Ed25519PrivateKey),
 
+    /// An SR25519 (Schnorr-Ristretto) private key
+    #[cfg(feature = "sr25519")]
+    Sr25519(Sr25519PrivateKey),
+
     /// An SSH private key
     #[cfg(feature = "ssh")]
     SSH(Box<SSHPrivateKey>),
@@ -165,6 +171,8 @@ impl std::hash::Hash for SigningPrivateKey {
             Self::ECDSA(key) => key.hash(_state),
             #[cfg(feature = "ed25519")]
             Self::Ed25519(key) => key.hash(_state),
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519(key) => key.hash(_state),
             #[cfg(feature = "ssh")]
             Self::SSH(key) => key.to_bytes().unwrap().hash(_state),
             #[cfg(feature = "pqcrypto")]
@@ -172,6 +180,7 @@ impl std::hash::Hash for SigningPrivateKey {
             #[cfg(not(any(
                 feature = "secp256k1",
                 feature = "ed25519",
+                feature = "sr25519",
                 feature = "ssh",
                 feature = "pqcrypto"
             )))]
@@ -264,6 +273,35 @@ impl SigningPrivateKey {
     #[cfg(feature = "ed25519")]
     pub const fn new_ed25519(key: Ed25519PrivateKey) -> Self {
         Self::Ed25519(key)
+    }
+
+    /// Creates a new SR25519 signing private key from an `Sr25519PrivateKey`.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - The SR25519 private key to use
+    ///
+    /// # Returns
+    ///
+    /// A new SR25519 signing private key
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "sr25519")]
+    /// # {
+    /// use bc_components::{Sr25519PrivateKey, SigningPrivateKey};
+    ///
+    /// // Create a new SR25519 private key
+    /// let sr_key = Sr25519PrivateKey::new();
+    ///
+    /// // Create an SR25519 signing key from it
+    /// let signing_key = SigningPrivateKey::new_sr25519(sr_key);
+    /// # }
+    /// ```
+    #[cfg(feature = "sr25519")]
+    pub const fn new_sr25519(key: Sr25519PrivateKey) -> Self {
+        Self::Sr25519(key)
     }
 
     /// Creates a new SSH signing private key from an `SSHPrivateKey`.
@@ -402,6 +440,10 @@ impl SigningPrivateKey {
             Self::Ed25519(key) => {
                 Ok(SigningPublicKey::from_ed25519(key.public_key()))
             }
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519(key) => {
+                Ok(SigningPublicKey::from_sr25519(key.public_key()))
+            }
             #[cfg(feature = "ssh")]
             Self::SSH(key) => {
                 Ok(SigningPublicKey::from_ssh(key.public_key().clone()))
@@ -413,6 +455,7 @@ impl SigningPrivateKey {
             #[cfg(not(any(
                 feature = "secp256k1",
                 feature = "ed25519",
+                feature = "sr25519",
                 feature = "ssh",
                 feature = "pqcrypto"
             )))]
@@ -543,7 +586,8 @@ impl SigningPrivateKey {
         #[cfg(any(
             feature = "secp256k1",
             feature = "ssh",
-            feature = "pqcrypto"
+            feature = "pqcrypto",
+            feature = "sr25519"
         ))]
         if let Self::Ed25519(key) = self {
             let sig = key.sign(message.as_ref());
@@ -554,12 +598,68 @@ impl SigningPrivateKey {
         #[cfg(not(any(
             feature = "secp256k1",
             feature = "ssh",
-            feature = "pqcrypto"
+            feature = "pqcrypto",
+            feature = "sr25519"
         )))]
         {
             let Self::Ed25519(key) = self;
             let sig = key.sign(message.as_ref());
             Ok(Signature::ed25519_from_data(sig))
+        }
+    }
+
+    /// Signs a message using SR25519.
+    ///
+    /// This method is only valid for SR25519 keys.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - The message to sign
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the SR25519 signature, or an error if the key is
+    /// not an SR25519 key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[cfg(feature = "sr25519")]
+    /// # {
+    /// use bc_components::{Sr25519PrivateKey, Signer, SigningPrivateKey};
+    ///
+    /// // Create an SR25519 key
+    /// let private_key = SigningPrivateKey::new_sr25519(Sr25519PrivateKey::new());
+    ///
+    /// // Sign a message
+    /// let message = b"Hello, world!";
+    /// let signature = private_key.sign(&message).unwrap();
+    /// # }
+    /// ```
+    #[cfg(feature = "sr25519")]
+    pub fn sr25519_sign(&self, message: impl AsRef<[u8]>) -> Result<Signature> {
+        #[cfg(any(
+            feature = "secp256k1",
+            feature = "ed25519",
+            feature = "ssh",
+            feature = "pqcrypto"
+        ))]
+        if let Self::Sr25519(key) = self {
+            let sig = key.sign(message.as_ref());
+            Ok(Signature::sr25519_from_data(sig))
+        } else {
+            Err(Error::crypto("Invalid key type for SR25519 signing"))
+        }
+        #[cfg(not(any(
+            feature = "secp256k1",
+            feature = "ed25519",
+            feature = "ssh",
+            feature = "pqcrypto"
+        )))]
+        {
+            let Self::Sr25519(key) = self;
+            let sig = key.sign(message.as_ref());
+            Ok(Signature::sr25519_from_data(sig))
         }
     }
 
@@ -683,6 +783,8 @@ impl Signer for SigningPrivateKey {
             Self::ECDSA(_) => self.ecdsa_sign(_message),
             #[cfg(feature = "ed25519")]
             Self::Ed25519(_) => self.ed25519_sign(_message),
+            #[cfg(feature = "sr25519")]
+            Self::Sr25519(_) => self.sr25519_sign(_message),
             #[cfg(feature = "ssh")]
             Self::SSH(_) => {
                 if let Some(SigningOptions::Ssh { namespace, hash_alg }) =
@@ -700,6 +802,7 @@ impl Signer for SigningPrivateKey {
             #[cfg(not(any(
                 feature = "secp256k1",
                 feature = "ed25519",
+                feature = "sr25519",
                 feature = "ssh",
                 feature = "pqcrypto"
             )))]
@@ -783,6 +886,10 @@ impl CBORTaggedEncodable for SigningPrivateKey {
             #[cfg(feature = "ed25519")]
             SigningPrivateKey::Ed25519(key) => {
                 vec![(2).into(), CBOR::to_byte_string(key.data())].into()
+            }
+            #[cfg(feature = "sr25519")]
+            SigningPrivateKey::Sr25519(key) => {
+                vec![(3).into(), CBOR::to_byte_string(key.to_seed())].into()
             }
             #[cfg(feature = "ssh")]
             SigningPrivateKey::SSH(key) => {
@@ -944,6 +1051,7 @@ impl std::fmt::Display for SigningPrivateKey {
         #[cfg(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         ))]
@@ -977,6 +1085,7 @@ impl std::fmt::Display for SigningPrivateKey {
         #[cfg(not(any(
             feature = "secp256k1",
             feature = "ed25519",
+            feature = "sr25519",
             feature = "ssh",
             feature = "pqcrypto"
         )))]
