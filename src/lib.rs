@@ -57,6 +57,11 @@ mod ed25519;
 #[cfg(feature = "ed25519")]
 pub use ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 
+#[cfg(feature = "sr25519")]
+mod sr25519;
+#[cfg(feature = "sr25519")]
+pub use sr25519::{Sr25519PrivateKey, Sr25519PublicKey};
+
 mod seed;
 pub use seed::Seed;
 
