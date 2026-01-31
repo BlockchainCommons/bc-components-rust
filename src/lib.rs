@@ -300,6 +300,7 @@ mod tests {
     #[test]
     #[cfg(feature = "ssh")]
     fn test_ssh_dsa_signing() {
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
             -----BEGIN OPENSSH PRIVATE KEY-----
@@ -338,6 +339,7 @@ mod tests {
     #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp256_signing() {
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
             -----BEGIN OPENSSH PRIVATE KEY-----
@@ -364,6 +366,7 @@ mod tests {
     #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp384_signing() {
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
             -----BEGIN OPENSSH PRIVATE KEY-----
@@ -392,6 +395,7 @@ mod tests {
     #[cfg(feature = "ssh")]
     #[ignore]
     fn test_ssh_dsa_nistp521_signing() {
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
             -----BEGIN OPENSSH PRIVATE KEY-----
@@ -449,6 +453,7 @@ xLZXkgY29tbWVudC4BAgMEBQY=
     #[test]
     #[cfg(feature = "ssh")]
     fn test_ssh_ed25519_signing() {
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected_private_key = Some(indoc! {r#"
             -----BEGIN OPENSSH PRIVATE KEY-----

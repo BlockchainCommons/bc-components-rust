@@ -175,6 +175,7 @@ mod tests {
             .unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected = indoc! {r#"
             40020(
@@ -211,6 +212,7 @@ mod tests {
         let signature = ECDSA_SIGNING_PRIVATE_KEY.sign(MESSAGE).unwrap();
         let signature_cbor: CBOR = signature.clone().into();
         let tagged_cbor_data = signature_cbor.to_cbor_data();
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected = indoc! {r#"
             40020(

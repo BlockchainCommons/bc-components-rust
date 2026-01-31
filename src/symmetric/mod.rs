@@ -87,6 +87,7 @@ mod test {
     fn test_cbor_data() {
         crate::register_tags();
         let cbor: CBOR = encrypted_message().into();
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected = indoc!(r#"
             40002(   / encrypted /
@@ -100,6 +101,7 @@ mod test {
         "#).trim();
         assert_eq!(cbor.diagnostic_annotated(), expected);
 
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         let expected = indoc!(r#"
             d9 9c42                                 # tag(40002) encrypted

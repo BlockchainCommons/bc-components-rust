@@ -288,12 +288,14 @@ mod tests {
         let public_key = private_key.public_key().unwrap();
 
         let key_cbor = public_key.to_cbor();
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_eq!(key_cbor.diagnostic(), indoc! {"
             40022(
                 h'e8251dc3a17e0f2c07865ed191139ecbcddcbdd070ec1ff65df5148c7ef4005a'
             )
         "}.trim());
+        // expected-text-output-rubric:
         #[rustfmt::skip]
         assert_eq!(key_cbor.hex_annotated(), indoc! {"
             d9 9c56                                 # tag(40022) signing-public-key
