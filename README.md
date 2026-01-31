@@ -129,7 +129,7 @@ The library is organized into several categories of cryptographic primitives and
 
 ## Version History
 
-- **0.31.1, January 26, 2026** - Update pqcrypto-mlkem and pqcrypto-mldsa feature configuration to use std feature with default-features disabled for iOS bridging compatibility.
+- **0.31.1, January 31, 2026** - Update pqcrypto-mlkem and pqcrypto-mldsa feature configuration to disable default features and enable std for iOS bridging compatibility. Add expected-text-output-rubric comments to tests.
 - **0.31.0, December 19, 2025** - Align to dependencies.
 - **0.30.0, December 4, 2025** - Align to workspace dependencies. Update third-party dependencies. Fix rand_core compatibility for ssh feature.
 - **0.29.0, December 3, 2025** - Add JSON type for CBOR-tagged UTF-8 JSON text. Add Copy trait to small atomic types (Digest, Nonce, Reference, and key types). Change DigestProvider trait to return Digest by value instead of Cow. Simplify APIs to take advantage of Copy implementations. Align to dependencies.
